@@ -1,0 +1,96 @@
+{
+  "project_name": "Simulation Sandbox",
+  "theme_strategy": "dark_mode_only",
+  "design_philosophy": "Technical Observability & Flight Recorder (Archetype 4: Swiss Brutalist / Technical Grid). The UI must feel like a precision scientific instrument, not a game. Prioritize data density, high contrast, and absolute clarity.",
+  "typography": {
+    "primary_font": "IBM Plex Sans",
+    "mono_font": "JetBrains Mono",
+    "instructions": "Use IBM Plex Sans for general UI labels, buttons, and text. Use JetBrains Mono EXCLUSIVELY for simulation data, hashes, scores, event IDs, causal chains, and coordinates. This separation creates an immediate visual distinction between 'the tool' and 'the data'.",
+    "hierarchy": {
+      "h1_title": "text-2xl font-semibold tracking-tight (Do not exceed 2xl for this dashboard)",
+      "h2_panel": "text-lg font-medium tracking-tight",
+      "h3_widget": "text-sm font-semibold uppercase tracking-[0.1em] text-zinc-400",
+      "body": "text-sm text-zinc-300",
+      "data_dense": "font-mono text-xs text-zinc-300 leading-tight"
+    }
+  },
+  "colors": {
+    "background": {
+      "app": "#050505",
+      "panel": "#0a0a0a",
+      "surface": "#141414",
+      "hover": "#1f1f22"
+    },
+    "text": {
+      "primary": "#f4f4f5",
+      "secondary": "#a1a1aa",
+      "muted": "#71717a"
+    },
+    "border": {
+      "default": "#27272a",
+      "focus": "#52525b"
+    },
+    "signals": {
+      "success": "#10b981",
+      "success_bg": "rgba(16, 185, 129, 0.1)",
+      "danger": "#ef4444",
+      "danger_bg": "rgba(239, 68, 68, 0.1)",
+      "focus": "#0ea5e9",
+      "warning": "#eab308"
+    },
+    "world_entities": {
+      "grass": "#166534",
+      "water": "#0369a1",
+      "tree": "#14532d",
+      "person": "#d946ef",
+      "animal": "#f59e0b"
+    },
+    "instructions": "Never use pure #000000 or #ffffff. Use Zinc scale from Tailwind. Signal colors (success, danger) should only be used for state indication (e.g., hash pass/fail, accepted/rejected actions)."
+  },
+  "visual_enhancers": {
+    "surfaces": "The 'Technical' Look (Grid Borders). Panels should have 1px solid borders (border-zinc-800). No soft shadows, no glassmorphism (glass obscures data precision). Use pure flat backgrounds.",
+    "borders": "border-collapse style layout. Sections should abut each other with a shared 1px border. Use sharp corners (rounded-none) or very minimal radius (rounded-sm/2px) to maintain the dev-tool aesthetic.",
+    "data_visualization": "Progressive disclosure. Use mono-spaced font for all numbers to ensure tabular vertical alignment."
+  },
+  "grids_and_layouts": {
+    "app_structure": "h-screen w-full flex overflow-hidden bg-[#050505] text-zinc-100",
+    "left_workspace": "flex-1 flex flex-col min-w-0 border-r border-zinc-800",
+    "control_bar": "h-14 border-b border-zinc-800 flex items-center justify-between px-4 bg-[#0a0a0a] shrink-0",
+    "world_canvas_container": "flex-1 bg-[#050505] relative overflow-hidden flex items-center justify-center p-4",
+    "right_inspector_sidebar": "w-[450px] shrink-0 bg-[#0a0a0a] flex flex-col h-full",
+    "inspector_tabs": "flex flex-col h-full",
+    "tab_content_area": "flex-1 overflow-y-auto p-0 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent",
+    "data_row": "flex justify-between items-center py-1.5 border-b border-zinc-800/50 last:border-0"
+  },
+  "component_instructions": {
+    "libraries": "Shadcn UI (ensure JS versions, NOT TSX), Phosphor Icons (for precise technical icons) or Lucide React.",
+    "tabs": "Use Shadcn Tabs. Customize to look like terminal/editor tabs: flat, no background on active, just a bold bottom-border (e.g., border-b-2 border-sky-500) and bright text.",
+    "buttons": "Square or rounded-sm, high contrast. Use variant='outline' for standard actions, variant='default' for primary interventions (like 'New Run').",
+    "badges": "Use Shadcn Badges. Make them highly structural: border, transparent bg, and colored text (e.g., text-red-400 border-red-900/50 for Rejected).",
+    "tables": "Use dense HTML tables or Shadcn Table for event logs and rejected proposals. padding-y should be tiny (py-1 or py-2 max). Mono-spaced cells for event IDs, scores, and coordinates.",
+    "world_renderer": "The world canvas should use HTML5 <canvas> for performance. If using React state to map divs, ensure strict sizing to prevent DOM bloat. Canvas is strongly preferred."
+  },
+  "motion_and_interactions": {
+    "philosophy": "Zero decorative animation. Motion is only for data updates and interaction feedback.",
+    "hover_states": "Hovering interactive rows (like a log entry) should shift background to bg-zinc-900. Do not use scaling transforms.",
+    "active_entity": "When an entity is selected in the canvas, highlight it with an animated pulsing stroke (cyan/sky-500) and immediately populate the Entity Inspector.",
+    "transitions": "Instant or lightning-fast (75ms). This is a technical instrument, users want speed, not cinematic transitions."
+  },
+  "accessibility": {
+    "contrast": "Text must meet WCAG AAA contrast ratio. Text on dark backgrounds must be #e4e4e7 or brighter.",
+    "testing_ids": "CRITICAL: Every button, tab, and row MUST have a data-testid attribute in kebab-case format based on role (e.g., data-testid='play-simulation-btn', data-testid='inspector-tab-events').",
+    "focus_states": "focus-visible:ring-1 focus-visible:ring-sky-500 focus-visible:ring-offset-0"
+  },
+  "general_ui_ux_guidelines": {
+    "1": "DO NOT use complete transparent backgrounds for the Control Bar or Inspector Tabs; use solid #0a0a0a.",
+    "2": "Never apply universal transitions (e.g., transition: all). Apply them explicitly to color/bg (transition-colors).",
+    "3": "Avoid generic centered layouts. This is a dashboard; content should align top-left, following F-pattern reading styles.",
+    "4": "The causal chain/event sequence should be represented visually as a vertical timeline or tree using mono-spaced text and structural lines (border-l).",
+    "5": "Do not use emojis for icons. Use precise vector icons (Lucide or Phosphor)."
+  },
+  "dependencies_to_add": [
+    "lucide-react",
+    "clsx",
+    "tailwind-merge"
+  ]
+}
