@@ -8,7 +8,7 @@ SCENARIO = Scenario(
     id="basic_survival",
     name="Wilderness Survival",
     description="Open grassland with a central lake, scattered trees, autonomous people and animals.",
-    enabled_domains=["ecology", "people", "animal"],
+    enabled_domains=["ecology", "lifecycle", "people", "animal"],
     world_gen={
         "width": 20, "height": 20,
         "ground_terrain": "grass",

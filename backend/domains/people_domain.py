@@ -2,6 +2,15 @@
 utility, deterministic interruption/resume. Still proposal-only, still reads
 only Core-issued named RNG streams, still never mutates or touches storage.
 
+Phase 4B note: this domain no longer proposes person death itself - that is
+now owned entirely by LifecycleDomain (see domains/lifecycle_domain.py),
+which runs earlier in the same tick (environment phase) so a person's death
+always commits before their own action proposal is evaluated. This domain
+only guards against acting AFTER death by adding an `alive == True`
+precondition to every action proposal (see _build_proposal below) - Core's
+existing sequential commit-time revalidation is what makes a same-tick
+death correctly cancel that tick's action, with zero Core changes.
+
 Per-tick flow for each living person:
   1. perceive() + merge into persistent `knowledge` (canonical, discovered-only)
   2. decide WHICH action should be active this tick:
@@ -47,12 +56,6 @@ class PeopleDomain(DomainEngine):
             if not e or e["type"] != "person" or not e.get("alive", True):
                 continue
 
-            if e["energy"] <= 0 and (e["hunger"] >= 1000 or e["thirst"] >= 1000):
-                proposal = self._death_proposal(e, eid, frame.simulation_time)
-                proposals.append(proposal)
-                diagnostics[eid] = {"candidates": [], "selected_goal": "DEATH", "explanation": proposal["explanation"]}
-                continue
-
             tick = frame.simulation_time
             pos = e["position"]
             rng = frame.rng.stream(f"people.{eid}.decision.{tick}")
@@ -65,7 +68,7 @@ class PeopleDomain(DomainEngine):
             plan = dict(e.get("plan") or empty_plan())
             paused = e.get("paused")
 
-            candidates, context = score_candidates(e, knowledge, pos, tick, night, action, terrain)
+            candidates, context = score_candidates(e, knowledge, pos, tick, night, action, terrain, frame.entities)
             cand_by_goal = {c["goal"]: c for c in candidates}
 
             critical_goal = check_critical_interrupt(e)
@@ -108,6 +111,8 @@ class PeopleDomain(DomainEngine):
             result = execute_action_tick(e, eid, action, frame.entities, terrain, tick, night, rng)
             action = result["action"]
             tree_delta = action.pop("_tree_delta", None)
+            carcass_delta = action.pop("_carcass_delta", None)
+            animal_delta = action.pop("_animal_delta", None)
             step_note = result["explanation"]
             explanation = f"{decision_note} -> {step_note}" if decision_note else step_note
 
@@ -120,7 +125,8 @@ class PeopleDomain(DomainEngine):
                 else:
                     plan["status"] = "completed" if action["status"] != "failed" else "abandoned"
 
-            proposal = self._build_proposal(e, eid, action, plan, paused, knowledge, result, tree_delta, tick, explanation)
+            proposal = self._build_proposal(e, eid, action, plan, paused, knowledge, result,
+                                             tree_delta, carcass_delta, animal_delta, tick, explanation)
             proposals.append(proposal)
             diagnostics[eid] = {
                 "candidates": candidates_out, "selected_goal": selected_goal, "explanation": explanation,
@@ -129,21 +135,30 @@ class PeopleDomain(DomainEngine):
 
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
-    def _build_proposal(self, e, eid, action, plan, paused, knowledge, result, tree_delta, tick, explanation):
+    def _build_proposal(self, e, eid, action, plan, paused, knowledge, result,
+                         tree_delta, carcass_delta, animal_delta, tick, explanation):
         entity_updates = {eid: {
             "position": result["pos"], "hunger": result["hunger"], "thirst": result["thirst"],
-            "energy": result["energy"], "inventory": result["inventory"], "has_shelter": result["has_shelter"],
-            "knowledge": knowledge, "action": action, "plan": plan, "paused": paused,
-            "current_goal": plan.get("goal"),
+            "energy": result["energy"], "inventory": result["inventory"], "food_inventory": result["food_inventory"],
+            "has_shelter": result["has_shelter"], "knowledge": knowledge, "action": action, "plan": plan,
+            "paused": paused, "current_goal": plan.get("goal"),
         }}
         touched_scope = list(result["touched_scope"])
         preconditions = list(result["preconditions"])
+        preconditions.append({"entity_id": eid, "field": "alive", "op": "eq", "value": True})
         new_entities = dict(result["new_entities"])
 
-        if tree_delta:
-            entity_updates[tree_delta["id"]] = {"resource": tree_delta["resource"], "claimed_tick": tree_delta["claimed_tick"]}
-            if tree_delta["id"] not in touched_scope:
-                touched_scope.append(tree_delta["id"])
+        for delta in (tree_delta, carcass_delta):
+            if delta:
+                entity_updates[delta["id"]] = {"resource": delta["resource"], "claimed_tick": delta["claimed_tick"]}
+                if delta["id"] not in touched_scope:
+                    touched_scope.append(delta["id"])
+
+        if animal_delta:
+            animal_id = animal_delta.pop("id")
+            entity_updates[animal_id] = animal_delta
+            if animal_id not in touched_scope:
+                touched_scope.append(animal_id)
 
         return {
             "proposal_family": "people_action",
@@ -160,24 +175,4 @@ class PeopleDomain(DomainEngine):
             "preconditions": preconditions,
             "mutation": {"entity_updates": entity_updates, "new_entities": new_entities},
             "explanation": explanation,
-        }
-
-    def _death_proposal(self, e, eid, tick):
-        return {
-            "proposal_family": "people_action",
-            "proposal_type": "death",
-            "proposer_engine_id": self.engine_id,
-            "proposer_engine_version": self.engine_version,
-            "entity_id": eid,
-            "causal_parent_event_ids": [e["last_event_id"]] if e.get("last_event_id") else [],
-            "is_exogenous": not e.get("last_event_id"),
-            "requested_time": tick,
-            "phase": "agent",
-            "engine_priority": self.engine_priority,
-            "touched_scope": [eid],
-            "preconditions": [{"entity_id": eid, "field": "alive", "op": "eq", "value": True}],
-            "mutation": {"entity_updates": {eid: {"alive": False, "current_goal": "DEAD",
-                                                    "action": {"type": "death", "status": "completed"}}},
-                         "new_entities": {}},
-            "explanation": f"critical: energy=0 with hunger={e['hunger']} thirst={e['thirst']} -> death",
         }

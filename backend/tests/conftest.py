@@ -9,6 +9,10 @@ __init__.py chain linking tests/ to the backend root).
 import os
 import sys
 
+from dotenv import load_dotenv
+
 BACKEND_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BACKEND_ROOT not in sys.path:
     sys.path.insert(0, BACKEND_ROOT)
+
+load_dotenv(os.path.join(BACKEND_ROOT, ".env"))

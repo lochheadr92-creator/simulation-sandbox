@@ -1,12 +1,12 @@
 import React from "react";
-import { Play, Pause, StepForward, Plus, Sun, Moon, Sunrise, Sunset } from "lucide-react";
+import { Play, Pause, StepForward, Plus, Sun, Moon, Sunrise, Sunset, FolderOpen } from "lucide-react";
 import { Button } from "./ui/button";
 import { Slider } from "./ui/slider";
 import { Badge } from "./ui/badge";
 
 const PHASE_ICON = { dawn: Sunrise, day: Sun, dusk: Sunset, night: Moon };
 
-export default function ControlBar({ run, worldState, isPlaying, onPlayPause, onStep, speed, onSpeedChange, onNewRun }) {
+export default function ControlBar({ run, worldState, isPlaying, onPlayPause, onStep, speed, onSpeedChange, onNewRun, onLoadRun }) {
   const PhaseIcon = worldState ? PHASE_ICON[worldState.time_phase] || Sun : Sun;
 
   return (
@@ -14,6 +14,9 @@ export default function ControlBar({ run, worldState, isPlaying, onPlayPause, on
       <div className="flex items-center gap-3">
         <Button variant="primary" onClick={onNewRun} data-testid="new-run-btn">
           <Plus className="h-3.5 w-3.5" /> New Run
+        </Button>
+        <Button variant="outline" onClick={onLoadRun} data-testid="load-run-btn">
+          <FolderOpen className="h-3.5 w-3.5" /> Load Run
         </Button>
 
         {run && (

@@ -19,6 +19,31 @@ GATHER_YIELD = 10           # wood units per completed gather
 SLEEP_ENERGY_TARGET = 950   # sleep continues (multi-tick) until this energy is reached
 FLEE_PERSIST_TICKS = 3      # animals keep fleeing this many ticks after a threat leaves range
 
+# --- Phase 4A: retention policy ---
+RECENT_HORIZON_TICKS = 200  # rejected proposals older than (current_tick - this) are pruned;
+                            # accepted events/commit_frames are NEVER pruned (required for replay).
+
+# --- Phase 4B: lifecycle (people ageing/health/injury/death) ---
+CHILD_MAX_AGE_TICKS = 3000       # below this age: life_stage == "child" (purely observational, no spawn path exists)
+ELDER_MIN_AGE_TICKS = 40000      # at/above this age: life_stage == "elder"
+STARVATION_HEALTH_DECAY = 3      # health lost/tick while hunger >= CRITICAL_THRESHOLD
+DEHYDRATION_HEALTH_DECAY = 4     # health lost/tick while thirst >= CRITICAL_THRESHOLD
+EXPOSURE_HEALTH_DECAY = 2        # health lost/tick while night and not sheltered
+AGE_DECLINE_HEALTH_DECAY = 1     # health lost/tick for elders, regardless of needs
+HEALTH_REGEN = 2                 # health gained/tick when none of the above conditions apply
+INJURY_HEALTH_THRESHOLD = 400    # health level at which a person is marked "injured" (foundation state)
+MAX_HEALTH = 1000
+
+# --- Phase 4B: minimal hunting/food-chain extension (animals) ---
+ANIMAL_MAX_HEALTH = 100
+HUNT_TICKS = 2                    # multi-tick HUNT_STRIKE duration (mirrors GATHER_TICKS)
+HUNT_DAMAGE = 55                  # health removed per successful hunt strike (2 strikes -> dead from full health)
+CARCASS_MEAT_YIELD = 30           # total meat units a fresh carcass holds
+CARCASS_HARVEST_YIELD = 10        # meat units per completed harvest action (mirrors GATHER_YIELD)
+CARCASS_DECAY_INTERVAL = 5        # ticks between decay steps (mirrors REGROWTH_INTERVAL)
+CARCASS_DECAY_AMOUNT = 8          # meat units lost per decay step
+MEAT_HUNGER_REDUCTION = 500       # hunger removed per meat unit eaten (vs 400 for foraged inventory)
+
 
 def time_phase(tick: int) -> str:
     t = tick % DAY_LENGTH_TICKS

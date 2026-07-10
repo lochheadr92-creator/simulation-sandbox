@@ -16,7 +16,7 @@ SCENARIO = Scenario(
         "survival hinges on the oasis and scarce forage. Reuses the same People behaviour engine "
         "in a harsher, more contested world; the Animal domain is disabled entirely for this scenario."
     ),
-    enabled_domains=["ecology", "people"],
+    enabled_domains=["ecology", "lifecycle", "people"],
     world_gen={
         "width": 20, "height": 20,
         "ground_terrain": "sand",

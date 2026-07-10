@@ -9,9 +9,11 @@ kernel does not change.
 from domains.people_domain import PeopleDomain
 from domains.animal_domain import AnimalDomain
 from domains.ecology_domain import EcologyDomain
+from domains.lifecycle_domain import LifecycleDomain
 
 DOMAIN_REGISTRY = {
     "ecology": EcologyDomain(),
+    "lifecycle": LifecycleDomain(),
     "people": PeopleDomain(),
     "animal": AnimalDomain(),
 }

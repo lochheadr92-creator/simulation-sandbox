@@ -22,10 +22,37 @@ function ResultBlock({ title, result, loading }) {
           {result.final_state_hash && <div className="truncate">final_hash: {result.final_state_hash.slice(0, 24)}...</div>}
         </div>
       ) : (
-        <div className="mt-1 text-[11px] font-data text-red-400 space-y-0.5">
-          <div>diverged_at_tick: {result.diverged_at_tick}</div>
-          {result.original_hash && <div className="truncate">original: {result.original_hash.slice(0, 20)}...</div>}
-          {result.shadow_hash && <div className="truncate">shadow: {String(result.shadow_hash).slice(0, 20)}...</div>}
+        <div className="mt-2" data-testid="first-divergence-panel">
+          <div className="text-[11px] font-data text-red-400 space-y-0.5 mb-2">
+            <div>diverged_at_tick: {result.diverged_at_tick}</div>
+            {result.expected_hash && <div className="truncate">expected_hash: {String(result.expected_hash).slice(0, 20)}...</div>}
+            {result.actual_hash && <div className="truncate">actual_hash: {String(result.actual_hash).slice(0, 20)}...</div>}
+          </div>
+          {result.note && <p className="text-[10px] text-zinc-500 italic mb-2">{result.note}</p>}
+          {result.touched_scope_union && result.touched_scope_union.length > 0 && (
+            <div className="text-[10px] font-data text-zinc-400 mb-1">
+              touched_scope: {result.touched_scope_union.join(", ")}
+            </div>
+          )}
+          {result.changed_state_paths && Object.keys(result.changed_state_paths).length > 0 && (
+            <div className="text-[10px] font-data text-zinc-400 space-y-1" data-testid="divergence-changed-state-paths">
+              {Object.entries(result.changed_state_paths).map(([eid, fields]) => (
+                <div key={eid} className="border-t border-zinc-800/50 pt-1">
+                  <div className="text-zinc-300">{eid}</div>
+                  {Object.entries(fields).map(([field, diff]) => (
+                    <div key={field} className="text-zinc-600 pl-2">
+                      {field}: expected={JSON.stringify(diff.expected)} actual={JSON.stringify(diff.actual)}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          {result.deterministic_draw_references && result.deterministic_draw_references.length > 0 && (
+            <div className="text-[10px] font-data text-zinc-600 mt-1">
+              rng_stream_refs: {result.deterministic_draw_references.join(", ")}
+            </div>
+          )}
         </div>
       )}
     </div>

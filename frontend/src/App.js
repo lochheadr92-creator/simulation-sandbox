@@ -2,11 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ControlBar from "./components/ControlBar";
 import WorldCanvas from "./components/WorldCanvas";
 import NewRunModal from "./components/NewRunModal";
+import LoadRunModal from "./components/LoadRunModal";
 import EntityInspector from "./components/EntityInspector";
 import EventLog from "./components/EventLog";
 import RejectionsLog from "./components/RejectionsLog";
 import DeterminismPanel from "./components/DeterminismPanel";
 import InterventionsPanel from "./components/InterventionsPanel";
+import TimelineTab from "./components/TimelineTab";
+import TileInspector from "./components/TileInspector";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
 import { api } from "./api";
 
@@ -14,9 +17,11 @@ export default function App() {
   const [run, setRun] = useState(null);
   const [worldState, setWorldState] = useState(null);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
+  const [selectedTile, setSelectedTile] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(4);
   const [showNewRunModal, setShowNewRunModal] = useState(true);
+  const [showLoadRunModal, setShowLoadRunModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const intervalRef = useRef(null);
@@ -65,11 +70,23 @@ export default function App() {
     }
   }
 
-  function handleRunCreated(newRun) {
+  function handleRunReady(newRun) {
     setRun(newRun);
     setSelectedEntityId(null);
+    setSelectedTile(null);
     setIsPlaying(false);
     setShowNewRunModal(false);
+    setShowLoadRunModal(false);
+  }
+
+  function handleSelectEntity(entityId) {
+    setSelectedEntityId(entityId);
+    setSelectedTile(null);
+  }
+
+  function handleSelectTile(tile) {
+    setSelectedTile(tile);
+    setSelectedEntityId(null);
   }
 
   return (
@@ -84,13 +101,19 @@ export default function App() {
           speed={speed}
           onSpeedChange={setSpeed}
           onNewRun={() => setShowNewRunModal(true)}
+          onLoadRun={() => setShowLoadRunModal(true)}
         />
         <div className="flex-1 bg-app relative overflow-auto flex items-center justify-center p-4" data-testid="world-canvas-container">
           {worldState ? (
-            <WorldCanvas state={worldState} selectedEntityId={selectedEntityId} onSelectEntity={setSelectedEntityId} />
+            <WorldCanvas
+              state={worldState}
+              selectedEntityId={selectedEntityId}
+              onSelectEntity={handleSelectEntity}
+              onSelectTile={handleSelectTile}
+            />
           ) : (
             <div className="text-zinc-600 text-sm" data-testid="no-run-placeholder">
-              Create a run to begin observing the world.
+              Create or load a run to begin observing the world.
             </div>
           )}
         </div>
@@ -100,6 +123,7 @@ export default function App() {
         <Tabs defaultValue="entity" className="flex flex-col h-full">
           <TabsList>
             <TabsTrigger value="entity" data-testid="inspector-tab-entity">Entity</TabsTrigger>
+            <TabsTrigger value="timeline" data-testid="inspector-tab-timeline">Timeline</TabsTrigger>
             <TabsTrigger value="events" data-testid="inspector-tab-events">Events</TabsTrigger>
             <TabsTrigger value="rejections" data-testid="inspector-tab-rejections">Rejections</TabsTrigger>
             <TabsTrigger value="determinism" data-testid="inspector-tab-determinism">Determinism</TabsTrigger>
@@ -107,13 +131,20 @@ export default function App() {
           </TabsList>
           <div className="flex-1 overflow-y-auto">
             <TabsContent value="entity">
-              <EntityInspector runId={run?.id} entityId={selectedEntityId} refreshKey={refreshKey} />
+              {selectedTile ? (
+                <TileInspector runId={run?.id} tile={selectedTile} refreshKey={refreshKey} />
+              ) : (
+                <EntityInspector runId={run?.id} entityId={selectedEntityId} refreshKey={refreshKey} />
+              )}
+            </TabsContent>
+            <TabsContent value="timeline">
+              <TimelineTab runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} />
             </TabsContent>
             <TabsContent value="events">
-              <EventLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={setSelectedEntityId} />
+              <EventLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} />
             </TabsContent>
             <TabsContent value="rejections">
-              <RejectionsLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={setSelectedEntityId} />
+              <RejectionsLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} />
             </TabsContent>
             <TabsContent value="determinism">
               {run && <DeterminismPanel runId={run.id} />}
@@ -134,7 +165,12 @@ export default function App() {
       <NewRunModal
         open={showNewRunModal && (!run || showNewRunModal)}
         onClose={() => setShowNewRunModal(false)}
-        onCreated={handleRunCreated}
+        onCreated={handleRunReady}
+      />
+      <LoadRunModal
+        open={showLoadRunModal}
+        onClose={() => setShowLoadRunModal(false)}
+        onLoaded={handleRunReady}
       />
     </div>
   );

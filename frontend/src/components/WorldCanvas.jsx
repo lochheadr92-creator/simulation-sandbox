@@ -10,6 +10,7 @@ const COLORS = {
   person: "#d946ef",
   animal: "#f59e0b",
   shelter: "#a1a1aa",
+  carcass: "#7f1d1d",
 };
 
 const NIGHT_OVERLAY = {
@@ -19,7 +20,7 @@ const NIGHT_OVERLAY = {
   night: "rgba(5, 10, 40, 0.55)",
 };
 
-export default function WorldCanvas({ state, selectedEntityId, onSelectEntity }) {
+export default function WorldCanvas({ state, selectedEntityId, onSelectEntity, onSelectTile }) {
   const canvasRef = useRef(null);
   const pulseRef = useRef(0);
   const rafRef = useRef(null);
@@ -72,6 +73,18 @@ export default function WorldCanvas({ state, selectedEntityId, onSelectEntity })
         ctx.strokeStyle = COLORS.shelter;
         ctx.lineWidth = 2;
         ctx.strokeRect(cx - TILE * 0.32, cy - TILE * 0.32, TILE * 0.64, TILE * 0.64);
+      } else if (e.type === "carcass") {
+        const ratio = (e.resource || 0) / (e.max_resource || 1);
+        ctx.fillStyle = COLORS.carcass;
+        ctx.globalAlpha = 0.4 + ratio * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - TILE * 0.3);
+        ctx.lineTo(cx + TILE * 0.3, cy);
+        ctx.lineTo(cx, cy + TILE * 0.3);
+        ctx.lineTo(cx - TILE * 0.3, cy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
       } else if (e.type === "person" || e.type === "animal") {
         if (!e.alive) {
           ctx.strokeStyle = "rgba(113,113,122,0.6)";
@@ -88,6 +101,20 @@ export default function WorldCanvas({ state, selectedEntityId, onSelectEntity })
         ctx.beginPath();
         ctx.arc(cx, cy, TILE * 0.28, 0, Math.PI * 2);
         ctx.fill();
+        if (e.type === "animal" && e.injured) {
+          ctx.strokeStyle = "rgba(220,38,38,0.9)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(cx, cy, TILE * 0.36, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        if (e.type === "person" && e.injury?.injured) {
+          ctx.strokeStyle = "rgba(220,38,38,0.9)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(cx, cy, TILE * 0.36, 0, Math.PI * 2);
+          ctx.stroke();
+        }
       }
 
       if (e.id === selectedEntityId) {
@@ -110,10 +137,11 @@ export default function WorldCanvas({ state, selectedEntityId, onSelectEntity })
     const rect = canvasRef.current.getBoundingClientRect();
     const x = Math.floor((evt.clientX - rect.left) / TILE);
     const y = Math.floor((evt.clientY - rect.top) / TILE);
-    const priority = { person: 0, animal: 1, shelter: 2, tree: 3 };
+    const priority = { person: 0, animal: 1, shelter: 2, carcass: 3, tree: 4 };
     const candidates = state.entities.filter((e) => e.position.x === x && e.position.y === y);
     if (candidates.length === 0) {
       onSelectEntity(null);
+      if (onSelectTile) onSelectTile({ x, y });
       return;
     }
     candidates.sort((a, b) => (priority[a.type] ?? 9) - (priority[b.type] ?? 9));

@@ -50,7 +50,7 @@ class AnimalDomain(DomainEngine):
 
             nearest_person = find_nearest_entity(frame.entities, pos, "person", lambda p: p.get("alive", True))
             threat_in_range = nearest_person is not None and manhattan(pos, nearest_person["position"]) <= FLEE_RADIUS
-            threatened = threat_in_range or flee_remaining > 0
+            threatened = threat_in_range or flee_remaining > 0 or e.get("injured", False)
 
             candidates = [
                 {"goal": "FLEE", "score": 900 if threatened else 0},
@@ -80,7 +80,9 @@ class AnimalDomain(DomainEngine):
                 if is_passable(target, frame.terrain):
                     new_pos = target
                 explanation = ("person within flee radius; fleeing" if threat_in_range
-                               else f"still fleeing residual danger ({new_flee_remaining} ticks left)")
+                               else (f"injured and wary; fleeing cautiously ({new_flee_remaining} ticks left)"
+                                     if e.get("injured", False) else
+                                     f"still fleeing residual danger ({new_flee_remaining} ticks left)"))
             elif best["goal"] == "REST":
                 action_type = "rest"
                 energy = min(1000, energy + 70)
@@ -115,7 +117,7 @@ class AnimalDomain(DomainEngine):
                 "phase": "agent",
                 "engine_priority": self.engine_priority,
                 "touched_scope": [eid],
-                "preconditions": [],
+                "preconditions": [{"entity_id": eid, "field": "alive", "op": "eq", "value": True}],
                 "mutation": {"entity_updates": entity_updates, "new_entities": {}},
                 "explanation": explanation,
             })

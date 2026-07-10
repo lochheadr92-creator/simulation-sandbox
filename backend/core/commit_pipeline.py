@@ -30,6 +30,10 @@ OPS = {
 
 
 def normalize_proposal(p: dict, seq: int) -> dict:
+    # NOTE: `seq` (input arrival order) is deliberately excluded from the
+    # hashed core_fields - content_hash must be a pure function of the
+    # proposal's CONTENT so that shuffling submission order never changes
+    # final commit order or outcome (determinism doctrine).
     core_fields = {
         "proposal_family": p["proposal_family"],
         "proposal_type": p["proposal_type"],
@@ -41,7 +45,6 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         "mutation": p.get("mutation", {}),
         "requested_time": p["requested_time"],
         "phase": p["phase"],
-        "seq": seq,
     }
     h = canonical_hash(core_fields)
     p = dict(p)

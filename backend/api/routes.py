@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from core.db import db
-from core.constants import time_phase
+from core.constants import time_phase, ENGINE_VERSION, SCHEMA_VERSION, RECENT_HORIZON_TICKS
 from core.commit_pipeline import run_commit_frame
 from core.interventions import build_intervention_proposal
 from core.run_service import (
@@ -13,7 +13,9 @@ from core.run_service import (
     step_run, set_run_status, lineage_key_for,
 )
 from core.replay_service import verify_replay, verify_determinism
+from core import history_service
 from domains.base import DomainOutput
+from domains.lifecycle_domain import lifecycle_diag_key
 from scenarios import list_scenarios, get_scenario
 
 router = APIRouter()
@@ -127,6 +129,9 @@ async def api_get_causal(run_id: str, entity_id: str):
         raise HTTPException(404, "entity not found")
 
     diag = await db.activation_diagnostics.find_one({"run_id": run_id, "entity_id": entity_id}, {"_id": 0})
+    lifecycle_diag = await db.activation_diagnostics.find_one(
+        {"run_id": run_id, "entity_id": lifecycle_diag_key(entity_id)}, {"_id": 0},
+    )
     accepted_events = await db.accepted_events.find(
         {"run_id": run_id, "entity_id": entity_id}, {"_id": 0},
     ).sort("order_index", -1).to_list(20)
@@ -170,11 +175,13 @@ async def api_get_causal(run_id: str, entity_id: str):
             "known_water_tiles": len(knowledge.get("known_water_tiles", [])),
             "known_trees": len(knowledge.get("known_trees", {})),
             "known_shelters": len(knowledge.get("known_shelters", {})),
+            "known_carcasses": len(knowledge.get("known_carcasses", {})),
         }
 
     return {
         "entity": {"id": entity_id, **entity},
         "diagnostics": diag["diagnostics"] if diag else None,
+        "lifecycle_diagnostics": lifecycle_diag["diagnostics"] if lifecycle_diag else None,
         "accepted_action": accepted_events[0] if accepted_events else None,
         "recent_accepted_events": accepted_events,
         "recent_rejected_proposals": rejected_events,
@@ -182,6 +189,56 @@ async def api_get_causal(run_id: str, entity_id: str):
         "action_history": action_history,
         "knowledge_summary": knowledge_summary,
     }
+
+
+# ---------- history: timeline, milestones, provenance, tile history (Phase 4A) ----------
+
+@router.get("/runs/{run_id}/timeline")
+async def api_get_timeline(run_id: str, limit: int = 300, entity_id: Optional[str] = None, milestone_only: bool = False):
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    events = await history_service.chronological_events_for_run(run_id)
+    milestones = history_service.classify_milestones(events)
+    timeline = history_service.build_timeline(events, milestones)
+    if entity_id:
+        timeline = [t for t in timeline if t["entity_id"] == entity_id or entity_id in t["touched_scope"]]
+    if milestone_only:
+        timeline = [t for t in timeline if t["milestones"]]
+    timeline = list(reversed(timeline))[:limit]
+    return {"timeline": timeline, "recent_horizon_ticks": RECENT_HORIZON_TICKS, "total_events_in_run": len(events)}
+
+
+@router.get("/runs/{run_id}/milestones")
+async def api_get_milestones(run_id: str):
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    events = await history_service.chronological_events_for_run(run_id)
+    milestones = history_service.classify_milestones(events)
+    return {"milestones": list(reversed(milestones))}
+
+
+@router.get("/runs/{run_id}/entities/{entity_id}/provenance")
+async def api_get_provenance(run_id: str, entity_id: str):
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    entity = await db.entities.find_one({"run_id": run_id, "id": entity_id}, {"_id": 0, "run_id": 0})
+    if not entity:
+        raise HTTPException(404, "entity not found")
+    events = await history_service.events_for_entity(run_id, entity_id)
+    return history_service.provenance_for_entity(entity_id, entity, events)
+
+
+@router.get("/runs/{run_id}/tiles/{x}/{y}/history")
+async def api_get_tile_history(run_id: str, x: int, y: int, limit: int = 50):
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    events = await history_service.tile_history(run_id, x, y, limit=limit)
+    return {"x": x, "y": y, "events": events,
+            "note": "projection over accepted events only - never simulation truth or replay authority"}
 
 
 # ---------- interventions ----------
@@ -203,7 +260,7 @@ async def api_submit_intervention(run_id: str, body: InterventionRequest):
     if proposal is None:
         raise HTTPException(400, "invalid intervention type or payload")
 
-    lineage_key = lineage_key_for(run["seed"])
+    lineage_key = lineage_key_for(run["seed"], run.get("engine_version", ENGINE_VERSION), run.get("schema_version", SCHEMA_VERSION))
     accepted, rejected, next_order = run_commit_frame(
         entities, [DomainOutput(proposals=[proposal])], run["current_tick"], lineage_key,
         run_id, run["next_order_index"], f"{run_id}-ext-{influence_id}",

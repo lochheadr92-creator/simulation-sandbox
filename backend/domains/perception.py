@@ -16,7 +16,8 @@ from core.constants import VISION_RADIUS
 
 
 def empty_knowledge() -> dict:
-    return {"known_tiles": [], "known_water_tiles": [], "known_trees": {}, "known_shelters": {}}
+    return {"known_tiles": [], "known_water_tiles": [], "known_trees": {},
+            "known_shelters": {}, "known_carcasses": {}}
 
 
 def perceive(pos: dict, entities: dict, terrain: list, tick: int, radius: int = VISION_RADIUS) -> dict:
@@ -39,6 +40,7 @@ def perceive(pos: dict, entities: dict, terrain: list, tick: int, radius: int = 
 
     tree_sightings = {}
     shelter_sightings = {}
+    carcass_sightings = {}
     for eid, e in entities.items():
         if e["type"] == "tree" and manhattan(pos, e["position"]) <= radius:
             tree_sightings[eid] = {
@@ -48,9 +50,14 @@ def perceive(pos: dict, entities: dict, terrain: list, tick: int, radius: int = 
             shelter_sightings[eid] = {
                 "last_seen_tick": tick, "position": dict(e["position"]), "owner_id": e.get("owner_id"),
             }
+        elif e["type"] == "carcass" and manhattan(pos, e["position"]) <= radius:
+            carcass_sightings[eid] = {
+                "last_seen_tick": tick, "last_known_resource": e["resource"], "position": dict(e["position"]),
+                "source_animal_id": e.get("source_animal_id"),
+            }
 
-    return {"new_tiles": new_tiles, "new_water": new_water,
-            "tree_sightings": tree_sightings, "shelter_sightings": shelter_sightings}
+    return {"new_tiles": new_tiles, "new_water": new_water, "tree_sightings": tree_sightings,
+            "shelter_sightings": shelter_sightings, "carcass_sightings": carcass_sightings}
 
 
 def merge_knowledge(existing: dict, delta: dict):
@@ -64,6 +71,7 @@ def merge_knowledge(existing: dict, delta: dict):
     known_water = set(existing.get("known_water_tiles", []))
     known_trees = dict(existing.get("known_trees", {}))
     known_shelters = dict(existing.get("known_shelters", {}))
+    known_carcasses = dict(existing.get("known_carcasses", {}))
 
     discovered_new = bool(set(delta["new_tiles"]) - known_tiles)
 
@@ -71,11 +79,13 @@ def merge_knowledge(existing: dict, delta: dict):
     known_water |= set(delta["new_water"])
     known_trees.update(delta["tree_sightings"])
     known_shelters.update(delta["shelter_sightings"])
+    known_carcasses.update(delta.get("carcass_sightings", {}))
 
     merged = {
         "known_tiles": sorted(known_tiles),
         "known_water_tiles": sorted(known_water),
         "known_trees": known_trees,
         "known_shelters": known_shelters,
+        "known_carcasses": known_carcasses,
     }
     return merged, discovered_new

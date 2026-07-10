@@ -17,4 +17,8 @@ export const api = {
     axios.post(`${BASE}/runs/${runId}/interventions`, { type, payload }).then((r) => r.data),
   verifyReplay: (runId) => axios.post(`${BASE}/runs/${runId}/replay/verify`).then((r) => r.data),
   verifyDeterminism: (runId) => axios.post(`${BASE}/runs/${runId}/replay/determinism`).then((r) => r.data),
+  getTimeline: (runId, params = {}) => axios.get(`${BASE}/runs/${runId}/timeline`, { params }).then((r) => r.data),
+  getMilestones: (runId) => axios.get(`${BASE}/runs/${runId}/milestones`).then((r) => r.data),
+  getProvenance: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/provenance`).then((r) => r.data),
+  getTileHistory: (runId, x, y) => axios.get(`${BASE}/runs/${runId}/tiles/${x}/${y}/history`).then((r) => r.data),
 };

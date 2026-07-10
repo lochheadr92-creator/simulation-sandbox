@@ -47,7 +47,7 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
   if (error) return <div className="p-4 text-xs text-red-400">{error}</div>;
   if (!data) return <div className="p-4 text-xs text-zinc-500">Loading...</div>;
 
-  const { entity, diagnostics, accepted_action, recent_rejected_proposals, causal_chain, action_history, knowledge_summary } = data;
+  const { entity, diagnostics, lifecycle_diagnostics, accepted_action, recent_rejected_proposals, causal_chain, action_history, knowledge_summary } = data;
   const isPerson = entity.type === "person";
   const isAnimal = entity.type === "animal";
   const action = entity.action;
@@ -66,6 +66,13 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
         <DataRow label="type" value={entity.type} />
         <DataRow label="position" value={`(${entity.position.x}, ${entity.position.y})`} />
         {entity.type === "tree" && <DataRow label="resource" value={`${entity.resource} / ${entity.max_resource}`} />}
+        {entity.type === "carcass" && (
+          <>
+            <DataRow label="meat remaining" value={`${entity.resource} / ${entity.max_resource}`} />
+            <DataRow label="source_animal_id" value={entity.source_animal_id} />
+          </>
+        )}
+        {entity.type === "shelter" && <DataRow label="owner_id" value={entity.owner_id} />}
         {(isPerson || isAnimal) && <DataRow label="current_goal" value={entity.current_goal || "-"} />}
       </div>
 
@@ -75,8 +82,54 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
           <NeedBar label="hunger" value={entity.hunger} />
           {isPerson && <NeedBar label="thirst" value={entity.thirst} />}
           <NeedBar label="energy" value={1000 - entity.energy} />
-          {isPerson && <DataRow label="inventory" value={entity.inventory} />}
+          {isPerson && <DataRow label="inventory (wood)" value={entity.inventory} />}
+          {isPerson && <DataRow label="food_inventory (meat)" value={entity.food_inventory ?? 0} />}
           {isPerson && <DataRow label="has_shelter" value={String(entity.has_shelter)} />}
+        </div>
+      )}
+
+      {isPerson && (
+        <div data-testid="lifecycle-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Lifecycle (ageing / health)</h4>
+          <DataRow label="age_ticks" value={entity.age_ticks} />
+          <DataRow label="life_stage" value={entity.life_stage} />
+          <NeedBar label="health" value={entity.health ?? 1000} danger={400} />
+          <div className="flex justify-between items-center py-1.5 text-xs" data-testid="injury-status-row">
+            <span className="text-zinc-500">injury</span>
+            <Badge variant={entity.injury?.injured ? "danger" : "success"}>
+              {entity.injury?.injured ? `injured (${entity.injury.cause})` : "healthy"}
+            </Badge>
+          </div>
+          {lifecycle_diagnostics?.explanation && (
+            <p className="text-[10px] text-zinc-600 font-data mt-1" data-testid="lifecycle-explanation">
+              {lifecycle_diagnostics.explanation}
+            </p>
+          )}
+          {entity.alive === false && (
+            <div className="mt-2 p-2 bg-red-950/30 border border-red-900/50 rounded-sm" data-testid="death-details-section">
+              <div className="text-[10px] uppercase text-red-400 mb-1">Death Record</div>
+              <DataRow label="cause" value={entity.death_cause || "unknown"} />
+              <DataRow label="tick" value={entity.death_tick ?? "-"} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {isAnimal && (
+        <div data-testid="animal-lifecycle-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Health (minimal survival extension)</h4>
+          <NeedBar label="health" value={entity.health ?? 100} max={100} danger={40} />
+          <div className="flex justify-between items-center py-1.5 text-xs" data-testid="animal-injury-status-row">
+            <span className="text-zinc-500">injured</span>
+            <Badge variant={entity.injured ? "danger" : "success"}>{entity.injured ? "yes" : "no"}</Badge>
+          </div>
+          {entity.alive === false && (
+            <div className="mt-2 p-2 bg-red-950/30 border border-red-900/50 rounded-sm" data-testid="death-details-section">
+              <div className="text-[10px] uppercase text-red-400 mb-1">Death Record</div>
+              <DataRow label="cause" value={entity.death_cause || "unknown"} />
+              <DataRow label="tick" value={entity.death_tick ?? "-"} />
+            </div>
+          )}
         </div>
       )}
 
@@ -226,6 +279,51 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      <ProvenanceSection runId={runId} entityId={entityId} refreshKey={refreshKey} />
+    </div>
+  );
+}
+
+function ProvenanceSection({ runId, entityId, refreshKey }) {
+  const [provenance, setProvenance] = useState(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setProvenance(null);
+    setOpen(false);
+  }, [entityId, refreshKey]);
+
+  async function load() {
+    const d = await api.getProvenance(runId, entityId);
+    setProvenance(d);
+    setOpen(true);
+  }
+
+  return (
+    <div data-testid="provenance-section">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500">Provenance</h4>
+        <button
+          onClick={load}
+          data-testid="load-provenance-btn"
+          className="text-[10px] px-2 py-0.5 rounded-sm border border-zinc-700 text-zinc-400 hover:text-zinc-200"
+        >
+          {open ? "Refresh" : "Load"}
+        </button>
+      </div>
+      {open && provenance && (
+        <div className="text-[11px] font-data text-zinc-400 space-y-1" data-testid="provenance-content">
+          {Object.entries(provenance).map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-2 border-b border-zinc-800/40 py-1">
+              <span className="text-zinc-500 shrink-0">{k}</span>
+              <span className="text-zinc-300 text-right truncate max-w-[260px]">
+                {v === null || v === undefined ? "-" : typeof v === "object" ? JSON.stringify(v) : String(v)}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>

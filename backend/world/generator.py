@@ -12,6 +12,7 @@ mutate over time (resource depletion, needs, position) so they are created
 as genesis accepted events, giving them causal origin like everything else.
 """
 from core.rng import DeterministicRNG
+from core.constants import MAX_HEALTH, ANIMAL_MAX_HEALTH
 
 
 def generate_world(seed: str, scenario):
@@ -57,18 +58,23 @@ def generate_world(seed: str, scenario):
     p_hunger = cfg.get("person_hunger_range", (100, 300))
     p_thirst = cfg.get("person_thirst_range", (100, 300))
     p_energy = cfg.get("person_energy_range", (700, 1000))
+    p_age = cfg.get("person_age_range", (3000, 30000))  # all genesis people start as adults (no birth mechanic)
     for _ in range(cfg.get("num_people", 0)):
         x, y = random_empty_tile()
         genesis_specs.append({
             "type": "person", "position": {"x": x, "y": y},
             "hunger": spawn_rng.randint(*p_hunger), "thirst": spawn_rng.randint(*p_thirst),
-            "energy": spawn_rng.randint(*p_energy), "inventory": 0, "has_shelter": False,
+            "energy": spawn_rng.randint(*p_energy), "inventory": 0, "food_inventory": 0, "has_shelter": False,
             "current_goal": "IDLE", "alive": True,
             "action": {"type": "idle", "status": "completed", "target_entity_id": None, "target_pos": None,
                        "ticks_spent": 0, "ticks_required": 0, "interruptible": True, "started_tick": 0},
             "plan": {"goal": None, "steps": [], "step_index": 0, "status": "completed"},
             "paused": None,
-            "knowledge": {"known_tiles": [], "known_water_tiles": [], "known_trees": {}, "known_shelters": {}},
+            "knowledge": {"known_tiles": [], "known_water_tiles": [], "known_trees": {},
+                          "known_shelters": {}, "known_carcasses": {}},
+            "age_ticks": spawn_rng.randint(*p_age), "life_stage": "adult",
+            "health": MAX_HEALTH, "injury": {"injured": False, "severity": 0, "cause": None},
+            "death_cause": None, "death_tick": None,
         })
 
     a_hunger = cfg.get("animal_hunger_range", (100, 300))
@@ -80,6 +86,7 @@ def generate_world(seed: str, scenario):
             "hunger": spawn_rng.randint(*a_hunger), "energy": spawn_rng.randint(*a_energy),
             "current_goal": "IDLE", "alive": True,
             "action": {"type": "idle", "status": "completed", "ticks_spent": 0, "flee_ticks_remaining": 0},
+            "health": ANIMAL_MAX_HEALTH, "injured": False, "death_cause": None, "death_tick": None,
         })
 
     return {"width": width, "height": height, "terrain": terrain, "genesis_specs": genesis_specs}

@@ -7,11 +7,20 @@ from core.db import db
 from core.rng import DeterministicRNG
 from core.kernel import build_genesis, run_tick
 from core.constants import ENGINE_VERSION, SCHEMA_VERSION
+from core.retention_service import prune_old_rejections
 from scenarios import get_scenario
 
 
-def lineage_key_for(seed: str) -> str:
-    return f"{seed}|{SCHEMA_VERSION}|{ENGINE_VERSION}"
+def lineage_key_for(seed: str, engine_version: str = ENGINE_VERSION, schema_version: str = SCHEMA_VERSION) -> str:
+    """Defaults to the CURRENT engine/schema constants (used at genesis
+    time, when no run doc exists yet). Every other caller that already has
+    a run doc MUST pass that run's OWN stored engine_version/schema_version
+    - otherwise, if these constants are ever bumped in a later session, a
+    LOADED older run would recompute a lineage_key that never matches what
+    was actually used to produce its stored hashes, silently breaking
+    replay/determinism for that run. This is what makes "load an existing
+    run and continue/replay it" safe across engine version bumps."""
+    return f"{seed}|{schema_version}|{engine_version}"
 
 
 async def create_run(seed: str, scenario_id: str = "basic_survival"):
@@ -106,7 +115,7 @@ async def step_run(run_id: str, n_ticks: int = 1):
     rng = DeterministicRNG(run["seed"])
     terrain = run["terrain"]
     order_index = run["next_order_index"]
-    lineage_key = lineage_key_for(run["seed"])
+    lineage_key = lineage_key_for(run["seed"], run.get("engine_version", ENGINE_VERSION), run.get("schema_version", SCHEMA_VERSION))
     frames_summary = []
 
     for _ in range(n_ticks):
@@ -158,6 +167,7 @@ async def step_run(run_id: str, n_ticks: int = 1):
         "current_tick": run["current_tick"], "last_state_hash": run["last_state_hash"],
         "next_order_index": order_index, "status": "running",
     }})
+    await prune_old_rejections(run_id, run["current_tick"])
     return frames_summary
 
 
