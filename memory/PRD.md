@@ -73,15 +73,37 @@ Goal: make the world visibly more alive WITHOUT new domains or LLM. Delivered en
 - **Known limitation**: resource contention (concurrent-gather rejection) is structurally implemented (Core preconditions on `claimed_tick`/`resource`) and covered by Phase 1 tests, but was not freshly re-triggered in the Phase 2 test session (probabilistic — needs 2+ people adjacent to the same tree in the same tick).
 - Test report: `/app/test_reports/iteration_2.json`. Git: branch `Main`, test-file commit `2e717b5` (no production code changed by testing agent, only new `test_phase2.py`).
 
+## Phase 3 — Scenario Architecture Proof (completed Feb 2026)
+Goal: prove the Core is genuinely domain-agnostic — a second, intentionally different scenario runs on the exact same Core with zero Core code changes. Architectural proof, not content expansion.
+
+### What was built
+- **Formal Scenario layer** (`/app/backend/scenarios/`): `base.py` defines an immutable `Scenario` dataclass (`id`, `name`, `description`, `enabled_domains: list[str]`, `world_gen: dict`, `presentation: dict`). `registry.py` provides `register_scenario()`/`get_scenario()`/`list_scenarios()`. Two scenario files (`wilderness_survival.py`, `desert_oasis.py`) each define one `Scenario` instance and self-register on import; `__init__.py` triggers both. Adding a third scenario in the future = one new file + one import line, nothing else.
+- **Domain registry** (`/app/backend/domains/registry.py`): `DOMAIN_REGISTRY = {"ecology": EcologyDomain(), "people": PeopleDomain(), "animal": AnimalDomain()}`. The Domain Engine Contract (`domains/base.py`) gained one new method, `select_due_ids(entities, tick)`, moving entity-type-filtering logic (which was previously hardcoded inline in the kernel) into each concrete domain — this is what let the kernel stop knowing what "person"/"animal"/"tree" mean.
+- **Kernel became scenario-agnostic** (`core/kernel.py`): `run_tick(...)` now takes a generic `enabled_domains: list` and loops `for domain_id in enabled_domains: domain = DOMAIN_REGISTRY[domain_id]; due = domain.select_due_ids(...); domain.activate(...)`. `build_genesis(seed, scenario, lineage_key)` now takes the `Scenario` object directly. **Verified via static-analysis pytest tests that `kernel.py` contains zero hardcoded entity-type or scenario-id string literals and imports no concrete domain class.**
+- **Generic world generator** (`world/generator.py`): `generate_world(seed, scenario)` is driven entirely by `scenario.world_gen` (width/height, `ground_terrain`, `water_blob_count`/`water_radius_range`, entity counts, stat ranges) — no scenario-id branching anywhere in the function.
+- **Second scenario — Desert Oasis** (`desert_oasis.py`): sand ground terrain, one small oasis (radius 1–2 vs the lake's 2–3), only 6 scarce trees (vs 16), harsher starting hunger/thirst/energy ranges, and **`enabled_domains = ["ecology", "people"]` — the Animal domain is fully disabled for this scenario**, proving domains are opt-in per scenario with zero Core changes. Reuses the exact same People domain (perception/planning/utility/interruption) unmodified.
+- **Orchestration layer updated minimally** (`core/run_service.py`, `core/replay_service.py`, `api/routes.py`): resolve `scenario_id → Scenario` via the registry and thread `enabled_domains`/`scenario` through to the kernel. These are the only Core-adjacent files touched — `commit_pipeline.py`, `hashing.py`, `mutations.py`, `rng.py`, `interventions.py`, `geometry.py`, `db.py` are **100% untouched** (git-diff verified).
+- **Frontend**: `NewRunModal.jsx` shows scenario friendly name + description + a live "domains: ..." line; `ControlBar.jsx` adds a scenario-name badge (`run-scenario-badge`) so an active run's scenario is always visible; `WorldCanvas.jsx` extended its terrain color map with `sand` (generic `COLORS[terrain[y][x]] || COLORS.grass` lookup, no per-scenario branching in canvas code).
+- `ENGINE_VERSION` bumped `0.2.0 → 0.3.0` (kernel signature changed); dead unused constants (`GRID_WIDTH`/`GRID_HEIGHT`/`NUM_PEOPLE`/`NUM_ANIMALS`/`NUM_TREES`) removed from `core/constants.py`, fully superseded by per-scenario `world_gen`.
+
+### Testing evidence (Phase 3, Feb 2026)
+- **Backend**: 54/54 pytest pass (22 Phase 1 + 13 Phase 2 regression + 19 new Phase 3 tests in `/app/backend/tests/test_phase3.py`), including 5 static-analysis tests that directly assert `kernel.py` has no `"person"`/`"animal"`/`"tree"`/scenario-id literals and imports no concrete domain class.
+- **Frontend**: 100% of tested flows pass — scenario picker, per-scenario terrain colors (sand vs grass), scenario badge, EntityInspector showing identical Phase 2 richness for a Desert Oasis person (proving unmodified People-domain reuse).
+- **Replay verify**: PASS for both scenarios. **Determinism verify**: PASS for both scenarios, including a same-seed dual-run hash-sequence match specific to Desert Oasis.
+- **Doctrine check**: `commit_pipeline.py`/`hashing.py`/`mutations.py`/`rng.py` never reference `scenarios` or `scenario_id` (asserted by test). No LLM, no new forbidden domains (weather/disease/economy/etc.), no scenario-specific branching inside the Core.
+- **Files changed**: `scenarios/*` (new), `domains/registry.py` (new), `domains/base.py`, `domains/{people,animal,ecology}_domain.py` (added `select_due_ids`), `core/kernel.py`, `core/run_service.py`, `core/replay_service.py`, `core/constants.py`, `api/routes.py`, `world/generator.py`, `frontend/{NewRunModal,ControlBar,WorldCanvas}.jsx`, `backend/tests/test_phase3.py` + `conftest.py` (test-infra only).
+- **Known limitation**: no in-app side-by-side comparison view between two running scenarios — a developer compares by switching the active run and reading the scenario badge (deliberately minimal, per "do not redesign the UI").
+- Test report: `/app/test_reports/iteration_3.json`. Branch `Main`.
+
 ## Deferred / Backlog (explicitly out of scope, by design)
-- Receipts, checkpoints, projection-cache layer, multi-lineage branch/fork/migration, Pressure Graph substrate — full Source-of-Truth-v2 record taxonomy beyond what's needed for the invariants.
-- Additional domains/scenarios (Weather, Disease, Economy, AI Town, Medieval Kingdom, etc.) — architecture supports adding these as pure scenario config + new domain engines with zero Core changes. Explicitly forbidden for Phase 2.
-- Multi-rate/state-dependent scheduling beyond the current fixed cadences (agents=1 tick, ecology=5 ticks).
+- Receipts, checkpoints, projection-cache layer, multi-lineage branch/fork/migration, Pressure Graph substrate.
+- Weather, Disease, Economy, population growth/birth, combat, politics, religion, complex social systems, LLM/narration — still explicitly out of scope.
+- Multi-rate/state-dependent scheduling beyond the current fixed cadences (agents=1 tick, ecology=5 ticks, Core-owned, not yet scenario-configurable).
 - Run persistence UI (list/switch between existing runs) — backend endpoint exists (`GET /runs`), not yet wired into the frontend.
-- LLM/narration — still explicitly out of scope.
+- In-app side-by-side scenario comparison view.
 
 ## Next Action Items
 - P1: Add a "Load Existing Run" picker in the sandbox (backend already supports it).
-- P1: Add a second scenario (e.g. a small "Ecology" variant) to prove the domain-agnostic Core claim without touching Core code.
 - P2: Deliberately reproduce resource contention (2 people forced adjacent to same tree via intervention) as a durable regression test.
 - P2: Add automated nondeterminism-detection tests (per Verification Doctrine Spec #32) as a CI-style check.
+- P2: Consider a 3rd scenario purely to further stress the registration mechanism (zero-Core-change proof) once there's a concrete need.
