@@ -7,7 +7,7 @@ consistent with the doctrine's "non-exogenous durable consequence needs
 causal parents" rule.
 """
 from domains.base import DomainEngine, DomainOutput
-from core.constants import REGROWTH_AMOUNT
+from core.constants import REGROWTH_AMOUNT, REGROWTH_INTERVAL
 
 
 class EcologyDomain(DomainEngine):
@@ -15,6 +15,9 @@ class EcologyDomain(DomainEngine):
     engine_version = "1.0.0"
     engine_priority = 0
     phase = "environment"
+
+    def select_due_ids(self, entities: dict, tick: int) -> list:
+        return [eid for eid, e in entities.items() if e["type"] == "tree" and tick % REGROWTH_INTERVAL == 0]
 
     def activate(self, frame):
         proposals = []

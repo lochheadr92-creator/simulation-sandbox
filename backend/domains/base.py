@@ -33,5 +33,12 @@ class DomainEngine:
     engine_priority = 100
     phase = "agent"
 
+    def select_due_ids(self, entities: dict, tick: int) -> list:
+        """Returns which entity ids this domain should activate for at this
+        tick. Kept on the domain itself (not the kernel) so the Core kernel
+        never needs to know any entity-type strings - it just calls this
+        generically for every enabled domain."""
+        raise NotImplementedError
+
     def activate(self, frame: ActivationFrame) -> DomainOutput:
         raise NotImplementedError

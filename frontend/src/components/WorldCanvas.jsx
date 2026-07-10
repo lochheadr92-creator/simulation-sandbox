@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 const TILE = 26;
 const COLORS = {
   grass: "#12351f",
+  sand: "#8a6a3f",
   water: "#0369a1",
   tree: "#14532d",
   treeCanopy: "#22c55e",
@@ -44,7 +45,7 @@ export default function WorldCanvas({ state, selectedEntityId, onSelectEntity })
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        ctx.fillStyle = terrain[y][x] === "water" ? COLORS.water : COLORS.grass;
+        ctx.fillStyle = COLORS[terrain[y][x]] || COLORS.grass;
         ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
         ctx.strokeStyle = "rgba(255,255,255,0.02)";
         ctx.strokeRect(x * TILE, y * TILE, TILE, TILE);

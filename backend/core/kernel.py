@@ -1,18 +1,19 @@
 """Pure simulation kernel: genesis + one deterministic tick. No DB access here
-so this module can be unit-tested and replay-verified in isolation."""
+so this module can be unit-tested and replay-verified in isolation.
+
+Phase 3: this kernel is scenario-agnostic. It never imports a concrete
+domain engine and never branches on a scenario id - it only iterates
+whichever `enabled_domains` list the caller supplies (sourced from a
+Scenario, see scenarios/) and looks each one up in the generic domain
+registry. This is what proves the Core supports arbitrary scenarios/domain
+combinations without Core code changes."""
 import copy
 
-from core.constants import REGROWTH_INTERVAL, ENGINE_VERSION, is_night
+from core.constants import ENGINE_VERSION, is_night
 from domains.base import ActivationFrame, DomainOutput
-from domains.people_domain import PeopleDomain
-from domains.animal_domain import AnimalDomain
-from domains.ecology_domain import EcologyDomain
+from domains.registry import DOMAIN_REGISTRY
 from core.commit_pipeline import run_commit_frame
 from world.generator import generate_world
-
-ECOLOGY = EcologyDomain()
-PEOPLE = PeopleDomain()
-ANIMAL = AnimalDomain()
 
 
 def _frame(run_id, tick, entities_view, terrain, due_ids, rng, phase, night):
@@ -21,15 +22,16 @@ def _frame(run_id, tick, entities_view, terrain, due_ids, rng, phase, night):
     return f
 
 
-def build_genesis(seed: str, scenario_id: str, lineage_key: str):
+def build_genesis(seed: str, scenario, lineage_key: str):
     """Creates the initial world and commits it as genesis accepted events (tick 0)."""
-    world = generate_world(seed, scenario_id)
+    world = generate_world(seed, scenario)
     entities = {}
     proposals = []
-    counters = {"tree": 0, "person": 0, "animal": 0}
+    counters = {}
 
     for spec in world["genesis_specs"]:
         t = spec["type"]
+        counters.setdefault(t, 0)
         eid = f"{t}-{counters[t]:03d}"
         counters[t] += 1
         proposals.append({
@@ -55,27 +57,31 @@ def build_genesis(seed: str, scenario_id: str, lineage_key: str):
     return world, entities, accepted, rejected, next_order
 
 
-def run_tick(run_id: str, entities: dict, terrain: list, tick: int, rng, order_index_start: int, lineage_key: str):
-    """Runs exactly one deterministic commit frame at `tick`. Mutates `entities` in place."""
+def run_tick(run_id: str, entities: dict, terrain: list, tick: int, rng, order_index_start: int,
+             lineage_key: str, enabled_domains: list):
+    """Runs exactly one deterministic commit frame at `tick`. Mutates `entities` in place.
+
+    `enabled_domains` is a generic list of domain_id strings (from the
+    active Scenario) - the kernel has zero knowledge of what any of them
+    mean; it only calls the Domain Engine Contract methods on whatever is
+    registered under those ids.
+    """
     night = is_night(tick)
-
-    due_trees = [eid for eid, e in entities.items() if e["type"] == "tree" and tick % REGROWTH_INTERVAL == 0]
-    people_ids = [eid for eid, e in entities.items() if e["type"] == "person" and e.get("alive", True)]
-    animal_ids = [eid for eid, e in entities.items() if e["type"] == "animal" and e.get("alive", True)]
-
     entities_view = copy.deepcopy(entities)
 
-    eco_out = ECOLOGY.activate(_frame(run_id, tick, entities_view, terrain, due_trees, rng, "environment", night))
-    people_out = PEOPLE.activate(_frame(run_id, tick, entities_view, terrain, people_ids, rng, "agent", night))
-    animal_out = ANIMAL.activate(_frame(run_id, tick, entities_view, terrain, animal_ids, rng, "agent", night))
+    outputs = []
+    for domain_id in enabled_domains:
+        domain = DOMAIN_REGISTRY[domain_id]
+        due_ids = domain.select_due_ids(entities_view, tick)
+        frame = _frame(run_id, tick, entities_view, terrain, due_ids, rng, domain.phase, night)
+        outputs.append(domain.activate(frame))
 
     frame_id = f"frame-{tick}"
     accepted, rejected, next_order = run_commit_frame(
-        entities, [eco_out, people_out, animal_out], tick, lineage_key, run_id, order_index_start, frame_id,
+        entities, outputs, tick, lineage_key, run_id, order_index_start, frame_id,
     )
 
     diagnostics = {}
-    diagnostics.update(eco_out.diagnostics)
-    diagnostics.update(people_out.diagnostics)
-    diagnostics.update(animal_out.diagnostics)
+    for out in outputs:
+        diagnostics.update(out.diagnostics)
     return accepted, rejected, next_order, diagnostics

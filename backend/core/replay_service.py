@@ -21,6 +21,7 @@ from core.run_service import lineage_key_for
 from core.commit_pipeline import run_commit_frame
 from core.interventions import build_intervention_proposal
 from domains.base import DomainOutput
+from scenarios import get_scenario
 
 
 async def verify_replay(run_id: str):
@@ -81,8 +82,9 @@ async def verify_determinism(run_id: str):
         influences_by_tick.setdefault(infl["simulation_time"], []).append(infl)
 
     lineage_key = lineage_key_for(run["seed"])
+    scenario = get_scenario(run["scenario_id"])
     shadow_run_id = "shadow-" + run_id
-    world, shadow_entities, shadow_accepted, _rej, order_index = build_genesis(run["seed"], run["scenario_id"], lineage_key)
+    world, shadow_entities, shadow_accepted, _rej, order_index = build_genesis(run["seed"], scenario, lineage_key)
     shadow_hashes = {0: shadow_accepted[-1]["post_state_hash"] if shadow_accepted else None}
 
     for infl in influences_by_tick.get(0, []):
@@ -99,7 +101,7 @@ async def verify_determinism(run_id: str):
     terrain = world["terrain"]
     for tick in range(1, run["current_tick"] + 1):
         accepted, _rejected, order_index, _diag = run_tick(
-            shadow_run_id, shadow_entities, terrain, tick, rng, order_index, lineage_key,
+            shadow_run_id, shadow_entities, terrain, tick, rng, order_index, lineage_key, scenario.enabled_domains,
         )
         shadow_hashes[tick] = accepted[-1]["post_state_hash"] if accepted else shadow_hashes.get(tick - 1)
 

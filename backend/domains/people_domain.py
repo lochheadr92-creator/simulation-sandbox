@@ -31,6 +31,9 @@ class PeopleDomain(DomainEngine):
     engine_priority = 10
     phase = "agent"
 
+    def select_due_ids(self, entities: dict, tick: int) -> list:
+        return [eid for eid, e in entities.items() if e["type"] == "person" and e.get("alive", True)]
+
     def activate(self, frame):
         proposals = []
         diagnostics = {}

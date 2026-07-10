@@ -1,0 +1,34 @@
+{
+  "summary": "Phase 3 architectural proof testing complete for Simulation Sandbox. Verified the Core kernel is genuinely domain-agnostic: two scenarios (Wilderness Survival / basic_survival, Desert Oasis / desert_oasis) run on the exact same Core with zero Core code branching. Fixed a test-infra-only bug (missing sys.path setup causing 5 static-analysis tests to fail with ModuleNotFoundError) by adding backend/tests/conftest.py - after the fix, full backend suite is 54/54 PASS (22 Phase1 + 13 Phase2 + 19 Phase3, including all 5 static-analysis tests proving kernel.py has zero hardcoded entity-type/scenario-id literals and does not import concrete domain classes). Manually re-verified via curl: GET /api/scenarios returns both scenarios with correct enabled_domains (desert_oasis correctly excludes 'animal'); desert_oasis run has 0 animal entities (tree:6, person:6, shelter:5) and sand terrain; basic_survival run retains animal:6, grass terrain; unknown scenario_id returns 400 (not 500); replay/verify and replay/determinism both PASS for desert_oasis; two same-seed desert_oasis runs produce identical per-frame ending_state_hash sequences (20/20 match); interventions (boost_need) and events endpoints still work on basic_survival. Frontend Playwright testing confirmed: NewRunModal dropdown shows friendly names, scenario-description and scenario-enabled-domains text correctly change per selection (domains list correctly omits 'animal' for Desert Oasis); ControlBar run-scenario-badge correctly shows 'Desert Oasis' / 'Wilderness Survival'; WorldCanvas renders sand terrain (brown) for desert_oasis and grass (green) for basic_survival with correctly-scaled smaller oasis pool; stepped a desert_oasis run 45 ticks without crash and confirmed EntityInspector shows the exact same rich Phase 2 panels (Current Action/Plan/Known Resources/Decision Explanation/Action History) for a person entity, proving unmodified People domain reuse; Wilderness Survival regression fully re-verified in UI (Determinism panel Verify Replay -> PASS verified_ticks:25, Verify Determinism -> PASS compared_ticks:26 with real final_hash, played live for 15s advancing 59 ticks with no crash, Events/Interventions tabs render content).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3.py",
+    "/app/backend/tests/test_phase2.py",
+    "/app/backend/tests/test_simulation_sandbox.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_phase3_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "No architectural doctrine violations found: core/kernel.py, core/commit_pipeline.py, core/hashing.py, core/mutations.py, core/rng.py contain zero references to 'scenarios' or 'scenario_id' (verified both via pytest static-analysis test and manual grep) - the Domain Engine Contract + DOMAIN_REGISTRY generic lookup pattern is honestly implemented, kernel.run_tick() takes enabled_domains generically with no scenario-id branching.",
+    "core/run_service.py and core/replay_service.py correctly DO reference scenarios (via get_scenario) since they are the orchestration layer responsible for resolving scenario->enabled_domains, not part of the pure deterministic kernel - this is the correct architectural boundary, not a leak.",
+    "desert_oasis.py and wilderness_survival.py are clean, well-documented Scenario dataclass instances registered via register_scenario() with no shared-state coupling - adding a third scenario would require zero Core changes, matching the stated Phase 3 goal.",
+    "Minor test-infra gap (not a product bug): backend/tests/ had no conftest.py, so 5 of the 19 new Phase3 tests that do `from core import kernel` (static source-code inspection tests) failed with ModuleNotFoundError when pytest was invoked from /app instead of /app/backend, since nothing added /app/backend to sys.path. Fixed by adding backend/tests/conftest.py that inserts the backend root into sys.path. This does not affect production runtime (server.py runs with cwd=/app/backend via supervisor)."
+  ],
+  "updated_files": ["/app/backend/tests/conftest.py"],
+  "success_rate": {"backend": "100% (54/54 after conftest.py fix)", "frontend": "100% of tested Phase 3 + regression flows passed"},
+  "test_credentials": "None required - no auth in app",
+  "seed_data_creation": "Created several ephemeral runs via API/UI during testing (seeds: TEST_desert1/2, TEST_samesed/2, TEST_longdesert, TEST_wild1, TEST_wild_intervene, TEST_ui_desert1, TEST_ui_desert_inspector/2/3, TEST_ui_click_calc, TEST_ui_wild_regress, TEST_ui_wild_det) - harmless leftover documents, no cleanup endpoint exists, single-user local sandbox tool, consistent with prior phases.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 is fully verified: architectural domain-agnosticism proven both by static-analysis pytest tests and manual runtime verification (grep + curl + UI). Both scenarios (basic_survival/Wilderness Survival, desert_oasis/Desert Oasis) run correctly on the same Core, desert_oasis correctly has zero animal entities and sand terrain/smaller oasis, same-seed determinism holds for the new scenario, and the People domain (multi-stage actions/planning/knowledge/utility/interruption) is fully reused unmodified across both scenarios as shown by identical EntityInspector panel richness. Only change made this session was adding backend/tests/conftest.py to fix a test-runner sys.path issue (not a product bug) - no application code was touched. All 54 backend tests pass; no bugs found in this pass.",
+  "rca of the issue": "N/A for product code. Test-infra issue RCA: 5 static-analysis tests in test_phase3.py import `core.kernel` etc. directly (not via HTTP), which requires /app/backend to be on sys.path; since backend/tests/ had no conftest.py and pytest was run with rootdir /app, Python could not resolve the `core` package. Fixed by adding a conftest.py under backend/tests/ that prepends the backend directory to sys.path at collection time."
+}

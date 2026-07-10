@@ -1,13 +1,7 @@
 """Core-owned constants and simulation-time helpers. No wall-clock, ever."""
 
-ENGINE_VERSION = "0.2.0"
+ENGINE_VERSION = "0.3.0"
 SCHEMA_VERSION = "0.2.0"
-
-GRID_WIDTH = 20
-GRID_HEIGHT = 20
-NUM_PEOPLE = 6
-NUM_ANIMALS = 6
-NUM_TREES = 16
 
 REGROWTH_INTERVAL = 5
 REGROWTH_AMOUNT = 6

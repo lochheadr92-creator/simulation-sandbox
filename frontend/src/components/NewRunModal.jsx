@@ -47,15 +47,20 @@ export default function NewRunModal({ open, onClose, onCreated }) {
               <SelectContent>
                 {scenarios.map((s) => (
                   <SelectItem key={s.id} value={s.id} data-testid={`scenario-option-${s.id}`}>
-                    {s.id}
+                    {s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {scenarios.length > 0 && (
-              <p className="text-[11px] text-zinc-500 mt-1 font-data">
-                {scenarios.find((s) => s.id === scenarioId)?.description}
-              </p>
+              <div className="mt-1" data-testid="scenario-description">
+                <p className="text-[11px] text-zinc-500 font-data">
+                  {scenarios.find((s) => s.id === scenarioId)?.description}
+                </p>
+                <p className="text-[10px] text-zinc-600 font-data mt-1" data-testid="scenario-enabled-domains">
+                  domains: {scenarios.find((s) => s.id === scenarioId)?.enabled_domains?.join(", ")}
+                </p>
+              </div>
             )}
           </div>
           <div>

@@ -52,6 +52,7 @@ export default function ControlBar({ run, worldState, isPlaying, onPlayPause, on
             TICK <span className="text-zinc-100">{worldState.current_tick}</span>
           </div>
           <Badge variant="info" data-testid="run-seed-badge">seed:{run.seed}</Badge>
+          <Badge variant="default" data-testid="run-scenario-badge">{worldState.scenario_name || run.scenario_id}</Badge>
           <div className="text-[10px] font-data text-zinc-600 max-w-[140px] truncate" title={worldState.last_state_hash} data-testid="state-hash-display">
             {worldState.last_state_hash?.slice(0, 14)}...
           </div>

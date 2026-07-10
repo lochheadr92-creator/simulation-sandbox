@@ -7,6 +7,7 @@ from core.db import db
 from core.rng import DeterministicRNG
 from core.kernel import build_genesis, run_tick
 from core.constants import ENGINE_VERSION, SCHEMA_VERSION
+from scenarios import get_scenario
 
 
 def lineage_key_for(seed: str) -> str:
@@ -14,9 +15,10 @@ def lineage_key_for(seed: str) -> str:
 
 
 async def create_run(seed: str, scenario_id: str = "basic_survival"):
+    scenario = get_scenario(scenario_id)
     run_id = f"run-{uuid.uuid4().hex[:12]}"
     lineage_key = lineage_key_for(seed)
-    world, entities, accepted, rejected, next_order = build_genesis(seed, scenario_id, lineage_key)
+    world, entities, accepted, rejected, next_order = build_genesis(seed, scenario, lineage_key)
 
     for e in accepted:
         e["run_id"] = run_id
@@ -29,6 +31,7 @@ async def create_run(seed: str, scenario_id: str = "basic_survival"):
         "id": run_id,
         "seed": seed,
         "scenario_id": scenario_id,
+        "scenario_name": scenario.name,
         "engine_version": ENGINE_VERSION,
         "schema_version": SCHEMA_VERSION,
         "current_tick": 0,
@@ -98,6 +101,7 @@ async def step_run(run_id: str, n_ticks: int = 1):
     if not run:
         raise ValueError("run not found")
 
+    enabled_domains = get_scenario(run["scenario_id"]).enabled_domains
     entities = await load_entities(run_id)
     rng = DeterministicRNG(run["seed"])
     terrain = run["terrain"]
@@ -110,7 +114,7 @@ async def step_run(run_id: str, n_ticks: int = 1):
         starting_hash = run["last_state_hash"]
 
         accepted, rejected, order_index, diagnostics = run_tick(
-            run_id, entities, terrain, next_tick, rng, order_index, lineage_key,
+            run_id, entities, terrain, next_tick, rng, order_index, lineage_key, enabled_domains,
         )
         for e in accepted:
             e["run_id"] = run_id

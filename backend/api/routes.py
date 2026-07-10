@@ -14,7 +14,7 @@ from core.run_service import (
 )
 from core.replay_service import verify_replay, verify_determinism
 from domains.base import DomainOutput
-from world.generator import SCENARIOS
+from scenarios import list_scenarios, get_scenario
 
 router = APIRouter()
 
@@ -39,7 +39,11 @@ class InterventionRequest(BaseModel):
 
 @router.get("/scenarios")
 async def get_scenarios():
-    return {"scenarios": [{"id": k, **v} for k, v in SCENARIOS.items()]}
+    return {"scenarios": [
+        {"id": s.id, "name": s.name, "description": s.description,
+         "enabled_domains": s.enabled_domains, "presentation": s.presentation}
+        for s in list_scenarios()
+    ]}
 
 
 # ---------- runs ----------
@@ -47,7 +51,9 @@ async def get_scenarios():
 @router.post("/runs")
 async def api_create_run(body: CreateRunRequest):
     seed = body.seed or uuid.uuid4().hex[:10]
-    if body.scenario_id not in SCENARIOS:
+    try:
+        get_scenario(body.scenario_id)
+    except KeyError:
         raise HTTPException(400, "unknown scenario_id")
     run = await create_run(seed, body.scenario_id)
     return run
@@ -91,6 +97,7 @@ async def api_get_state(run_id: str):
     entities = await db.entities.find({"run_id": run_id}, {"_id": 0, "run_id": 0}).to_list(5000)
     return {
         "id": run["id"], "seed": run["seed"], "scenario_id": run["scenario_id"],
+        "scenario_name": run.get("scenario_name"),
         "current_tick": run["current_tick"], "time_phase": time_phase(run["current_tick"]),
         "status": run["status"], "last_state_hash": run["last_state_hash"],
         "width": run["width"], "height": run["height"], "terrain": run["terrain"],
