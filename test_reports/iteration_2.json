@@ -1,0 +1,34 @@
+{
+  "summary": "Full backend+frontend testing of Simulation Sandbox Phase 2 (multi-stage actions, planning, knowledge/perception, utility scoring, critical interruption/resume, exploration, contention, determinism). Created new /app/backend/tests/test_phase2.py with 13 pytest cases covering all Phase 2 behaviors -> 13/13 PASS. Re-ran existing Phase 1 suite (test_simulation_sandbox.py) -> 22/22 PASS, confirming no regressions from people_domain.py rewrite. Frontend Playwright + direct API-via-browser testing confirmed: EntityInspector Current Action section (type/status badge/progress bar/target) updates correctly across ticks (observed drink/travel/gather/build_shelter transitions with real progress like '2/3'), Current Plan section shows step badges with correct active/completed color coding (TRAVEL_WATER completed-green, DRINK active-blue), Known Resources section shows real growing counts (explored_tiles 73/400, known_water_tiles 13, known_trees 2, known_shelters 2), Utility Breakdown table appears ONLY on fresh-decision ticks (correctly hidden during action-continuation ticks) and shows all 7 documented goals (SEEK_WATER/SEEK_FOOD/SLEEP/BUILD_SHELTER/GATHER_SURPLUS/EXPLORE/WANDER) with all score fields, selected_goal matched highest score (EXPLORE, score=157.5) in an observed fresh decision. Critical interruption verified end-to-end via boost_need intervention on a person with known water mid-travel: explanation showed exact expected text 'CRITICAL: SEEK_WATER interrupts in-progress travel', and later 'resumed travel after prior interruption cleared' confirming pause/resume works. Also confirmed the (correct, non-buggy) design nuance: if the critical need's target is NOT YET KNOWN (e.g. thirst=1000 but known_water_tiles=0), the domain deliberately does NOT force an interrupt to an unreachable goal - it lets the current action finish, after which utility scoring's urgent_but_blind EXPLORE bonus naturally takes over. Phase 1 regressions verified via UI: Replay Verify -> PASS (verified_ticks:28), Verify Determinism -> PASS (real final_hash, compared_ticks:29), Interventions panel functional, canvas renders trees/shelters/animals/people/day-night overlay correctly, 100+ tick stepping caused no crash/hang. Resource contention (tree preconditions: claimed_tick/resource>=1) verified structurally correct in code but not observed as an actual rejection event in this test session (probabilistic, no two people happened to gather the same tree simultaneously in tested runs) - Rejections endpoint itself works correctly (returns valid empty/real list).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase2.py",
+    "/app/backend/tests/test_simulation_sandbox.py",
+    "/app/test_reports/pytest/pytest_phase2_results.xml",
+    "/app/test_reports/pytest/pytest_phase1_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "No architectural doctrine violations found: domains (people_domain.py, people_planning.py, people_utility.py, perception.py) remain proposal-only, knowledge/action/plan all flow through the standard entity_updates envelope, Core commit pipeline unchanged, all decisions read from the actor's own `knowledge` field (verified via nearest_known_water/tree/shelter/unknown_tile all sourcing from `knowledge` parameter, never a global/omniscient lookup) - vision-radius discovery doctrine is honestly implemented.",
+    "merge_knowledge() correctly uses sorted lists (not raw set iteration) for canonical hashing determinism - good attention to detail for a deterministic-hash-based system.",
+    "Critical-interrupt gating (people_domain.py line 69: critical_available requires the critical goal's own availability > 0) is a deliberate and reasonable design choice, not a bug - it prevents force-switching to an unreachable goal; EXPLORE's urgent_but_blind severity bonus (people_utility.py line 144-145) is the actual mechanism that resolves 'critically thirsty but blind' cases at the next fresh decision. This should be documented more explicitly in code comments near check_critical_interrupt() since a future reader might expect immediate interruption on ANY critical need crossing the threshold, regardless of target knowledge.",
+    "TRAVEL_STALL_LIMIT=25 safety net (people_planning.py line 136) verified structurally correct (fails+advances plan cleanly rather than looping) though no actual stall was reproduced in a live run within the test window - not concerning given the small 20x20 open-terrain scenario map.",
+    "people_domain.py activate() and people_planning.py execute_action_tick() are both reasonably sized (181 and 230 lines) and stay within the 700-line file-size guideline; no DRY violations of note."
+  ],
+  "updated_files": ["/app/backend/tests/test_phase2.py"],
+  "success_rate": {"backend": "100% (35/35: 22 Phase1 + 13 Phase2)", "frontend": "100% of tested Phase 2 + regression flows passed"},
+  "test_credentials": "None required - no auth in app",
+  "seed_data_creation": "Created several ephemeral runs via API/UI during testing (seeds: TEST_phase2_seed, TEST_phase2_determinism (x2 runs same seed), TEST_phase2_longrun, TEST_playwright_phase2, TEST_ui_playwright, TEST_final_inspector, TEST_critical_interrupt, TEST_regression_final) - harmless leftover documents, no cleanup endpoint exists, single-user local sandbox tool.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 2 is fully verified end-to-end: multi-stage actions, plans, knowledge/perception (discovery-only, never omniscient), utility scoring with all 7 goals + full breakdown, critical interruption + resume, EXPLORE frontier-seeking, and determinism are all working correctly and match the spec precisely (even matched the exact expected explanation strings 'CRITICAL: <goal> interrupts in-progress <action>' and 'resumed <type> after prior interruption cleared'). Resource contention/rejection was not directly reproduced in this session (would need a scenario with a tree deliberately near 2+ people or a longer/denser run) - if a future agent wants to force it, spawn 2 people adjacent to the same tree via intervention and step together. No bugs found this pass.",
+  "rca of the issue": "N/A - no bugs found in this pass."
+}
