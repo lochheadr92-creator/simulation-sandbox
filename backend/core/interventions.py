@@ -54,8 +54,10 @@ def build_intervention_proposal(itype: str, payload: dict, entities: dict, tick:
             "requested_time": tick, "phase": "agent", "engine_priority": 999,
             "touched_scope": [eid],
             "preconditions": [{"entity_id": eid, "field": "alive", "op": "eq", "value": True}],
-            "mutation": {"entity_updates": {eid: {"alive": False, "current_goal": "DEAD", "current_action": "external_kill"}},
-                         "new_entities": {}},
+            "mutation": {"entity_updates": {eid: {
+                "alive": False, "current_goal": "DEAD", "current_action": "external_kill",
+                "death_cause": "external_intervention", "death_tick": tick,
+            }}, "new_entities": {}},
             "explanation": f"external intervention: kill entity (influence={influence_id})",
         }
 
