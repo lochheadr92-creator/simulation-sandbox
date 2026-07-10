@@ -1,0 +1,20 @@
+import axios from "axios";
+
+const BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+export const api = {
+  getScenarios: () => axios.get(`${BASE}/scenarios`).then((r) => r.data),
+  createRun: (seed, scenario_id) => axios.post(`${BASE}/runs`, { seed, scenario_id }).then((r) => r.data),
+  listRuns: () => axios.get(`${BASE}/runs`).then((r) => r.data),
+  getRun: (runId) => axios.get(`${BASE}/runs/${runId}`).then((r) => r.data),
+  getState: (runId) => axios.get(`${BASE}/runs/${runId}/state`).then((r) => r.data),
+  step: (runId, ticks = 1) => axios.post(`${BASE}/runs/${runId}/step`, { ticks }).then((r) => r.data),
+  pause: (runId) => axios.post(`${BASE}/runs/${runId}/pause`).then((r) => r.data),
+  getEvents: (runId, limit = 150) => axios.get(`${BASE}/runs/${runId}/events`, { params: { limit } }).then((r) => r.data),
+  getRejections: (runId, limit = 150) => axios.get(`${BASE}/runs/${runId}/rejections`, { params: { limit } }).then((r) => r.data),
+  getCausal: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/causal`).then((r) => r.data),
+  submitIntervention: (runId, type, payload) =>
+    axios.post(`${BASE}/runs/${runId}/interventions`, { type, payload }).then((r) => r.data),
+  verifyReplay: (runId) => axios.post(`${BASE}/runs/${runId}/replay/verify`).then((r) => r.data),
+  verifyDeterminism: (runId) => axios.post(`${BASE}/runs/${runId}/replay/determinism`).then((r) => r.data),
+};
