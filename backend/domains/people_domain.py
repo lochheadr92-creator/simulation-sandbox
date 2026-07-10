@@ -1,30 +1,43 @@
-"""PeopleDomain: needs -> goals -> actions, with genuine candidate scoring.
+"""PeopleDomain (Phase 2): multi-stage actions, short plans, knowledge-driven
+utility, deterministic interruption/resume. Still proposal-only, still reads
+only Core-issued named RNG streams, still never mutates or touches storage.
 
-Layers considered per decision (per doctrine's NPC framing): current
-temporary condition (hunger/thirst/energy), acquired state (inventory,
-has_shelter), and immediate situation (nearby tree/water, day/night).
-Every candidate goal and its score is recorded in diagnostics so causal
-inspection shows REAL evidence, never a fabricated explanation.
+Per-tick flow for each living person:
+  1. perceive() + merge into persistent `knowledge` (canonical, discovered-only)
+  2. decide WHICH action should be active this tick:
+       a. a critical need (>= CRITICAL_THRESHOLD) interrupts an unrelated
+          in-progress interruptible action -> pause it, plan the critical goal
+       b. otherwise keep continuing an in-progress action as-is
+       c. otherwise resume a previously paused action if one exists
+       d. otherwise score fresh candidates (people_utility.score_candidates)
+          and form a new short plan (people_planning.form_plan)
+  3. always progress the (possibly just-decided) action by exactly one tick
+     (people_planning.execute_action_tick) - this is what makes actions
+     multi-frame and each step individually observable
+  4. if the step finished, advance the plan to its next step (or complete it)
 """
 from domains.base import DomainEngine, DomainOutput
-from core.constants import SHELTER_COST
-from core.geometry import manhattan, step_toward, is_water_adjacent, find_nearest_water, find_nearest_entity, is_passable
-
-SEEK_THRESHOLD = 650
-REST_THRESHOLD_DAY = 300
-REST_THRESHOLD_NIGHT = 600
+from domains.perception import perceive, merge_knowledge, empty_knowledge
+from domains.people_utility import score_candidates
+from domains.people_planning import (
+    idle_action, empty_plan, check_critical_interrupt, form_plan, start_step,
+    execute_action_tick, context_from_action,
+)
 
 
 class PeopleDomain(DomainEngine):
     engine_id = "people"
-    engine_version = "1.0.0"
+    engine_version = "2.0.0"
     engine_priority = 10
     phase = "agent"
 
     def activate(self, frame):
         proposals = []
         diagnostics = {}
-        night = frame.night if hasattr(frame, "night") else False
+        night = getattr(frame, "night", False)
+        terrain = frame.terrain
+        height = len(terrain)
+        width = len(terrain[0]) if height else 0
 
         for eid in frame.due_entity_ids:
             e = frame.entities.get(eid)
@@ -37,37 +50,114 @@ class PeopleDomain(DomainEngine):
                 diagnostics[eid] = {"candidates": [], "selected_goal": "DEATH", "explanation": proposal["explanation"]}
                 continue
 
-            rng = frame.rng.stream(f"people.{eid}.decision.{frame.simulation_time}")
+            tick = frame.simulation_time
             pos = e["position"]
-            nearest_tree = find_nearest_entity(frame.entities, pos, "tree", lambda t: t["resource"] > 0)
-            nearest_water = find_nearest_water(pos, frame.terrain)
-            can_gather_here = nearest_tree is not None and manhattan(pos, nearest_tree["position"]) <= 1
-            can_drink_here = is_water_adjacent(pos, frame.terrain)
-            rest_threshold = REST_THRESHOLD_NIGHT if night else REST_THRESHOLD_DAY
-            energy_deficit = max(0, rest_threshold - e["energy"])
+            rng = frame.rng.stream(f"people.{eid}.decision.{tick}")
 
-            candidates = [
-                {"goal": "SEEK_WATER", "score": e["thirst"] if e["thirst"] >= SEEK_THRESHOLD else e["thirst"] * 0.3},
-                {"goal": "SEEK_FOOD", "score": e["hunger"] if (e["hunger"] >= SEEK_THRESHOLD and (e["inventory"] > 0 or nearest_tree)) else e["hunger"] * 0.3},
-                {"goal": "REST", "score": energy_deficit * 1.5},
-                {"goal": "BUILD_SHELTER", "score": 260 if (e["inventory"] >= SHELTER_COST and not e.get("has_shelter")) else 0},
-                {"goal": "GATHER_SURPLUS", "score": 130 if (can_gather_here and e["inventory"] < 20) else 0},
-                {"goal": "WANDER", "score": 45},
-            ]
-            best = max(candidates, key=lambda c: c["score"])
-            rejected_goals = [c for c in candidates if c["goal"] != best["goal"]]
+            existing_knowledge = e.get("knowledge") or empty_knowledge()
+            delta = perceive(pos, frame.entities, terrain, tick)
+            knowledge, _discovered = merge_knowledge(existing_knowledge, delta)
 
-            proposal = self._build_proposal(
-                e, eid, best["goal"], nearest_tree, nearest_water, frame.terrain,
-                frame.simulation_time, night, can_gather_here, can_drink_here, rng,
-            )
+            action = dict(e.get("action") or idle_action())
+            plan = dict(e.get("plan") or empty_plan())
+            paused = e.get("paused")
+
+            candidates, context = score_candidates(e, knowledge, pos, tick, night, action, terrain)
+            cand_by_goal = {c["goal"]: c for c in candidates}
+
+            critical_goal = check_critical_interrupt(e)
+            critical_available = bool(critical_goal) and cand_by_goal.get(critical_goal, {}).get("availability", 0) > 0
+            active_now = action.get("status") in ("travelling", "performing")
+            already_on_critical = active_now and plan.get("goal") == critical_goal
+
+            candidates_out = []
+            selected_goal = plan.get("goal")
+            decision_note = ""
+
+            if critical_available and active_now and not already_on_critical and action.get("interruptible", True):
+                paused = {"action": {**action, "status": "paused"}, "plan": dict(plan)}
+                plan = form_plan(critical_goal, e, context, tick)
+                action = start_step(plan["steps"][0], e, eid, context, terrain, tick, pos)
+                selected_goal = critical_goal
+                candidates_out = candidates
+                decision_note = f"CRITICAL: {critical_goal} interrupts in-progress {paused['action']['type']}"
+
+            elif active_now:
+                decision_note = ""  # just continue; nothing new decided this tick
+
+            elif paused and not critical_available:
+                action = dict(paused["action"])
+                action["status"] = "travelling" if action["type"] == "travel" else "performing"
+                plan = dict(paused["plan"])
+                paused = None
+                selected_goal = plan.get("goal")
+                decision_note = f"resumed {action['type']} after prior interruption cleared"
+
+            else:
+                best = max(candidates, key=lambda c: c["score"])
+                plan = form_plan(best["goal"], e, context, tick)
+                action = start_step(plan["steps"][0], e, eid, context, terrain, tick, pos)
+                selected_goal = best["goal"]
+                candidates_out = candidates
+                decision_note = f"selected {best['goal']} (score={best['score']})"
+
+            # Always progress the (possibly just-decided) action by one tick.
+            result = execute_action_tick(e, eid, action, frame.entities, terrain, tick, night, rng)
+            action = result["action"]
+            tree_delta = action.pop("_tree_delta", None)
+            step_note = result["explanation"]
+            explanation = f"{decision_note} -> {step_note}" if decision_note else step_note
+
+            if result["advance_plan"]:
+                plan["step_index"] = plan.get("step_index", 0) + 1
+                if action["status"] != "failed" and plan["step_index"] < len(plan.get("steps", [])):
+                    next_step = plan["steps"][plan["step_index"]]
+                    context = context_from_action(action, result["pos"])
+                    action = start_step(next_step, e, eid, context, terrain, tick, result["pos"])
+                else:
+                    plan["status"] = "completed" if action["status"] != "failed" else "abandoned"
+
+            proposal = self._build_proposal(e, eid, action, plan, paused, knowledge, result, tree_delta, tick, explanation)
             proposals.append(proposal)
             diagnostics[eid] = {
-                "candidates": candidates, "selected_goal": best["goal"],
-                "rejected_goals": rejected_goals, "night": night, "explanation": proposal["explanation"],
+                "candidates": candidates_out, "selected_goal": selected_goal, "explanation": explanation,
+                "rng_stream": f"people.{eid}.decision.{tick}", "night": night,
             }
 
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
+
+    def _build_proposal(self, e, eid, action, plan, paused, knowledge, result, tree_delta, tick, explanation):
+        entity_updates = {eid: {
+            "position": result["pos"], "hunger": result["hunger"], "thirst": result["thirst"],
+            "energy": result["energy"], "inventory": result["inventory"], "has_shelter": result["has_shelter"],
+            "knowledge": knowledge, "action": action, "plan": plan, "paused": paused,
+            "current_goal": plan.get("goal"),
+        }}
+        touched_scope = list(result["touched_scope"])
+        preconditions = list(result["preconditions"])
+        new_entities = dict(result["new_entities"])
+
+        if tree_delta:
+            entity_updates[tree_delta["id"]] = {"resource": tree_delta["resource"], "claimed_tick": tree_delta["claimed_tick"]}
+            if tree_delta["id"] not in touched_scope:
+                touched_scope.append(tree_delta["id"])
+
+        return {
+            "proposal_family": "people_action",
+            "proposal_type": result["event_type"],
+            "proposer_engine_id": self.engine_id,
+            "proposer_engine_version": self.engine_version,
+            "entity_id": eid,
+            "causal_parent_event_ids": [e["last_event_id"]] if e.get("last_event_id") else [],
+            "is_exogenous": not e.get("last_event_id"),
+            "requested_time": tick,
+            "phase": "agent",
+            "engine_priority": self.engine_priority,
+            "touched_scope": touched_scope,
+            "preconditions": preconditions,
+            "mutation": {"entity_updates": entity_updates, "new_entities": new_entities},
+            "explanation": explanation,
+        }
 
     def _death_proposal(self, e, eid, tick):
         return {
@@ -83,113 +173,8 @@ class PeopleDomain(DomainEngine):
             "engine_priority": self.engine_priority,
             "touched_scope": [eid],
             "preconditions": [{"entity_id": eid, "field": "alive", "op": "eq", "value": True}],
-            "mutation": {"entity_updates": {eid: {"alive": False, "current_goal": "DEAD", "current_action": "death"}},
+            "mutation": {"entity_updates": {eid: {"alive": False, "current_goal": "DEAD",
+                                                    "action": {"type": "death", "status": "completed"}}},
                          "new_entities": {}},
             "explanation": f"critical: energy=0 with hunger={e['hunger']} thirst={e['thirst']} -> death",
-        }
-
-    def _build_proposal(self, e, eid, goal, nearest_tree, nearest_water, terrain, tick, night,
-                         can_gather_here, can_drink_here, rng):
-        hunger = min(1000, e["hunger"] + 8)
-        thirst = min(1000, e["thirst"] + 10)
-        energy = max(0, e["energy"] - (7 if night else 5))
-        inventory = e["inventory"]
-        pos = dict(e["position"])
-        entity_updates = {}
-        new_entities = {}
-        touched_scope = [eid]
-        preconditions = []
-        action_type = "wander"
-        has_shelter_after = e.get("has_shelter", False)
-        explanation = ""
-
-        if goal == "SEEK_WATER":
-            if can_drink_here:
-                action_type = "drink"
-                thirst = 0
-                explanation = f"thirst={e['thirst']} >= threshold; adjacent to water -> drink"
-            elif nearest_water:
-                action_type = "move"
-                pos = step_toward(pos, nearest_water, terrain)
-                explanation = f"thirst={e['thirst']} high; moving toward water at {nearest_water}"
-            else:
-                explanation = "thirsty but no known water source; wandering"
-
-        elif goal == "SEEK_FOOD":
-            if inventory > 0:
-                action_type = "eat"
-                inventory -= 1
-                hunger = max(0, hunger - 400)
-                explanation = f"hunger={e['hunger']} high; ate from inventory"
-            elif can_gather_here:
-                action_type = "gather"
-                amount = min(10, nearest_tree["resource"])
-                tree_id = nearest_tree["id"]
-                touched_scope.append(tree_id)
-                preconditions.append({"entity_id": tree_id, "field": "claimed_tick", "op": "neq", "value": tick})
-                preconditions.append({"entity_id": tree_id, "field": "resource", "op": "gte", "value": amount})
-                entity_updates[tree_id] = {"resource": nearest_tree["resource"] - amount, "claimed_tick": tick}
-                inventory += amount
-                explanation = f"hunger={e['hunger']} high, no food stored; gathered {amount} from {tree_id}"
-            elif nearest_tree:
-                action_type = "move"
-                pos = step_toward(pos, nearest_tree["position"], terrain)
-                explanation = f"hunger={e['hunger']} high; moving toward tree at {nearest_tree['position']}"
-            else:
-                explanation = "hungry but no known food source; wandering"
-
-        elif goal == "REST":
-            action_type = "rest"
-            energy = min(1000, energy + (90 if e.get("has_shelter") else 55))
-            explanation = f"energy={e['energy']} below threshold (night={night}); resting"
-
-        elif goal == "BUILD_SHELTER":
-            action_type = "build_shelter"
-            shelter_id = f"shelter-{eid.split('-')[-1]}"
-            inventory -= SHELTER_COST
-            touched_scope.append(shelter_id)
-            new_entities[shelter_id] = {"type": "shelter", "position": dict(pos), "alive": True, "owner_id": eid}
-            has_shelter_after = True
-            explanation = f"inventory={e['inventory']} >= cost {SHELTER_COST}; built shelter {shelter_id}"
-
-        elif goal == "GATHER_SURPLUS":
-            action_type = "gather"
-            amount = min(10, nearest_tree["resource"])
-            tree_id = nearest_tree["id"]
-            touched_scope.append(tree_id)
-            preconditions.append({"entity_id": tree_id, "field": "claimed_tick", "op": "neq", "value": tick})
-            preconditions.append({"entity_id": tree_id, "field": "resource", "op": "gte", "value": amount})
-            entity_updates[tree_id] = {"resource": nearest_tree["resource"] - amount, "claimed_tick": tick}
-            inventory += amount
-            explanation = f"idle capacity; gathering surplus {amount} from {tree_id}"
-
-        else:
-            action_type = "wander"
-            dx, dy = rng.choice([(-1, 0), (1, 0), (0, -1), (0, 1), (0, 0)])
-            candidate = {"x": pos["x"] + dx, "y": pos["y"] + dy}
-            if is_passable(candidate, terrain):
-                pos = candidate
-            explanation = "no urgent need; wandering"
-
-        entity_updates[eid] = {
-            "position": pos, "hunger": hunger, "thirst": thirst, "energy": energy,
-            "inventory": inventory, "has_shelter": has_shelter_after,
-            "current_goal": goal, "current_action": action_type,
-        }
-
-        return {
-            "proposal_family": "people_action",
-            "proposal_type": action_type,
-            "proposer_engine_id": self.engine_id,
-            "proposer_engine_version": self.engine_version,
-            "entity_id": eid,
-            "causal_parent_event_ids": [e["last_event_id"]] if e.get("last_event_id") else [],
-            "is_exogenous": not e.get("last_event_id"),
-            "requested_time": tick,
-            "phase": "agent",
-            "engine_priority": self.engine_priority,
-            "touched_scope": touched_scope,
-            "preconditions": preconditions,
-            "mutation": {"entity_updates": entity_updates, "new_entities": new_entities},
-            "explanation": explanation,
         }

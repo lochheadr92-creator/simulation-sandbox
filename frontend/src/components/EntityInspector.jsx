@@ -27,6 +27,11 @@ function NeedBar({ label, value, max = 1000, danger = 700 }) {
   );
 }
 
+const ACTION_STATUS_VARIANT = {
+  travelling: "info", performing: "info", planned: "default", paused: "warning",
+  completed: "success", failed: "danger", cancelled: "danger",
+};
+
 export default function EntityInspector({ runId, entityId, refreshKey }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -42,9 +47,12 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
   if (error) return <div className="p-4 text-xs text-red-400">{error}</div>;
   if (!data) return <div className="p-4 text-xs text-zinc-500">Loading...</div>;
 
-  const { entity, diagnostics, accepted_action, recent_rejected_proposals, causal_chain } = data;
+  const { entity, diagnostics, accepted_action, recent_rejected_proposals, causal_chain, action_history, knowledge_summary } = data;
   const isPerson = entity.type === "person";
   const isAnimal = entity.type === "animal";
+  const action = entity.action;
+  const plan = entity.plan;
+  const paused = entity.paused;
 
   return (
     <div className="p-3 space-y-4" data-testid="entity-inspector-panel">
@@ -58,8 +66,7 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
         <DataRow label="type" value={entity.type} />
         <DataRow label="position" value={`(${entity.position.x}, ${entity.position.y})`} />
         {entity.type === "tree" && <DataRow label="resource" value={`${entity.resource} / ${entity.max_resource}`} />}
-        {(isPerson || isAnimal) && <DataRow label="current_goal" value={entity.current_goal} />}
-        {(isPerson || isAnimal) && <DataRow label="current_action" value={entity.current_action} />}
+        {(isPerson || isAnimal) && <DataRow label="current_goal" value={entity.current_goal || "-"} />}
       </div>
 
       {(isPerson || isAnimal) && (
@@ -73,33 +80,95 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
         </div>
       )}
 
+      {action && (
+        <div data-testid="current-action-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Current Action</h4>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-data text-zinc-200">{action.type}</span>
+            <Badge variant={ACTION_STATUS_VARIANT[action.status] || "default"} data-testid="action-status-badge">{action.status}</Badge>
+          </div>
+          {action.ticks_required > 0 && (
+            <div className="mb-1">
+              <div className="flex justify-between text-[10px] text-zinc-500 mb-0.5">
+                <span>progress</span>
+                <span className="font-data">{action.ticks_spent || 0}/{action.ticks_required}</span>
+              </div>
+              <div className="h-1.5 bg-zinc-800 rounded-sm overflow-hidden">
+                <div className="h-full bg-sky-500" style={{ width: `${Math.min(100, ((action.ticks_spent || 0) / action.ticks_required) * 100)}%` }} />
+              </div>
+            </div>
+          )}
+          {action.target_pos && <DataRow label="target" value={`(${action.target_pos.x}, ${action.target_pos.y})`} />}
+          {paused && <DataRow label="paused_action" value={`${paused.action.type} (${paused.plan.goal})`} mono />}
+        </div>
+      )}
+
+      {plan && plan.steps && plan.steps.length > 0 && (
+        <div data-testid="current-plan-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Current Plan: {plan.goal}</h4>
+          <div className="flex flex-wrap gap-1">
+            {plan.steps.map((step, i) => (
+              <Badge key={step + i} variant={i === plan.step_index ? "info" : i < plan.step_index ? "success" : "default"}>
+                {step}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {knowledge_summary && (
+        <div data-testid="known-resources-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Known Resources (resource memory)</h4>
+          <DataRow label="explored tiles" value={`${knowledge_summary.explored_tiles} / 400`} />
+          <DataRow label="known water tiles" value={knowledge_summary.known_water_tiles} />
+          <DataRow label="known trees" value={knowledge_summary.known_trees} />
+          <DataRow label="known shelters" value={knowledge_summary.known_shelters} />
+        </div>
+      )}
+
       {diagnostics && diagnostics.candidates && diagnostics.candidates.length > 0 && (
         <div data-testid="candidate-actions-section">
-          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Candidate Goals &amp; Scores</h4>
-          <table className="w-full text-xs">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Utility Breakdown (all inputs)</h4>
+          <table className="w-full text-[10px]">
+            <thead>
+              <tr className="text-zinc-500 uppercase">
+                <th className="text-left py-1">Goal</th>
+                <th className="text-right py-1">Sev</th>
+                <th className="text-right py-1">Pred</th>
+                <th className="text-right py-1">Travel</th>
+                <th className="text-right py-1">Avail</th>
+                <th className="text-right py-1">Risk</th>
+                <th className="text-right py-1">Intrpt</th>
+                <th className="text-right py-1">Score</th>
+              </tr>
+            </thead>
             <tbody>
               {diagnostics.candidates
                 .slice()
                 .sort((a, b) => b.score - a.score)
                 .map((c, i) => (
                   <tr key={c.goal} className={i === 0 ? "bg-emerald-950/20" : ""} data-testid={`candidate-row-${c.goal}`}>
-                    <td className="py-1 text-zinc-300">{c.goal}</td>
-                    <td className="py-1 text-right font-data text-zinc-400">{Number(c.score).toFixed(1)}</td>
-                    <td className="py-1 text-right w-16">
-                      {i === 0 ? (
-                        <Badge variant="success">accepted</Badge>
-                      ) : (
-                        <Badge variant="default">rejected</Badge>
-                      )}
-                    </td>
+                    <td className="py-1 text-zinc-300 font-data">{c.goal}</td>
+                    <td className="py-1 text-right font-data text-zinc-500">{c.severity}</td>
+                    <td className="py-1 text-right font-data text-zinc-500">{c.predicted_severity}</td>
+                    <td className="py-1 text-right font-data text-zinc-500">{c.travel_cost}</td>
+                    <td className="py-1 text-right font-data text-zinc-500">{c.availability}</td>
+                    <td className="py-1 text-right font-data text-zinc-500">{c.risk}</td>
+                    <td className="py-1 text-right font-data text-zinc-500">{c.interruption_cost}</td>
+                    <td className="py-1 text-right font-data text-zinc-200 font-semibold">{c.score}</td>
                   </tr>
                 ))}
             </tbody>
           </table>
-          {diagnostics.explanation && (
-            <p className="text-[11px] text-zinc-500 mt-2 font-data leading-relaxed" data-testid="decision-explanation">
-              {diagnostics.explanation}
-            </p>
+        </div>
+      )}
+
+      {diagnostics && diagnostics.explanation && (
+        <div data-testid="decision-explanation-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Decision Explanation</h4>
+          <p className="text-[11px] text-zinc-400 font-data leading-relaxed">{diagnostics.explanation}</p>
+          {diagnostics.rng_stream && (
+            <p className="text-[10px] text-zinc-600 font-data mt-1" data-testid="rng-stream-reference">rng_stream: {diagnostics.rng_stream}</p>
           )}
         </div>
       )}
@@ -111,6 +180,20 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
           <DataRow label="event_type" value={accepted_action.event_type} />
           <DataRow label="tick" value={accepted_action.simulation_time} />
           <DataRow label="post_state_hash" value={`${accepted_action.post_state_hash.slice(0, 16)}...`} />
+        </div>
+      )}
+
+      {action_history && action_history.length > 0 && (
+        <div data-testid="action-history-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Action History</h4>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {action_history.map((h, i) => (
+              <div key={i} className="text-[10px] font-data text-zinc-500 flex justify-between border-b border-zinc-800/40 py-0.5">
+                <span>t={h.tick} {h.action_type}</span>
+                <Badge variant={ACTION_STATUS_VARIANT[h.action_status] || "default"}>{h.action_status}</Badge>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -57,7 +57,12 @@ def generate_world(seed: str, scenario_id: str = "basic_survival"):
             "type": "person", "position": {"x": x, "y": y},
             "hunger": spawn_rng.randint(100, 300), "thirst": spawn_rng.randint(100, 300),
             "energy": spawn_rng.randint(700, 1000), "inventory": 0, "has_shelter": False,
-            "current_goal": "IDLE", "current_action": "NONE", "alive": True,
+            "current_goal": "IDLE", "alive": True,
+            "action": {"type": "idle", "status": "completed", "target_entity_id": None, "target_pos": None,
+                       "ticks_spent": 0, "ticks_required": 0, "interruptible": True, "started_tick": 0},
+            "plan": {"goal": None, "steps": [], "step_index": 0, "status": "completed"},
+            "paused": None,
+            "knowledge": {"known_tiles": [], "known_water_tiles": [], "known_trees": {}, "known_shelters": {}},
         })
 
     for _ in range(cfg["num_animals"]):
@@ -65,7 +70,8 @@ def generate_world(seed: str, scenario_id: str = "basic_survival"):
         genesis_specs.append({
             "type": "animal", "position": {"x": x, "y": y},
             "hunger": spawn_rng.randint(100, 300), "energy": spawn_rng.randint(700, 1000),
-            "current_goal": "IDLE", "current_action": "NONE", "alive": True,
+            "current_goal": "IDLE", "alive": True,
+            "action": {"type": "idle", "status": "completed", "ticks_spent": 0, "flee_ticks_remaining": 0},
         })
 
     return {"width": width, "height": height, "terrain": terrain, "genesis_specs": genesis_specs}

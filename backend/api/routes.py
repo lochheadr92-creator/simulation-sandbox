@@ -144,6 +144,27 @@ async def api_get_causal(run_id: str, entity_id: str):
             current = await db.accepted_events.find_one({"run_id": run_id, "id": parents[0]}, {"_id": 0})
             depth += 1
 
+    action_history = []
+    for ev in accepted_events[:15]:
+        upd = ev.get("mutation", {}).get("entity_updates", {}).get(entity_id, {})
+        act = upd.get("action")
+        if act:
+            action_history.append({
+                "tick": ev["simulation_time"], "event_type": ev["event_type"],
+                "action_type": act.get("type"), "action_status": act.get("status"),
+                "ticks_spent": act.get("ticks_spent"), "explanation": ev.get("explanation", ""),
+            })
+
+    knowledge = entity.get("knowledge")
+    knowledge_summary = None
+    if knowledge:
+        knowledge_summary = {
+            "explored_tiles": len(knowledge.get("known_tiles", [])),
+            "known_water_tiles": len(knowledge.get("known_water_tiles", [])),
+            "known_trees": len(knowledge.get("known_trees", {})),
+            "known_shelters": len(knowledge.get("known_shelters", {})),
+        }
+
     return {
         "entity": {"id": entity_id, **entity},
         "diagnostics": diag["diagnostics"] if diag else None,
@@ -151,6 +172,8 @@ async def api_get_causal(run_id: str, entity_id: str):
         "recent_accepted_events": accepted_events,
         "recent_rejected_proposals": rejected_events,
         "causal_chain": chain,
+        "action_history": action_history,
+        "knowledge_summary": knowledge_summary,
     }
 
 
