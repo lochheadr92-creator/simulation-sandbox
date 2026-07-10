@@ -51,13 +51,37 @@ Governing doctrine (from uploaded documents: Source of Truth v2, Core Commit Pip
 - Full sandbox UI: world canvas, autoplay controls, 5-tab inspector (Entity/Events/Rejections/Determinism/Intervene) — all causal data is genuine simulation evidence, no fabricated explanations.
 - Testing: 22/22 backend pytest cases + full frontend Playwright pass (`/app/backend/tests/test_simulation_sandbox.py`). No bugs found in first test pass.
 
-## Deferred / Backlog (explicitly out of scope for MVP, by design)
+## Phase 2 — Behavior Enrichment (completed Feb 2026)
+Goal: make the world visibly more alive WITHOUT new domains or LLM. Delivered entirely inside the existing People domain (`animal_domain.py`/Core untouched in spirit; only schema field additions):
+
+- **Multi-stage actions** (`people_planning.py::execute_action_tick`) — travel/gather/eat/drink/sleep/build_shelter/wander each span multiple ticks with `ticks_spent`/`ticks_required`, individually observable per tick.
+- **Behavior planning** (`people_planning.py::PLAN_STEPS`/`form_plan`) — short multi-step plans (e.g. SEEK_WATER → [TRAVEL_WATER, DRINK], BUILD_SHELTER → [TRAVEL_TREE, GATHER, TRAVEL_SITE, BUILD]) with `step_index` advancing as steps complete.
+- **Knowledge / resource memory** (`perception.py`) — each person perceives a vision-radius delta every tick and merges it into their own persistent canonical `knowledge` field (`known_tiles`, `known_water_tiles`, `known_trees`, `known_shelters`). All utility lookups (`people_utility.py::nearest_known_*`) read exclusively from this field — never a global/omniscient search. Sets are converted to sorted lists before merge to preserve canonical-hash determinism.
+- **Exploration** — `nearest_unknown_tile()` + EXPLORE goal walks toward the nearest unknown passable tile; `urgent_but_blind` severity bonus makes EXPLORE win when a critical need has no known target yet (resolves "thirsty but blind" without ever forcing an unreachable goal).
+- **Better utility scoring** (`people_utility.py::score_candidates`) — `severity*W + predicted*W - travel*W - interrupt*W + availability*W - risk*W`, all 7 candidates (SEEK_WATER/SEEK_FOOD/SLEEP/BUILD_SHELTER/GATHER_SURPLUS/EXPLORE/WANDER) scored every fresh decision with every input exposed for inspection.
+- **Deterministic interruptions** (`people_domain.py::activate`) — a critical need (≥`CRITICAL_THRESHOLD`) with a *known* target pauses an in-progress interruptible action (paused action/plan stored verbatim) and resumes it once the critical need clears — verified end-to-end with exact expected explanation strings.
+- **Improved inspection** (`EntityInspector.jsx`) — Current Action (status/progress bar/target), Current Plan (step badges w/ active/done coloring), Known Resources (explored tiles / known water / trees / shelters), full Utility Breakdown table, Decision Explanation + rng_stream reference, Accepted Action, Action History, Rejected Proposals, Causal Chain — all genuine, non-fabricated evidence.
+- **Safety net**: `TRAVEL_STALL_LIMIT=25` ticks aborts a travel step that cannot make progress (unreachable/boxed-in target) and cleanly triggers a replan rather than deadlocking — resolved two real lock-ups found during implementation (unreachable SEEK_WATER, EXPLORE pathing to unreachable water).
+
+### Testing evidence (Phase 2 close-out, Feb 2026)
+- **Backend**: 35/35 pytest pass (22 Phase 1 regression + 13 new Phase 2 cases in `/app/backend/tests/test_phase2.py`).
+- **Frontend**: 100% of tested Phase 2 + Phase 1 regression flows passed (Playwright) — action/plan/knowledge/utility-breakdown panels all confirmed showing real, changing data across ticks; critical interrupt + resume observed with exact expected explanation text.
+- **Replay verify**: PASS (real `verified_ticks`/`frames_checked`).
+- **Determinism verify**: PASS (real `final_state_hash`, same-seed dual-run hash sequences identical).
+- **Doctrine check**: no LLM calls, no hidden persistent state outside canonical entity fields, no domain mutating state directly, no float/global-random usage in hashed state — knowledge/action/plan all flow through the standard `entity_updates` mutation envelope; Core remains domain-agnostic and unchanged.
+- **Deviations from spec**: none functional. One design nuance confirmed intentional (not a bug): a critical need only force-interrupts when its target is already *known* — if unknown, EXPLORE's `urgent_but_blind` bonus takes over at the next fresh decision instead of interrupting toward an unreachable goal.
+- **Known limitation**: resource contention (concurrent-gather rejection) is structurally implemented (Core preconditions on `claimed_tick`/`resource`) and covered by Phase 1 tests, but was not freshly re-triggered in the Phase 2 test session (probabilistic — needs 2+ people adjacent to the same tree in the same tick).
+- Test report: `/app/test_reports/iteration_2.json`. Git: branch `Main`, test-file commit `2e717b5` (no production code changed by testing agent, only new `test_phase2.py`).
+
+## Deferred / Backlog (explicitly out of scope, by design)
 - Receipts, checkpoints, projection-cache layer, multi-lineage branch/fork/migration, Pressure Graph substrate — full Source-of-Truth-v2 record taxonomy beyond what's needed for the invariants.
-- Additional domains/scenarios (Weather, Disease, Economy, AI Town, Medieval Kingdom, etc.) — architecture supports adding these as pure scenario config + new domain engines with zero Core changes.
+- Additional domains/scenarios (Weather, Disease, Economy, AI Town, Medieval Kingdom, etc.) — architecture supports adding these as pure scenario config + new domain engines with zero Core changes. Explicitly forbidden for Phase 2.
 - Multi-rate/state-dependent scheduling beyond the current fixed cadences (agents=1 tick, ecology=5 ticks).
 - Run persistence UI (list/switch between existing runs) — backend endpoint exists (`GET /runs`), not yet wired into the frontend.
+- LLM/narration — still explicitly out of scope.
 
 ## Next Action Items
 - P1: Add a "Load Existing Run" picker in the sandbox (backend already supports it).
 - P1: Add a second scenario (e.g. a small "Ecology" variant) to prove the domain-agnostic Core claim without touching Core code.
+- P2: Deliberately reproduce resource contention (2 people forced adjacent to same tree via intervention) as a durable regression test.
 - P2: Add automated nondeterminism-detection tests (per Verification Doctrine Spec #32) as a CI-style check.
