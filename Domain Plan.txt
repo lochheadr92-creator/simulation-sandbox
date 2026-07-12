@@ -1,0 +1,1123 @@
+Domain Plan
+
+Cross-references (alignment; not execution authority):
+- Execution roadmap: memory/ROADMAP.md
+- Domain-to-phase mapping: memory/DOMAIN_MAPPING.md
+
+This Domain Plan is the long-range capability vision and domain catalogue.
+It does not authorise implementation. Implementation requires an explicit
+phase or approved phase contract in memory/ROADMAP.md. Partial foundations
+must not be described as complete domain implementations. See
+memory/DOMAIN_MAPPING.md for coverage status and unassigned cognition rules.
+
+Core
+│
+├── History
+├── Lifecycle
+├── Perception
+├── Knowledge
+├── Needs
+├── Memory
+├── Emotion
+├── Personality
+├── Planning
+│
+├── Ecology
+├── Animals
+├── Resources
+├── Terrain
+├── Weather
+│
+├── Relationships
+├── Social
+├── Family
+├── Reproduction
+│
+├── Work
+├── Crafting
+├── Logistics
+├── Economy
+├── Settlement
+│
+├── Government
+├── Crime
+├── Conflict
+├── Culture
+├── Religion
+├── Technology
+├── Education
+│
+└── Civilization
+
+Simulation Engine Domain Roadmap
+
+The engine should grow in layers, with each new domain building on the capabilities beneath it. Higher-level behaviour should emerge naturally from the interaction of lower-level deterministic systems.
+
+======================================================================
+FOUNDATION LAYER
+======================================================================
+
+Core
+- Simulation time
+- Event ordering
+- Proposal validation
+- Commit pipeline
+- Canonical state
+- Replay
+- Deterministic RNG
+- Scheduler
+- Entity registry
+
+History
+- Timeline
+- Provenance
+- Milestones
+- Causal graph
+- World history
+- Entity history
+- Resource history
+- Structure history
+
+Lifecycle
+- Age
+- Health
+- Injury
+- Recovery
+- Deterioration
+- Death
+- (Later) Birth
+
+======================================================================
+COGNITION LAYER
+======================================================================
+
+Perception Domain
+- Vision
+- Hearing
+- Line of sight
+- Visibility
+- Detection
+- Discovery
+
+Knowledge Domain
+- Known locations
+- Known resources
+- Known people
+- Known dangers
+- Confidence
+- Exploration results
+
+Memory Domain
+- Personal experiences
+- Important events
+- Previous interactions
+- Learned locations
+- Historical experiences
+
+Needs Domain
+- Hunger
+- Thirst
+- Rest
+- Warmth
+- Safety
+- Social needs
+- Curiosity
+- Comfort
+
+Emotion Domain
+- Fear
+- Happiness
+- Anger
+- Stress
+- Confidence
+- Loneliness
+- Temporary emotional state
+
+Personality Domain
+- Curiosity
+- Bravery
+- Aggression
+- Patience
+- Kindness
+- Laziness
+- Greed
+- Long-term behavioural tendencies
+
+Habit Domain
+- Routine formation
+- Preferred behaviours
+- Frequently used locations
+- Learned routines
+
+Learning Domain
+- Experience gain
+- Skill improvement
+- Learning from success
+- Learning from failure
+- Teaching others
+- Knowledge transfer
+
+======================================================================
+SOCIAL LAYER
+======================================================================
+
+Relationship Domain
+- Trust
+- Respect
+- Fear
+- Affection
+- Rivalry
+- Familiarity
+- Obligation
+- Debt
+
+Social Interaction Domain
+- Conversation
+- Cooperation
+- Helping
+- Trading
+- Threatening
+- Arguing
+- Teaching
+
+Family Domain
+- Parents
+- Children
+- Siblings
+- Marriage
+- Household
+- Kinship
+
+Reproduction Domain
+- Courtship
+- Compatibility
+- Fertility
+- Conception
+- Pregnancy
+- Birth
+
+Population emerges naturally through these systems.
+No spawn-rate mechanics.
+
+======================================================================
+ENVIRONMENT LAYER
+======================================================================
+
+Ecology Domain
+- Trees
+- Grass
+- Bushes
+- Plant growth
+- Competition
+- Regrowth
+- Decay
+
+Animal Domain
+- Hunting
+- Grazing
+- Migration
+- Sleeping
+- Pack behaviour
+- Territories
+- Predator behaviour
+
+Weather Domain
+- Rain
+- Temperature
+- Wind
+- Storms
+- Humidity
+- Seasons
+
+Climate Domain
+- Long-term weather patterns
+- Droughts
+- Climate shifts
+- Biome evolution
+
+Terrain Domain
+- Rivers
+- Mud
+- Snow
+- Flooding
+- Erosion
+- Traversability
+
+Resource Domain
+- Water
+- Wood
+- Stone
+- Clay
+- Ore
+- Fish
+- Animals
+- Food
+
+======================================================================
+SURVIVAL & PRODUCTION LAYER
+======================================================================
+
+Crafting Domain
+- Recipes
+- Construction
+- Tool creation
+- Furniture
+- Equipment
+
+Logistics Domain
+- Carrying
+- Transport
+- Stockpiles
+- Distribution
+
+Work Domain
+- Professions
+- Hunting
+- Building
+- Farming
+- Teaching
+- Medicine
+
+======================================================================
+SOCIETY LAYER
+======================================================================
+
+Settlement Domain
+- Settlement detection
+- Population
+- Infrastructure
+- Growth
+- Expansion
+- Influence
+
+Economy Domain
+- Trade
+- Markets
+- Supply
+- Demand
+- Currency
+- Specialisation
+
+Government Domain
+- Leadership
+- Laws
+- Justice
+- Policies
+- Taxation
+
+Crime Domain
+- Theft
+- Murder
+- Investigation
+- Punishment
+
+Conflict Domain
+- Raids
+- Warfare
+- Diplomacy
+- Alliances
+
+======================================================================
+ADVANCED CIVILIZATION LAYER
+======================================================================
+
+Disease Domain
+- Infection
+- Spread
+- Recovery
+- Immunity
+- Mutation
+
+Culture Domain
+- Customs
+- Traditions
+- Festivals
+- Social norms
+
+Religion Domain
+- Belief systems
+- Rituals
+- Temples
+- Pilgrimages
+
+Technology Domain
+- Invention
+- Discovery
+- Research
+- Knowledge preservation
+
+Education Domain
+- Teaching
+- Apprenticeship
+- Schools
+- Skill transfer
+
+Language Domain
+- Communication
+- Dialects
+- Vocabulary evolution
+
+Exploration Domain
+- Mapping
+- Navigation
+- Discovery
+- Expansion
+
+Reputation Domain
+- Public opinion
+- Fame
+- Infamy
+- Community trust
+
+Investigation Domain
+- Evidence
+- Deduction
+- Crime solving
+- Event reconstruction
+
+Myth & Story Domain
+- Legends
+- Rumours
+- Folklore
+- Oral history
+
+Civilization Domain
+- Cities
+- Kingdoms
+- Empires
+- Borders
+- Roads
+- Trade routes
+- Rise and collapse of civilizations
+
+======================================================================
+ARCHITECTURAL PRINCIPLES
+======================================================================
+
+- The Core owns truth.
+- Domains never directly mutate canonical state.
+- Every durable change requires a causal origin.
+- All domains submit proposals.
+- The Core validates, orders, accepts or rejects proposals.
+- Every accepted event is replayable.
+- Every persistent fact is explainable through deterministic evidence.
+- Higher-level domains depend on lower-level systems, never the reverse.
+- Population is emergent, never spawn-driven.
+- History is accumulated from accepted events, never generated manually.
+- Presentation, UI, and future AI systems observe the simulation but never become authoritative.
+
+
+DOMAIN ENRICHMENT WITHOUT BLOAT
+
+==================================================
+GLOBAL DESIGN RULES
+==================================================
+
+1. Prefer consequences over variables.
+
+Bad:
+- 40 personality traits
+- 20 mood values
+- huge private memories
+
+Better:
+- a few stable traits
+- a few temporary states
+- clear effects on utility, risk, and relationships
+
+2. Every stored value must answer at least one question:
+
+- What decision does this affect?
+- What event changes it?
+- What projection explains it?
+- When can it be compressed or discarded?
+
+If none of those have a clear answer, do not store it.
+
+3. Use tiers of resolution.
+
+Not every entity needs full simulation detail.
+
+Examples:
+- Active entities: full decision detail
+- Nearby entities: reduced detail
+- Distant populations: aggregate state
+- Archived entities: causal summary only
+
+4. Use event-triggered updates.
+
+Do not run every domain every small tick.
+
+Examples:
+- Hunger updates periodically
+- Relationships update after social events
+- Memory changes after notable events
+- Economy activates when supply or demand changes
+- Lifecycle activates on age boundaries or health changes
+
+5. Separate canonical state from projections.
+
+Canonical:
+- current health
+- known water source
+- relationship trust
+- current action
+
+Projection:
+- “Bob is desperate”
+- “Alice distrusts Bob”
+- “This settlement is unstable”
+
+6. Compress old detail into causal receipts.
+
+Keep:
+- major injuries
+- deaths
+- ownership
+- relationships
+- constructions
+- migrations
+- births
+- persistent knowledge
+
+Compress:
+- repeated footsteps
+- failed low-value proposals
+- routine meals
+- minor mood fluctuations
+- repetitive idle actions
+
+==================================================
+COGNITION
+==================================================
+
+PERCEPTION DOMAIN
+
+Keep canonical:
+- what was detected
+- confidence
+- observer
+- time
+- location
+- visibility cause
+
+Do not store:
+- every raycast
+- every frame of visibility
+- every failed sensory check
+
+Enrichment:
+- line of sight
+- hearing range
+- occlusion
+- detection confidence
+- surprise
+- false uncertainty only where useful
+
+Bounded model:
+- current visible set
+- recent notable detections
+- discovered locations
+- last-known positions for important entities
+
+KNOWLEDGE DOMAIN
+
+Keep:
+- known fact
+- confidence
+- source
+- last confirmed time
+- observer scope
+
+Enrichment:
+- verified knowledge
+- uncertain knowledge
+- outdated knowledge
+- misinformation
+- shared knowledge
+
+Avoid:
+- full copies of world state per person
+
+Use:
+- sparse fact references
+- confidence decay
+- receipts for old knowledge history
+
+MEMORY DOMAIN
+
+Keep only meaningful memories.
+
+Categories:
+- danger
+- help
+- harm
+- discovery
+- loss
+- success
+- failure
+- relationship-changing event
+
+Each memory should include:
+- source event
+- emotional weight
+- relevance tags
+- retention score
+- current influence
+
+Do not store every action as a memory.
+
+NEEDS DOMAIN
+
+Use a small set of broad needs:
+- hunger
+- thirst
+- rest
+- warmth
+- safety
+- social connection
+- comfort
+
+Enrichment comes from:
+- rate of change
+- predicted future risk
+- interruption cost
+- known solutions
+- urgency
+- competition between needs
+
+Not from adding 30 separate need meters.
+
+EMOTION DOMAIN
+
+Use a few temporary dimensions:
+- fear
+- anger
+- stress
+- contentment
+- grief
+- confidence
+
+Each should:
+- rise from accepted events
+- decay deterministically
+- alter utility or perception
+- remain inspectable
+
+Avoid storing dozens of named emotions.
+
+PERSONALITY DOMAIN
+
+Use a limited trait vector:
+- bravery
+- sociability
+- patience
+- aggression
+- curiosity
+- generosity
+- risk tolerance
+
+Traits should bias decisions.
+
+They should not directly force actions.
+
+HABIT DOMAIN
+
+Store only repeated patterns that materially affect choice.
+
+Examples:
+- preferred water source
+- preferred sleeping place
+- routine work sequence
+- trusted trading partner
+
+Habit strength should:
+- grow through repetition
+- weaken when interrupted
+- be overridden by emergency
+
+LEARNING DOMAIN
+
+Use skill records with:
+- level
+- experience
+- source activities
+- teacher where applicable
+- last use
+
+Avoid giant skill trees initially.
+
+Enrichment comes from:
+- learning speed
+- teaching
+- forgetting
+- skill transfer
+- failure improving future decisions
+
+==================================================
+SOCIAL
+==================================================
+
+RELATIONSHIP DOMAIN
+
+Use a small directional vector:
+- trust
+- affection
+- fear
+- resentment
+- respect
+- obligation
+
+Each change must come from accepted events.
+
+Do not store one giant “relationship score.”
+
+SOCIAL INTERACTION DOMAIN
+
+Use bounded interaction types:
+- greet
+- request
+- help
+- refuse
+- share
+- argue
+- threaten
+- comfort
+- teach
+
+Interactions produce:
+- relationship changes
+- knowledge transfer
+- mood changes
+- obligations
+- future utility effects
+
+Do not simulate full dialogue yet.
+
+FAMILY DOMAIN
+
+Store factual kinship:
+- parent
+- child
+- sibling
+- partner
+- household
+
+Derived views can calculate:
+- family group
+- inheritance priority
+- caregiving responsibility
+
+Avoid duplicating family trees in every entity.
+
+REPRODUCTION DOMAIN
+
+Keep it causal and staged:
+- relationship suitability
+- intention
+- attempt
+- conception success/failure
+- pregnancy
+- birth
+
+No spawn rate.
+
+No population target.
+
+No replacement logic.
+
+==================================================
+ENVIRONMENT
+==================================================
+
+ECOLOGY DOMAIN
+
+Do not model every blade of grass.
+
+Use resolution tiers:
+- individual important plants
+- local vegetation patches
+- regional biomass aggregates
+
+Track:
+- biomass
+- growth rate
+- water access
+- competition
+- disturbance
+- recovery
+
+ANIMAL DOMAIN
+
+Use species templates plus individual state only where needed.
+
+Full detail:
+- nearby or important animals
+
+Aggregate:
+- distant herds
+- background populations
+
+Track:
+- hunger
+- fear
+- territory
+- group
+- reproduction state
+- health
+- migration pressure
+
+WEATHER DOMAIN
+
+Use cells or regions, not per-tile full physics.
+
+Track:
+- temperature
+- precipitation
+- wind
+- humidity
+- cloud cover
+- pressure
+
+Update at regional cadence.
+
+Project local effects to tiles only when needed.
+
+CLIMATE DOMAIN
+
+Operate at very slow cadence.
+
+Track:
+- seasonal baselines
+- long-term rainfall
+- temperature trend
+- drought state
+- biome pressure
+
+Do not run climate every simulation minute.
+
+TERRAIN DOMAIN
+
+Store persistent terrain facts:
+- elevation
+- soil type
+- water saturation
+- traversability
+- erosion state
+
+Use event-triggered updates for:
+- flood
+- fire
+- construction
+- mud
+- collapse
+
+RESOURCE DOMAIN
+
+Use resource stocks with:
+- quantity
+- quality
+- renewability
+- location
+- ownership
+- accessibility
+
+Avoid separate bespoke logic for every resource.
+
+Use shared resource contracts.
+
+==================================================
+PRODUCTION
+==================================================
+
+CRAFTING DOMAIN
+
+Use recipes as data.
+
+Recipe:
+- inputs
+- tools
+- skill
+- time
+- location requirements
+- outputs
+- failure consequences
+
+Do not hardcode every item chain.
+
+LOGISTICS DOMAIN
+
+Track:
+- source
+- destination
+- carrier
+- quantity
+- route
+- capacity
+- ownership
+
+Use transfers as accepted events.
+
+Avoid hidden inventories or magic movement.
+
+WORK DOMAIN
+
+Jobs should emerge from:
+- needs
+- available work
+- skill
+- obligation
+- role
+- reward
+- urgency
+
+Avoid locking entities permanently into classes.
+
+==================================================
+SOCIETY
+==================================================
+
+SETTLEMENT DOMAIN
+
+A settlement should emerge from patterns.
+
+Track:
+- occupied structures
+- shared resources
+- persistent population
+- infrastructure
+- territory
+- identity
+
+Do not create a settlement merely because population > X.
+
+ECONOMY DOMAIN
+
+Start with:
+- ownership
+- exchange
+- scarcity
+- demand
+- production
+- price signals
+
+Delay:
+- complex banking
+- stock markets
+- taxation systems
+- macroeconomics
+
+Use local markets first.
+
+GOVERNMENT DOMAIN
+
+Start with:
+- leadership
+- rules
+- authority
+- obligations
+- enforcement
+
+Do not begin with full constitutional simulation.
+
+CRIME DOMAIN
+
+Crime is not a label.
+
+It should emerge from:
+- action
+- rule
+- knowledge
+- evidence
+- authority
+- enforcement
+
+CONFLICT DOMAIN
+
+Track:
+- hostility
+- claims
+- forces
+- objectives
+- supply
+- morale
+- casualties
+
+Avoid simulating every battle in full detail unless observed.
+
+==================================================
+ADVANCED CIVILISATION
+==================================================
+
+DISEASE DOMAIN
+
+Use compact disease definitions:
+- transmission
+- incubation
+- symptoms
+- severity
+- immunity
+- recovery
+- mortality
+
+Aggregate distant outbreaks.
+
+Full detail only near active populations.
+
+CULTURE DOMAIN
+
+Store cultural traits at group level:
+- norms
+- practices
+- taboos
+- values
+- traditions
+
+Individuals reference group culture plus personal deviation.
+
+RELIGION DOMAIN
+
+Treat religion as:
+- beliefs
+- rituals
+- institutions
+- obligations
+- sacred places
+- group identity
+
+Avoid simulating theology as free text.
+
+TECHNOLOGY DOMAIN
+
+Track:
+- discovered knowledge
+- required prerequisites
+- known processes
+- adoption
+- teaching
+- loss
+
+Technology should spread through people and institutions.
+
+EDUCATION DOMAIN
+
+Use:
+- teacher
+- learner
+- skill
+- duration
+- effectiveness
+- interruption
+
+LANGUAGE DOMAIN
+
+Start with:
+- shared language IDs
+- fluency
+- communication success
+- dialect distance
+
+Do not simulate individual vocabulary initially.
+
+REPUTATION DOMAIN
+
+Keep separate from direct relationships.
+
+Track:
+- observer group
+- subject
+- reputation dimension
+- evidence source
+- confidence
+
+INVESTIGATION DOMAIN
+
+Use:
+- evidence
+- hypotheses
+- confidence
+- contradiction
+- observer access
+
+Do not let inferred belief become canonical truth.
+
+MYTH AND STORY DOMAIN
+
+Myths are beliefs, not world truth.
+
+Store:
+- claim
+- origin
+- transmitters
+- distortion
+- believer groups
+
+CIVILISATION DOMAIN
+
+This should mostly be projection and aggregation.
+
+Track:
+- settlements
+- institutions
+- trade routes
+- territory
+- population
+- culture
+- governance
+- technology
+
+Do not duplicate lower-level truth.
+
+==================================================
+BOUNDED GROWTH RULES
+==================================================
+
+For every domain, define:
+
+- maximum proposals per activation
+- activation cadence
+- retained event horizon
+- compression policy
+- entity resolution tiers
+- projection size limits
+- diagnostics limits
+- promotion/demotion rules
+- aggregation rules
+
+Every domain must answer:
+
+1. What does it read?
+2. What does it propose?
+3. What canonical state does its accepted events affect?
+4. What can be recomputed?
+5. What gets compressed?
+6. What can be aggregated?
+7. What is the worst-case growth rate?
+8. How is that growth capped?
+
+==================================================
+KEY PRINCIPLE
+==================================================
+
+Richness should come from interactions between small systems.
+
+Not from making each system huge.
+
+A few needs
++ a few traits
++ memory
++ relationships
++ knowledge
++ environment
++ scarcity
+
+can produce more believable behaviour than hundreds of disconnected variables.
+
+The target is:
+
+small state
+clear causality
+many consequences
+bounded history
+layered resolution
+deterministic replay

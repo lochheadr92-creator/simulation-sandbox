@@ -4,6 +4,12 @@ Phase 5 keeps the existing doctrine: accepted events are simulation truth; Core 
 
 The detailed fork decision and implementation boundary are recorded in [ADR-001: Fork Semantics Contract](ADR-001-fork-semantics.md).
 
+**Long-range vision:** the [Domain Plan](../Domain%20Plan.txt) is the capability catalogue and conceptual layer diagram. It does **not** authorise implementation.
+
+**Execution authority:** this roadmap owns phase order, dependencies, status, scope, acceptance gates, and explicit deferrals.
+
+**Alignment map:** [DOMAIN_MAPPING.md](DOMAIN_MAPPING.md) records domain-to-phase coverage, partial foundations, unassigned cognition domains, and prohibitions on implicit implementation. A Domain Plan entry alone is never permission to build.
+
 ## Priority and gates
 
 1. 5A1 - Fork Semantics Contract
@@ -73,6 +79,61 @@ Development on dependency-independent work may continue under the parallel-work 
 If a required 5B stage is blocked, dependency-independent Phase 5D work may proceed as the controlled parallel workstream.
 
 Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict motives (`5E3`), reproduction (`5F3`), lifecycle-dependent social systems, or other phases whose declared prerequisites are incomplete. From this roadmap, that includes at least remaining `5B4`–`5B6`, Phase `5C` (depends on `5B1`–`5B6`), Phase `5E` (depends on 5B social foundations and 5C ownership/resource contracts), and Phase `5F` (depends on 5B social facts/memory and lifecycle state). Phase 5D depends only on completed 5A Core/replay contracts and is the permitted parallel track.
+
+### Conceptual versus execution ordering
+
+- The Domain Plan layer diagram describes **conceptual dependency direction** (higher behaviour rests on lower truth contracts).
+- This roadmap describes **practical implementation order**.
+- Dependency-independent foundations may be resequenced or developed in **controlled parallel** (see parallel-work rule above).
+- Controlled parallel work does **not** allow a higher-level domain to bypass incomplete lower-level truth contracts.
+- **Phase 5D** remains the controlled parallel workstream when the active social phase is blocked.
+- Environment appearing later (or in parallel) is an **execution-sequencing** decision, not a reversal of architectural dependency direction.
+
+### Phase 5 resolution-tier policy
+
+Phase 5 currently operates at the **bounded active-world scale** using detailed canonical entities.
+
+Intended **future** resolution tiers (Domain Plan “tiers of resolution”; **not implemented** in Phase 5):
+
+| Tier | Intended detail |
+|---|---|
+| **active** | Full decision detail |
+| **nearby** | Reduced detail |
+| **distant** | Aggregate population or regional state |
+| **archived** | Causal summary only |
+
+**Decision:** nearby reduced-detail, distant aggregate, and archived causal-summary simulation tiers are **deferred to Phase 6 scale work**. This is an **explicit deferral**, not an accidental omission.
+
+- Do **not** add unused tier fields, fake tier implementations, dormant state, or placeholder stubs in Phase 5.
+- **Phase 5D** must not introduce architecture that prevents future deterministic promotion, demotion, aggregation, or causal compression.
+- Future tiering must preserve persistent identity, ownership, relationships, lifecycle facts, accepted-event provenance, and reconstruction boundaries.
+
+### Bounded-growth design gate
+
+Every **new** phase or sub-phase, **before implementation**, must answer:
+
+1. What does it read?
+2. What proposals can it submit?
+3. What canonical state can accepted events affect?
+4. What can be recomputed instead of stored?
+5. What gets compressed?
+6. What can be aggregated?
+7. What is the worst-case growth rate?
+8. How is that growth capped?
+
+It must also declare (use `not applicable` only with a brief reason):
+
+- maximum proposals per activation
+- activation cadence
+- retained event or fact horizon
+- compression policy
+- resolution-tier behaviour or explicit deferral (Phase 5 default: active-world only; see resolution-tier policy)
+- projection size limits
+- diagnostics limits
+- promotion and demotion rules where applicable
+- aggregation rules where applicable
+
+Do **not** invent numerical limits for completed phases unless an existing implementation or contract already defines them. This gate is **not** duplicated under every phase body; it is required once at design time for each new phase.
 
 ## 5A5 - Cognitive Grounding Vertical Slice
 
@@ -556,3 +617,5 @@ python -m pytest tests/test_phase5b3_food_interaction.py tests/test_phase5b_econ
 5A2 must satisfy its contract before later Phase 5 mechanics that depend on fork/lineage semantics. Live 5A2 success-path verification remains infrastructure-gated (transaction-capable Mongo) under the Infrastructure-gated verification policy; fail-closed behaviour on unsupported deployments does not by itself block unrelated work.
 
 Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B3 are implemented**; **5B4 is the next active stage** on the social interaction chain. If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
+
+Domain catalogue alignment and unassigned cognition prohibitions: [DOMAIN_MAPPING.md](DOMAIN_MAPPING.md).
