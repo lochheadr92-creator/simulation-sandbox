@@ -23,6 +23,8 @@ from domains.food_interaction_proposals import (
     propose_protocol_steps_for_person,
     propose_stranded_accepted_invalidations,
 )
+from domains.interaction_memory import merge_interaction_memory, MAX_IM_DIAGNOSTICS
+from domains.reciprocity_trust import derive_subject_view, list_subject_views
 
 
 class PeopleDomain(DomainEngine):
@@ -57,13 +59,23 @@ class PeopleDomain(DomainEngine):
             knowledge, knowledge_changed, learned = merge_knowledge(
                 existing_knowledge, delta, observer_id=eid,
             )
+            # Phase 5B4: event-backed interaction memory from canonical interactions.
+            knowledge, im_changed, im_learned = merge_interaction_memory(
+                knowledge, observer_id=eid, entities=frame.entities, tick=tick,
+            )
+            if im_changed:
+                knowledge_changed = True
+                learned = list(learned) + list(im_learned)
 
             action = dict(e.get("action") or idle_action())
             plan = dict(e.get("plan") or empty_plan())
             paused = e.get("paused")
 
+            e_for_score = dict(e)
+            e_for_score["id"] = eid
+            e_for_score["knowledge"] = knowledge
             candidates, context = score_candidates(
-                e, knowledge, pos, tick, night, action, terrain,
+                e_for_score, knowledge, pos, tick, night, action, terrain,
                 entities=frame.entities, perception_delta=delta,
             )
             cand_by_goal = {c["goal"]: c for c in candidates}
@@ -172,6 +184,15 @@ class PeopleDomain(DomainEngine):
                         or context.get("animal_target_id") or context.get("frontier_target")
                     ),
                     "explore_neighbour_only": True,
+                },
+                "interaction_memory": {
+                    "learned": im_learned[:MAX_IM_DIAGNOSTICS] if im_changed else [],
+                    "fact_count": len(
+                        ((knowledge.get("interaction_memory") or {}).get("facts") or {})
+                    ),
+                },
+                "reciprocity_trust": {
+                    "views": list_subject_views(knowledge, observer_id=eid, current_tick=tick)[:8],
                 },
             }
 

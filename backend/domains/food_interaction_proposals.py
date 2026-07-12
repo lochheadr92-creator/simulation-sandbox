@@ -170,10 +170,15 @@ def build_fulfil_proposal(
     entities: dict,
     explanation: str = "fulfil food interaction via food-transfer-v1",
 ) -> dict:
+    from domains.interaction_memory import compute_eligible_witness_ids
+
     iid = interaction["interaction_id"]
     giver_id, receiver_id = giver_and_receiver(interaction)
     giver = entities[giver_id]
     receiver = entities[receiver_id]
+    # Snapshot third-party witnesses from the pinned frame at fulfilment proposal
+    # time (not later hindsight). Stored on the accepted interaction entity.
+    eligible_witness_ids = compute_eligible_witness_ids(entities, interaction)
     causal = []
     if interaction.get("last_event_id"):
         causal.append(interaction["last_event_id"])
@@ -207,7 +212,11 @@ def build_fulfil_proposal(
         "entity_updates": {
             giver_id: {"food_inventory": giver["food_inventory"] - FOOD_TRANSFER_QUANTITY},
             receiver_id: {"food_inventory": receiver.get("food_inventory", 0) + FOOD_TRANSFER_QUANTITY},
-            iid: {"status": STATUS_FULFILLED, "terminal_reason": None},
+            iid: {
+                "status": STATUS_FULFILLED,
+                "terminal_reason": None,
+                "eligible_witness_ids": list(eligible_witness_ids),
+            },
         },
         "new_entities": {},
     }
@@ -392,7 +401,7 @@ def propose_protocol_steps_for_person(entities: dict, person_id: str, tick: int)
             and response_permitted_at(interaction, tick)
         ):
             # Auto-accept when the 5B1 transfer would be eligible for the giver.
-            if _responder_should_accept(entities, interaction):
+            if _responder_should_accept(entities, interaction, tick=tick):
                 proposals.append(build_respond_proposal(
                     interaction=interaction, response=RESPONSE_ACCEPT, tick=tick, entities=entities,
                     explanation="auto-accept food interaction",
@@ -412,7 +421,7 @@ def propose_protocol_steps_for_person(entities: dict, person_id: str, tick: int)
     return proposals
 
 
-def _responder_should_accept(entities: dict, interaction: dict) -> bool:
+def _responder_should_accept(entities: dict, interaction: dict, tick: int | None = None) -> bool:
     giver_id, receiver_id = giver_and_receiver(interaction)
     giver = entities.get(giver_id) or {}
     receiver = entities.get(receiver_id) or {}
@@ -424,6 +433,20 @@ def _responder_should_accept(entities: dict, interaction: dict) -> bool:
         return False
     if not participants_adjacent(entities, giver_id, receiver_id):
         return False
+    # 5B5: high derived caution against the initiator can block auto-accept only.
+    # Hard 5B1 eligibility above remains authoritative; Core still revalidates.
+    responder_id = interaction.get("responder_id")
+    initiator_id = interaction.get("initiator_id")
+    responder = entities.get(responder_id) or {}
+    if tick is not None and responder_id and initiator_id:
+        from domains.reciprocity_trust import should_auto_accept_with_caution
+        if not should_auto_accept_with_caution(
+            responder.get("knowledge") or {},
+            responder_id,
+            initiator_id,
+            tick,
+        ):
+            return False
     return True
 
 

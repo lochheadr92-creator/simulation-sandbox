@@ -45,8 +45,8 @@ These prevent silent overclaiming:
 | 5B1 is the Economy Domain | **5B1** is giver-owned **food transfer** only — not Economy, markets, or property law. |
 | 5B2 is Relationships / Memory / Emotion | **5B2** is **social-observation-v1** coarse visible facts only — not Relationships, Personality, Emotion, or general Memory. |
 | 5B3 is dialogue / barter / trust | **5B3 `food-interaction-v1`** is a bounded **request / offer / response / expiry / invalidation / fulfilment** protocol only. Not dialogue, bargaining, trust, reputation, mood, personality, barter, or generic resource exchange. |
-| 5B4 is the Memory Domain | **5B4** will be an **interaction-memory slice** only, not the complete Memory Domain. |
-| 5B5 is universal trust | **5B5** is **derived reciprocity** signals — not a freely mutable universal trust or relationship system. |
+| 5B4 is the Memory Domain | **5B4** is an **interaction-memory-v1 slice** only, not the complete Memory Domain. |
+| 5B5 is universal trust | **5B5** is **derived reciprocity-trust-v1** signals — not a freely mutable universal trust or relationship system. |
 | 5C is a macroeconomy | **5C** is **resource organisation foundations** — not a complete macroeconomy. |
 | 5D completes environment | **5D** foundations do **not** automatically satisfy full Ecology, Terrain, Climate, Animal, or Weather domains. |
 | 5F is population control | **5F** reproduction is **deterministic lifecycle behaviour**, not spawn-driven population control. |
@@ -68,7 +68,7 @@ These prevent silent overclaiming:
 | Planning | **5A5** (+ multi-stage actions Ph2) | implemented narrow slice | Needs-driven goals; knowledge/detection targets; multi-tick actions | Strategic planning, broad motive libraries, hidden planner state | implemented narrow slice |
 | Needs | Phase 1–2 utility / 5A5 | implemented narrow slice | Hunger, thirst, energy; critical/seek thresholds | Warmth, safety, social needs, curiosity, comfort as full domains | partially represented |
 | General Memory (Memory Domain) | **Unassigned** (see below); **5B4** is not this | unassigned / prohibited from implicit implementation | None as complete Memory Domain | Personal experiences, free-form history, teaching memory, etc. | unassigned |
-| Interaction Memory | **5B4** (next active) | active (planned slice) | Roadmap: helped/refused/requested/offered/witnessed facts with event provenance | Full Memory Domain, unbounded social history | active (next social phase) |
+| Interaction Memory | **5B4** | implemented narrow slice | `interaction-memory-v1`: helped/refused/requested/offered/witnessed_assistance with event provenance | Full Memory Domain, unbounded social history | implemented narrow slice |
 | Emotion | **Unassigned** | unassigned / prohibited from implicit implementation | None | Fear, happiness, anger, temporary state; may later bias utility only | unassigned |
 | Personality | **Unassigned** | unassigned / prohibited from implicit implementation | None | Long-term traits; may later bias utility only; never force actions | unassigned |
 | Habit | **Unassigned** | unassigned / prohibited from implicit implementation | None | Routines after repeated deterministic work patterns exist | unassigned |
@@ -82,7 +82,7 @@ These prevent silent overclaiming:
 | Social Observation | **5B2** | implemented narrow slice | `social-observation-v1` coarse visible facts | Private inventory, telepathy, global social knowledge | implemented narrow slice |
 | Social Interaction Protocol | **5B3** | implemented narrow slice | `food-interaction-v1` request/offer lifecycle + 5B1 fulfilment | Dialogue, bargaining, multi-party, generic protocols | implementation complete (focused-verified; 5A2 infra boundary) |
 | Relationships | **5F1** (+ Domain Plan Relationship Domain) | planned / partial future | Roadmap: durable pairing foundations | Trust vectors, rivalry, debt, full relationship calculus | planned |
-| Reciprocity / Trust | **5B5** | planned | Derived signals from interaction facts | Universal mutable trust, reputation networks | planned |
+| Reciprocity / Trust | **5B5** | implemented narrow slice | `reciprocity-trust-v1` derived scores; narrow ranking/auto-accept influence | Universal mutable trust, reputation networks | implemented narrow slice |
 | Persistent Social Motives | **5B6** | planned | One reserve-maintenance motive | Broad motive libraries, personality-driven motives | planned |
 | Family / Kinship | **5F1–5F4** | planned | Pairing, shared-resource bond, parent links, kin facts | Clans, inheritance, multi-household systems | planned |
 | Reproduction | **5F3** | planned | One deterministic birth path; fixed costs/cooldowns | Pregnancy sim, genetics tables, animal reproduction | planned |
@@ -186,4 +186,4 @@ These remain **prohibited from implicit implementation** until the roadmap assig
 
 ---
 
-*Document type: alignment only. Last aligned to Phase 5B3 implementation-complete status; next active social phase **5B4**.*
+*Document type: alignment only. Last aligned to Phase 5B5 implementation-complete status; next active social phase **5B6**.*

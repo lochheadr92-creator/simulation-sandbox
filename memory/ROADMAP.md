@@ -18,7 +18,7 @@ The detailed fork decision and implementation boundary are recorded in [ADR-001:
 4. 5A4a - Transactional Tick Persistence (implemented)
 5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — implemented
 6. **5A6 - Cognitive Visualisation and Live World Readability** — implemented
-7. **5B - Social Behaviour Foundations** (`5B1`–`5B3` implemented; **5B4 next active**)
+7. **5B - Social Behaviour Foundations** (`5B1`–`5B5` implemented; **5B6 next active**)
 8. 5C - Resource Organisation and Economic Foundations
 9. 5D - Canonical World State and Environment (controlled parallel workstream if 5B interaction chain is blocked)
 10. 5E - Social Conflict
@@ -74,11 +74,11 @@ Development on dependency-independent work may continue under the parallel-work 
 
 ### Controlled parallel work when the 5B interaction chain is blocked
 
-**Phase 5B4 is the next active phase** on the social interaction chain.
+**Phase 5B6 is the next active phase** on the social interaction chain.
 
 If a required 5B stage is blocked, dependency-independent Phase 5D work may proceed as the controlled parallel workstream.
 
-Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict motives (`5E3`), reproduction (`5F3`), lifecycle-dependent social systems, or other phases whose declared prerequisites are incomplete. From this roadmap, that includes at least remaining `5B4`–`5B6`, Phase `5C` (depends on `5B1`–`5B6`), Phase `5E` (depends on 5B social foundations and 5C ownership/resource contracts), and Phase `5F` (depends on 5B social facts/memory and lifecycle state). Phase 5D depends only on completed 5A Core/replay contracts and is the permitted parallel track.
+Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict motives (`5E3`), reproduction (`5F3`), lifecycle-dependent social systems, or other phases whose declared prerequisites are incomplete. From this roadmap, that includes at least remaining `5B6`, Phase `5C` (depends on `5B1`–`5B6`), Phase `5E` (depends on 5B social foundations and 5C ownership/resource contracts), and Phase `5F` (depends on 5B social facts/memory and lifecycle state). Phase 5D depends only on completed 5A Core/replay contracts and is the permitted parallel track.
 
 ### Conceptual versus execution ordering
 
@@ -156,7 +156,7 @@ Do **not** invent numerical limits for completed phases unless an existing imple
 - The selected-person canvas overlay uses a bounded, versioned, observer-specific projection for current perception, retained knowledge, stale last-known entity markers, latest discoveries, and stored route state.
 - Route, target, arrival-mode, planning, action, injury, death, urgent-need, and accepted-change indicators are presentation only. They never create state, recalculate routes, or alter decision results.
 - The normal observer view remains complete when no person is selected; personal fog is never applied automatically.
-- 5B1–5B3 social foundations through the food request/offer protocol are implemented. **Phase 5B4 (Event-Backed Interaction Memory) is the next active phase.**
+- 5B1–5B5 social foundations through interaction memory and derived reciprocity are implemented. **Phase 5B6 (Persistent Motive and Replanning) is the next active phase.**
 
 ## 5A1 - Fork Semantics Contract
 
@@ -324,11 +324,41 @@ python -m pytest tests/test_phase5b3_food_interaction.py tests/test_phase5b_econ
 
 ### 5B4 — Event-Backed Interaction Memory
 
+**Status:** implementation complete (focused-verified). Not fully verified while prerequisite 5A2 live transaction-capable Mongo remains `Implemented — Verification Pending`.
+
 **Goal:** retain bounded observer-owned facts referencing accepted interaction events.
 
 **Dependencies:** 5B3 accepted interaction lifecycle and existing knowledge retention rules.
 
 **Bounded implementation scope:** initial fact kinds are helped, refused, requested, offered, and witnessed assistance, each with accepted-event provenance.
+
+**Implementation evidence (`interaction-memory-v1`):**
+- Nested under observer `knowledge.interaction_memory` (compatible with `knowledge-v2`; absent on legacy runs).
+- Fact kinds: `requested`, `offered`, `refused`, `helped`, `witnessed_assistance` only.
+- Provenance: `accepted_event_id`, event tick (from `evt-{tick}-…`), interaction id/kind, observer/subject/counterparty; content-derived `fact_id`.
+- `refused` only from explicit refusal terminal; expiry/invalidation never count as refuse.
+- `helped` only after fulfilment + `fulfilment_transfer_event_id`; accepted-unfulfilled is not help.
+- `witnessed_assistance` only for third parties listed in fulfilment-frame `eligible_witness_ids` (perception-bounded snapshot; no hindsight).
+- Caps: 24 facts/observer, 8/subject; eviction by newest accepted_event_tick then fact_id.
+- Idempotent re-merge of the same event; rejected proposals produce no facts.
+
+**Bounded-growth design (5B4):**
+1. Reads: pinned entities (food_interaction + people), existing knowledge.
+2. Proposals: rides people_action knowledge updates (max one material knowledge rewrite path per person activation).
+3. Canonical state: observer knowledge only (via accepted people events).
+4. Recomputable: candidate facts from interaction entities + event stamps.
+5. Compression: eviction only (no LLM summary).
+6. Aggregation: none.
+7. Worst-case growth: O(interactions observed) until caps.
+8. Cap: MAX_INTERACTION_FACTS_PER_OBSERVER=24, per-subject=8.
+- Activation cadence: people due every tick; resolution active-world only; tiering deferred Phase 6.
+
+**Focused verification:**
+```
+cd backend
+python -m pytest tests/test_phase5b4_interaction_memory.py -q
+# 21 passed
+```
 
 **Explicit deferrals:** free-form memories, inferred private motives, unbounded social history, and memory as a replacement for accepted-event truth.
 
@@ -336,11 +366,30 @@ python -m pytest tests/test_phase5b3_food_interaction.py tests/test_phase5b_econ
 
 ### 5B5 — Derived Reciprocity and Trust
 
+**Status:** implementation complete (focused-verified). Not fully verified while prerequisite 5A2 live Mongo remains `Implemented — Verification Pending`.
+
 **Goal:** derive bounded reciprocity/trust signals from retained interaction facts, confidence, and recency.
 
 **Dependencies:** 5B4 event-backed facts and deterministic time/replay.
 
 **Bounded implementation scope:** a reproducible derived projection may influence sharing, requests, and refusals without becoming a freely mutable universal trust field.
+
+**Implementation evidence (`reciprocity-trust-v1`):**
+- On-demand pure projection from `interaction-memory-v1` facts; integer weights and recency (`max(0, 100 - age*2)`).
+- Observer-relative components: `support_score`, `caution_score`, `confidence_score`, `reciprocity_net` (all bounded).
+- Direct `helped` > `witnessed_assistance`; `requested`/`offered` raise confidence only; expiry/invalidation never caution.
+- Missing evidence is neutral (zeros).
+- Behavioural influence (narrow, inspectable): GIVE_FOOD recipient ranking by support then id; auto-accept blocked when caution ≥ 50. Core still validates all transfers/interactions. No canonical `trust` field.
+
+**Focused verification:**
+```
+cd backend
+python -m pytest tests/test_phase5b5_reciprocity_trust.py -q
+# 19 passed
+
+python -m pytest tests/test_phase5b4_interaction_memory.py tests/test_phase5b5_reciprocity_trust.py tests/test_phase5b3_food_interaction.py tests/test_phase5b_economy.py tests/test_phase5b2_social_observations.py tests/test_phase5a5_cognitive.py tests/test_kernel_determinism.py -q
+# 94 passed
+```
 
 **Explicit deferrals:** global reputation, relationship calculus, factions, romance, and unbounded score accumulation.
 
@@ -616,6 +665,6 @@ python -m pytest tests/test_phase5b3_food_interaction.py tests/test_phase5b_econ
 
 5A2 must satisfy its contract before later Phase 5 mechanics that depend on fork/lineage semantics. Live 5A2 success-path verification remains infrastructure-gated (transaction-capable Mongo) under the Infrastructure-gated verification policy; fail-closed behaviour on unsupported deployments does not by itself block unrelated work.
 
-Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B3 are implemented**; **5B4 is the next active stage** on the social interaction chain. If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
+Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B5 are implemented**; **5B6 is the next active stage** on the social interaction chain. If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
 
 Domain catalogue alignment and unassigned cognition prohibitions: [DOMAIN_MAPPING.md](DOMAIN_MAPPING.md).

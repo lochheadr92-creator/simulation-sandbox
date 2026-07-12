@@ -220,12 +220,15 @@ def _resource_availability(resource_amount, carried=False):
     return min(1.0, float(resource_amount) / 40.0)
 
 
-def eligible_food_recipient(giver, pos, entities, perception_delta=None):
+def eligible_food_recipient(giver, pos, entities, perception_delta=None, tick=None):
     """Return the stable first adjacent recipient visible to the giver.
 
     Eligibility deliberately starts from this activation's bounded person
     sightings.  The live entity view is consulted only to resolve those
     observed subjects' canonical state; it is never scanned for recipients.
+
+    Among equally eligible recipients, prefer higher 5B5 support_score, then
+    recipient_id ascending (hard 5B1 survival eligibility is unchanged).
     """
     sightings = (perception_delta or {}).get("person_sightings", {})
     candidates = []
@@ -244,7 +247,24 @@ def eligible_food_recipient(giver, pos, entities, perception_delta=None):
         if recipient.get("food_inventory", 0) != 0 or recipient.get("inventory", 0) != 0:
             continue
         candidates.append(recipient_id)
-    return candidates[0] if candidates else None
+    if not candidates:
+        return None
+    # 5B5 ranking influence: support desc, then id asc. Survival gate already applied.
+    from domains.reciprocity_trust import support_score_for
+    knowledge = giver.get("knowledge") or {}
+    observer_id = giver.get("id")
+    # giver entity may not carry id field; callers pass entity with id sometimes.
+    # score_candidates uses e without always setting id — use None-safe.
+    current_tick = 0 if tick is None else int(tick)
+
+    def rank_key(rid):
+        support = 0
+        if observer_id:
+            support = support_score_for(knowledge, observer_id, rid, current_tick)
+        return (-support, rid)
+
+    candidates.sort(key=rank_key)
+    return candidates[0]
 
 
 def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
@@ -302,7 +322,13 @@ def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
 
     recipient_id = None
     if e.get("food_inventory", 0) >= FOOD_TRANSFER_SURPLUS:
-        recipient_id = eligible_food_recipient(e, pos, entities or {}, perception_delta)
+        # Ensure observer id is available for 5B5 ranking
+        if e.get("id") is None and entities:
+            # best-effort: match by identity in entities map is not available; leave unset
+            pass
+        recipient_id = eligible_food_recipient(
+            e, pos, entities or {}, perception_delta, tick=tick,
+        )
     recipient = (entities or {}).get(recipient_id) if recipient_id else None
     recipient_hunger = recipient.get("hunger", 0) if recipient else 0
     candidates.append(_score(

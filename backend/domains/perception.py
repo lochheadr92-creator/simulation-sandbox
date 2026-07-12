@@ -51,6 +51,8 @@ def empty_knowledge() -> dict:
         "known_people": {},
         "known_dangers": {},
         "facts": {},
+        # Phase 5B4: optional bounded interaction-memory-v1 (absent on legacy runs)
+        "interaction_memory": {"version": "interaction-memory-v1", "facts": {}},
     }
 
 
@@ -67,6 +69,14 @@ def _compat_knowledge(existing: dict | None) -> dict:
                 "known_animals", "known_people", "known_dangers", "facts"):
         if key in existing and isinstance(existing[key], dict):
             out[key] = dict(existing[key])
+    # Preserve observer-owned interaction memory when present; empty shape otherwise.
+    im = existing.get("interaction_memory")
+    if isinstance(im, dict):
+        facts = im.get("facts") if isinstance(im.get("facts"), dict) else {}
+        out["interaction_memory"] = {
+            "version": im.get("version") or "interaction-memory-v1",
+            "facts": dict(facts),
+        }
     out["schema_version"] = KNOWLEDGE_SCHEMA_VERSION
     return out
 
@@ -430,6 +440,10 @@ def merge_knowledge(existing: dict, delta: dict, observer_id: str | None = None,
         "known_people": known_people,
         "known_dangers": known_dangers,
         "facts": facts,
+        # Pass through existing interaction memory; 5B4 merge is separate.
+        "interaction_memory": existing.get("interaction_memory")
+        if isinstance(existing.get("interaction_memory"), dict)
+        else {"version": "interaction-memory-v1", "facts": {}},
     }
     return merged, changed, learned
 
