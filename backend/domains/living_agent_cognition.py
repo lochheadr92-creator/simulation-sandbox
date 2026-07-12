@@ -114,7 +114,6 @@ def _visible_properties(entity_id: str, entity: dict, base_delta: dict) -> dict:
             "source_action_id": entity.get("source_action_id"),
             "source_event_id": entity.get("source_event_id") or entity.get("last_event_id"),
             "message": copy.deepcopy(entity.get("message")),
-            "truth_status": entity.get("truth_status"),
             "propagation_depth": int(entity.get("propagation_depth", 0)),
         }
     if entity_type in ("storage", "container"):
@@ -189,6 +188,10 @@ def perceive_living(
         signal_range = max(effective_radius, signal_strength // 200) if signal_strength else effective_radius
         if distance > signal_range:
             continue
+        if subject_type == "signal" and subject.get("signal_kind") in ("speech", "social", "warning"):
+            allowed = set(subject.get("recipient_ids") or []) | set(subject.get("witness_ids") or [])
+            if allowed and observer_id not in allowed:
+                continue
         if subject_type == "signal" and subject.get("signal_kind") in ("noise", "warning", "speech"):
             source = "hearing"
         elif not _has_line_of_sight(pos, subject_pos, terrain):
@@ -665,6 +668,8 @@ def merge_meaningful_memories(
         relation = 0
         if kind == "danger" or (kind == "signal" and properties.get("signal_kind") in ("warning", "smoke", "noise")):
             meaningful_kind, significance, emotional = "threat_observed", 700, 650
+        elif kind == "signal" and properties.get("signal_kind") in ("speech", "social"):
+            meaningful_kind, significance, emotional, relation = "social_information", 520, 260, 420
         elif kind in ("tree", "carcass", "resource", "water_source", "storage", "tool") and subject_id in learned_subjects:
             meaningful_kind, significance = "resource_discovered", 420
         elif kind == "person" and (properties.get("appears_injured") or properties.get("apparent_urgent_need") in ("distressed", "critical")):

@@ -36,6 +36,10 @@ from domains.living_agent_actions import (
     evidence_signal_for_action,
     living_action_metadata,
 )
+from domains.living_agent_social import (
+    advance_commitment_deadlines,
+    apply_observed_social_information,
+)
 from domains.people_utility import score_candidates
 from domains.people_planning import (
     idle_action, empty_plan, check_critical_interrupt, form_plan, start_step,
@@ -102,6 +106,24 @@ class PeopleDomain(DomainEngine):
 
             living_state = compat_living_agent_state(
                 e.get("living_agent"), eid, tick, frame.rng,
+            )
+            living_state, knowledge, social_consequences, social_knowledge_changed = (
+                apply_observed_social_information(
+                    living_state,
+                    knowledge,
+                    observer_id=eid,
+                    observations=delta.get("observations") or [],
+                    tick=tick,
+                )
+            )
+            if social_knowledge_changed:
+                knowledge_changed = True
+                learned = list(learned) + [
+                    {"kind": item["kind"], "subject": item.get("subject_id") or item.get("fact_id")}
+                    for item in social_consequences
+                ]
+            living_state, commitment_consequences = advance_commitment_deadlines(
+                living_state, owner_id=eid, tick=tick,
             )
             living_state = derive_internal_pressures(
                 e, living_state, knowledge, delta, tick, night=night,
@@ -322,6 +344,8 @@ class PeopleDomain(DomainEngine):
                     "new_memories": (memory_learned + action_memories)[:8],
                     "perception_version": delta.get("living_perception_version"),
                     "attention": delta.get("attention"),
+                    "social_consequences": social_consequences[:8],
+                    "commitment_consequences": commitment_consequences[:8],
                 },
                 "interaction_memory": {
                     "learned": im_learned[:MAX_IM_DIAGNOSTICS] if im_changed else [],

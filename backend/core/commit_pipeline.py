@@ -24,6 +24,7 @@ from core.food_interaction import (
     validate_food_interaction,
 )
 from domains.living_agent_actions import validate_living_action_proposal
+from domains.living_agent_social import validate_social_action_proposal
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -54,6 +55,7 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         "transfer": p.get("transfer"),
         "interaction": p.get("interaction"),
         "living_action": p.get("living_action"),
+        "social_action": p.get("social_action"),
         "requested_time": p["requested_time"],
         "phase": p["phase"],
     }
@@ -201,12 +203,32 @@ def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str
                 if (receipt.get("accepted_event_id") is None
                         and int(receipt.get("tick", -1)) == tick):
                     receipt["accepted_event_id"] = event_id
+            for relation in (living.get("relationships") or {}).values():
+                if int(relation.get("pending_event_tick", -1)) == tick:
+                    causal = list(relation.get("causal_event_ids") or [])
+                    applied = list(relation.get("applied_event_ids") or [])
+                    if event_id not in causal:
+                        causal.append(event_id)
+                    if event_id not in applied:
+                        applied.append(event_id)
+                    relation["causal_event_ids"] = causal[-16:]
+                    relation["applied_event_ids"] = applied[-16:]
+                    relation["pending_event_tick"] = None
+                    relation["last_event_id"] = event_id
+            for commitment in (living.get("commitments") or {}).values():
+                if (commitment.get("created_event_id") is None
+                        and int(commitment.get("created_tick", -1)) == tick):
+                    commitment["created_event_id"] = event_id
+                if int(commitment.get("last_changed_tick", -1)) == tick:
+                    commitment["last_event_id"] = event_id
         knowledge = update.get("knowledge")
         if isinstance(knowledge, dict):
             for fact in (knowledge.get("facts") or {}).values():
                 if (fact.get("learned_event_id") is None
                         and int(fact.get("first_known_tick", -1)) == tick):
                     fact["learned_event_id"] = event_id
+                    if fact.get("source_event_id") is None:
+                        fact["source_event_id"] = event_id
 
 
 def _stamp_living_action_provenance(
@@ -295,6 +317,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             ))
             continue
 
+        social_action_err = validate_social_action_proposal(proposal, entities)
+        if social_action_err:
+            rejected.append(_reject(
+                proposal, "initial_validation", social_action_err,
+                social_action_err, tick,
+            ))
+            continue
+
         if not proposal.get("is_exogenous"):
             causal_parents = proposal.get("causal_parent_event_ids") or []
             if not causal_parents:
@@ -356,6 +386,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             accepted_events[-1]["interaction"] = proposal["interaction"]
         if proposal.get("living_action"):
             accepted_events[-1]["living_action"] = proposal["living_action"]
+        if proposal.get("social_action"):
+            social_action = proposal["social_action"]
+            commitment = social_action.get("commitment")
+            if isinstance(commitment, dict):
+                if commitment.get("created_event_id") is None:
+                    commitment["created_event_id"] = event_id
+                commitment["last_event_id"] = event_id
+            accepted_events[-1]["social_action"] = social_action
         order_index += 1
 
     return accepted_events, rejected, order_index

@@ -202,6 +202,31 @@ def evidence_signal_for_action(action: dict, *, position: dict, tick: int):
     )
 
 
+def social_signal_spec(
+    *, actor_id: str, action_id: str, action_type: str, tick: int,
+    position: dict, message: dict | None, recipient_ids: list[str],
+    witness_ids: list[str], truth_status: str, propagation_depth: int = 0,
+) -> tuple[str, dict]:
+    signal_id, spec = _signal_spec(
+        actor_id=actor_id,
+        action_id=action_id,
+        action_type=action_type,
+        tick=tick,
+        position=position,
+        signal_kind="speech" if action_type in (
+            "request_help", "offer_help", "refuse", "warn",
+            "share_information", "lie", "apologise", "promise",
+        ) else "social",
+        strength=600,
+        message=message,
+    )
+    spec["recipient_ids"] = sorted(set(recipient_ids))[:LIMITS.social_propagation_recipients]
+    spec["witness_ids"] = sorted(set(witness_ids))[:LIMITS.witnesses_processed_per_event]
+    spec["truth_status"] = truth_status
+    spec["propagation_depth"] = min(int(propagation_depth), LIMITS.information_propagation_depth)
+    return signal_id, spec
+
+
 def _base_action(actor_id: str, action_type: str, tick: int, plan: dict | None, target_id: str | None) -> dict:
     plan = plan or {}
     action = compat_action(
