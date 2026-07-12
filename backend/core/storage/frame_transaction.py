@@ -61,8 +61,10 @@ MAX_ACCEPTED_EVENTS_PER_FRAME = 2000
 MAX_REJECTIONS_PER_FRAME = 5000
 MAX_CANONICAL_WRITES_PER_FRAME = 12000
 
-TX_MAX_ATTEMPTS = 3
+TX_MAX_ATTEMPTS = 10
 TX_DEADLINE_SECONDS = 15.0
+TX_RETRY_BASE_DELAY_SECONDS = 0.01
+TX_RETRY_MAX_DELAY_SECONDS = 0.25
 
 # Test-only failure injection. Production never enables this set.
 # Points: before_events, after_events, after_rejections, after_entities,
@@ -319,6 +321,19 @@ def _tx_unsupported(exc: BaseException) -> bool:
         if getattr(exc, "code", None) in (20, 303):
             return True
     return False
+
+
+async def _wait_before_retry(attempt: int, deadline: float) -> None:
+    """Yield to a competing transaction before retrying a transient failure."""
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        return
+    delay = min(
+        TX_RETRY_BASE_DELAY_SECONDS * (2 ** (attempt - 1)),
+        TX_RETRY_MAX_DELAY_SECONDS,
+        remaining,
+    )
+    await asyncio.sleep(delay)
 
 
 # ---------------------------------------------------------------------------
@@ -663,6 +678,7 @@ async def commit_frame_atomically(frame: PrecomputedFrame) -> dict:
                             "commit failed and frame confirmed absent",
                             "DB_TX_FAILURE",
                         ) from exc
+                    await _wait_before_retry(attempt, deadline)
                     continue
                 raise CommitStatusUnknown(
                     "commit result unknown; frame state not safely resolvable"
@@ -700,6 +716,7 @@ async def commit_frame_atomically(frame: PrecomputedFrame) -> dict:
                         f"transient transaction errors exhausted: {exc}",
                         "DB_TX_FAILURE",
                     ) from exc
+                await _wait_before_retry(attempt, deadline)
                 continue
             if _tx_unsupported(exc):
                 raise TransactionUnavailable(

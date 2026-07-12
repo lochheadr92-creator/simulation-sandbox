@@ -38,22 +38,43 @@ def _rebind_motor_to_running_loop():
     retention_service.db = database
     frame_tx.db = database
     frame_tx.client = client
-    return database
+    return client, database
 
 
 def async_test(function):
     @wraps(function)
     def run(*args, **kwargs):
         async def _runner():
-            _rebind_motor_to_running_loop()
-            return await function(*args, **kwargs)
+            previous_bindings = (
+                core_db.client,
+                core_db.db,
+                run_service.client,
+                run_service.db,
+                retention_service.db,
+                frame_tx.client,
+                frame_tx.db,
+            )
+            client, _ = _rebind_motor_to_running_loop()
+            try:
+                return await function(*args, **kwargs)
+            finally:
+                (
+                    core_db.client,
+                    core_db.db,
+                    run_service.client,
+                    run_service.db,
+                    retention_service.db,
+                    frame_tx.client,
+                    frame_tx.db,
+                ) = previous_bindings
+                client.close()
         return asyncio.run(_runner())
     return run
 
 
 @async_test
 async def test_concurrent_identical_steps_single_head_advance():
-    db = _rebind_motor_to_running_loop()
+    db = core_db.db
     await core_db.ensure_indexes()
     clear_test_failure_injection()
     run = await create_run(f"conc-{uuid.uuid4().hex[:8]}", "basic_survival")
@@ -65,12 +86,9 @@ async def test_concurrent_identical_steps_single_head_advance():
             return ("ok", await step_run(run["id"], 1))
         except ConcurrentModification:
             return ("cas", None)
-        except Exception as exc:
-            return ("err", type(exc).__name__)
 
     results = await asyncio.gather(attempt(), attempt())
     statuses = [r[0] for r in results]
-    assert "err" not in statuses, results
     assert statuses.count("ok") >= 1
     head2 = await get_run(run["id"])
     assert head2["current_tick"] == head["current_tick"] + 1
@@ -82,7 +100,6 @@ async def test_concurrent_identical_steps_single_head_advance():
 
 @async_test
 async def test_stale_precomputed_frame_cas_conflict():
-    _rebind_motor_to_running_loop()
     await core_db.ensure_indexes()
     clear_test_failure_injection()
     run = await create_run(f"stale-{uuid.uuid4().hex[:8]}", "basic_survival")
