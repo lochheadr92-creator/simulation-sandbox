@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router as api_router
+from core.db import ensure_indexes
 
 app = FastAPI(title="Simulation Sandbox - Core Kernel")
 
@@ -21,3 +22,8 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+
+
+@app.on_event("startup")
+async def initialize_core_storage():
+    await ensure_indexes()

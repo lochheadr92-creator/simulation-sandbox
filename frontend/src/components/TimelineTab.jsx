@@ -11,10 +11,12 @@ const MILESTONE_LABELS = {
   first_death: "First Death",
 };
 
-export default function TimelineTab({ runId, refreshKey, onSelectEntity }) {
+export default function TimelineTab({ runId, refreshKey, onSelectEntity, onFork }) {
   const [timeline, setTimeline] = useState([]);
   const [milestoneOnly, setMilestoneOnly] = useState(false);
   const [meta, setMeta] = useState({});
+  const [forkingTick, setForkingTick] = useState(null);
+  const [forkError, setForkError] = useState("");
 
   useEffect(() => {
     if (!runId) return;
@@ -23,6 +25,19 @@ export default function TimelineTab({ runId, refreshKey, onSelectEntity }) {
       setMeta(d);
     });
   }, [runId, refreshKey, milestoneOnly]);
+
+  async function handleFork(event, tick) {
+    event.stopPropagation();
+    setForkingTick(tick);
+    setForkError("");
+    try {
+      await onFork(tick);
+    } catch (error) {
+      setForkError(error.response?.data?.detail || "Fork creation failed");
+    } finally {
+      setForkingTick(null);
+    }
+  }
 
   return (
     <div className="p-2" data-testid="timeline-tab-panel">
@@ -40,6 +55,11 @@ export default function TimelineTab({ runId, refreshKey, onSelectEntity }) {
           Milestones only
         </button>
       </div>
+      {forkError && (
+        <div className="mb-2 px-2 py-1 text-[10px] text-red-400 border border-red-900" data-testid="fork-error">
+          {forkError}
+        </div>
+      )}
       <table className="w-full text-xs">
         <thead>
           <tr className="text-[10px] uppercase text-zinc-500 text-left">
@@ -47,6 +67,7 @@ export default function TimelineTab({ runId, refreshKey, onSelectEntity }) {
             <th className="py-1 px-1">Entity</th>
             <th className="py-1 px-1">Event</th>
             <th className="py-1 px-1">Milestone</th>
+            <th className="py-1 px-1">Branch</th>
           </tr>
         </thead>
         <tbody>
@@ -68,11 +89,22 @@ export default function TimelineTab({ runId, refreshKey, onSelectEntity }) {
                   </Badge>
                 ))}
               </td>
+              <td className="py-1 px-1">
+                <button
+                  type="button"
+                  onClick={(event) => handleFork(event, t.tick)}
+                  disabled={forkingTick !== null}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300 disabled:text-zinc-600"
+                  data-testid={`fork-from-tick-${t.tick}-${t.event_id}`}
+                >
+                  {forkingTick === t.tick ? "Forking..." : "Fork from here"}
+                </button>
+              </td>
             </tr>
           ))}
           {timeline.length === 0 && (
             <tr>
-              <td colSpan={4} className="py-4 text-center text-zinc-600 text-xs">No timeline events yet. Press Play or Step.</td>
+              <td colSpan={5} className="py-4 text-center text-zinc-600 text-xs">No timeline events yet. Press Play or Step.</td>
             </tr>
           )}
         </tbody>

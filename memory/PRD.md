@@ -114,14 +114,28 @@ Goal: (A) a durable history layer derived from accepted events (timelines, prove
 - **Doctrine check**: `history_service.py` is read-only (static-analysis-asserted, never writes to `commit_frames`/`accepted_events`, never deletes), never imported by `replay_service.py`; `LifecycleDomain` has zero mutable instance state and a pure `activate()`; all deaths (natural, hunted, external-kill) flow through the same commit pipeline as every other proposal — no despawns, no direct DB mutation outside Core.
 - Test report: `/app/test_reports/iteration_4.json`.
 
+## Phase 5A - Deterministic Forking Foundation (implemented July 2026)
+
+- The accepted contract is recorded in [`ADR-001-fork-semantics.md`](ADR-001-fork-semantics.md), with sequencing in [`ROADMAP.md`](ROADMAP.md).
+- Forks preserve absolute simulation time, seed, named-stream RNG context, and deterministic order index while receiving a fresh deterministic lineage and independent accepted-event stream.
+- A child starts from one accepted snapshot-derived `fork_genesis` record containing canonical entities, immutable world context, source hashes, version context, and validated external causal anchors; parent events are referenced rather than copied.
+- Fork ancestry and effective context are also recorded in a separate deterministic Core `LineageRecord` administrative record, which cannot mutate world state or simulation time.
+- Replay and deterministic shadow verification now support non-zero fork genesis independently of parent raw history. New runs use tick-correct empty-frame hashing and store explicit lineage/schema/RNG/world-context metadata.
+- Child creation is deterministic, idempotent, uniquely indexed, and atomic inside a required Mongo snapshot/majority transaction. Unsupported standalone Mongo deployments fail before child writes.
+- The existing timeline exposes `Fork from here`, and the existing load modal labels parent run/tick lineage; no fork tree or comparison view was added.
+- Focused verification covers genesis/later/empty boundaries, source versus lineage hashes, exact-continuation behavior, non-zero replay, parent immutability, concurrency, rollback, idempotency, projection rebuild, version failure, causal anchors, indexes, and the API seam.
+- Environment limit: the current local Mongo server is standalone, so successful live transaction creation could not be exercised there; its fail-closed behavior was verified.
+
 
 ## Deferred / Backlog (explicitly out of scope, by design)
-- Formal checkpoint/fork system (save/load works via standard state restoration; branching/forking interfaces deferred), complex animal reproduction/genetics/birth, weather, combat, economy, LLM/narration — still explicitly out of scope.
+- Fork comparison/tree visualization and storage compaction remain deferred. Reproduction/genetics/birth, weather, combat, economy, and LLM/narration remain unimplemented.
 - Multi-rate/state-dependent scheduling beyond the current fixed cadences (agents=1 tick, ecology=5 ticks, lifecycle=1 tick, Core-owned, not yet scenario-configurable).
 - In-app side-by-side scenario comparison view.
 
 ## Next Action Items
+- Phase 5 contract and sequencing: see [`ROADMAP.md`](ROADMAP.md).
+- Accepted fork semantics and implemented Phase 5A2 boundary: see [`ADR-001-fork-semantics.md`](ADR-001-fork-semantics.md). Successful live creation remains gated on replica-set transactions.
 - P2: Consider a 3rd scenario purely to further stress the registration mechanism (zero-Core-change proof) once there's a concrete need.
 - P2: Add automated nondeterminism-detection tests (per Verification Doctrine Spec #32) as a CI-style check beyond the current proposal-shuffle regression test.
-- P3 (Phase 5+, deferred): formal checkpoint/forking interfaces, complex biological reproduction, legacy import classes, economy, weather.
+- P1: configure a transaction-capable Mongo replica set and run the Phase 5A live success-path verification without weakening fail-closed behavior.
 

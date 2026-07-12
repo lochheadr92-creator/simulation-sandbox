@@ -91,7 +91,8 @@ def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int
 
 
 def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_key: str,
-                      run_id: str, order_index_start: int, frame_id: str):
+                      run_id: str, order_index_start: int, frame_id: str,
+                      valid_causal_parent_event_ids: set | None = None):
     """Runs one deterministic commit frame. Mutates `entities` in place.
 
     Returns (accepted_events, rejected_proposals, next_order_index).
@@ -115,10 +116,25 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             rejected.append(_reject(proposal, "initial_validation", "precondition.entity_missing", scope_err, tick))
             continue
 
-        if not proposal.get("is_exogenous") and not proposal.get("causal_parent_event_ids"):
-            rejected.append(_reject(proposal, "initial_validation", "causality.missing_parent",
-                                     "non-exogenous proposal without causal parent", tick))
-            continue
+        if not proposal.get("is_exogenous"):
+            causal_parents = proposal.get("causal_parent_event_ids") or []
+            if not causal_parents:
+                rejected.append(_reject(
+                    proposal, "initial_validation", "causality.missing_parent",
+                    "non-exogenous proposal without causal parent", tick,
+                ))
+                continue
+            if valid_causal_parent_event_ids is not None:
+                invalid = sorted(
+                    set(causal_parents) - set(valid_causal_parent_event_ids)
+                )
+                if invalid:
+                    rejected.append(_reject(
+                        proposal, "initial_validation", "causality.invalid_parent",
+                        f"causal parent not present in accepted stream or validated anchor: {invalid}",
+                        tick,
+                    ))
+                    continue
 
         precond_err = evaluate_preconditions(proposal.get("preconditions", []), entities)
         if precond_err:

@@ -89,6 +89,13 @@ export default function App() {
     setSelectedEntityId(null);
   }
 
+  async function handleForkRun(tick) {
+    if (!run) return;
+    setIsPlaying(false);
+    const child = await api.forkRun(run.id, tick);
+    handleRunReady(child);
+  }
+
   return (
     <div className="h-screen w-full flex overflow-hidden bg-app text-zinc-100 font-sans">
       <div className="flex-1 flex flex-col min-w-0 border-r border-zinc-800">
@@ -138,7 +145,12 @@ export default function App() {
               )}
             </TabsContent>
             <TabsContent value="timeline">
-              <TimelineTab runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} />
+              <TimelineTab
+                runId={run?.id}
+                refreshKey={refreshKey}
+                onSelectEntity={handleSelectEntity}
+                onFork={handleForkRun}
+              />
             </TabsContent>
             <TabsContent value="events">
               <EventLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} />

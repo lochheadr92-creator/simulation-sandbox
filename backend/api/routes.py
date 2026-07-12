@@ -5,12 +5,14 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from core.db import db
-from core.constants import time_phase, ENGINE_VERSION, SCHEMA_VERSION, RECENT_HORIZON_TICKS
+from core.constants import time_phase, RECENT_HORIZON_TICKS
 from core.commit_pipeline import run_commit_frame
 from core.interventions import build_intervention_proposal
 from core.run_service import (
     create_run, get_run, list_runs, load_entities, save_entities_delta,
-    step_run, set_run_status, lineage_key_for,
+    step_run, set_run_status, fork_run, lineage_key_for_run,
+    ForkNotFound, ForkConflict, ForkCompatibilityError, ForkIntegrityError,
+    TransactionUnavailable,
 )
 from core.replay_service import verify_replay, verify_determinism
 from core import history_service
@@ -30,6 +32,13 @@ class CreateRunRequest(BaseModel):
 
 class StepRequest(BaseModel):
     ticks: int = 1
+
+
+class ForkRunRequest(BaseModel):
+    fork_tick: int
+    branch_key: str = "default"
+    expected_boundary_event_id: Optional[str] = None
+    expected_forked_from_state_hash: Optional[str] = None
 
 
 class InterventionRequest(BaseModel):
@@ -74,6 +83,26 @@ async def api_get_run(run_id: str):
     run = dict(run)
     run.pop("terrain", None)
     return run
+
+
+@router.post("/runs/{run_id}/fork")
+async def api_fork_run(run_id: str, body: ForkRunRequest):
+    try:
+        return await fork_run(
+            run_id,
+            body.fork_tick,
+            branch_key=body.branch_key,
+            expected_boundary_event_id=body.expected_boundary_event_id,
+            expected_forked_from_state_hash=body.expected_forked_from_state_hash,
+        )
+    except ForkNotFound as exc:
+        raise HTTPException(404, str(exc))
+    except ForkConflict as exc:
+        raise HTTPException(409, str(exc))
+    except (ForkCompatibilityError, ForkIntegrityError) as exc:
+        raise HTTPException(412, str(exc))
+    except TransactionUnavailable as exc:
+        raise HTTPException(503, str(exc))
 
 
 @router.post("/runs/{run_id}/step")
@@ -153,7 +182,24 @@ async def api_get_causal(run_id: str, entity_id: str):
             parents = current.get("causal_parent_event_ids", [])
             if not parents or parents[0] in visited:
                 break
-            current = await db.accepted_events.find_one({"run_id": run_id, "id": parents[0]}, {"_id": 0})
+            next_event = await db.accepted_events.find_one(
+                {"run_id": run_id, "id": parents[0]}, {"_id": 0},
+            )
+            if not next_event:
+                anchor = next((
+                    item for item in run.get("external_causal_anchors", [])
+                    if item.get("event_id") == parents[0]
+                ), None)
+                if anchor:
+                    chain.append({
+                        "event_id": anchor["event_id"],
+                        "event_type": anchor["event_type"],
+                        "simulation_time": anchor["simulation_time"],
+                        "explanation": "validated external causal anchor from parent lineage",
+                        "external_parent_lineage": anchor["parent_lineage_key"],
+                    })
+                break
+            current = next_event
             depth += 1
 
     action_history = []
@@ -260,7 +306,7 @@ async def api_submit_intervention(run_id: str, body: InterventionRequest):
     if proposal is None:
         raise HTTPException(400, "invalid intervention type or payload")
 
-    lineage_key = lineage_key_for(run["seed"], run.get("engine_version", ENGINE_VERSION), run.get("schema_version", SCHEMA_VERSION))
+    lineage_key = lineage_key_for_run(run)
     accepted, rejected, next_order = run_commit_frame(
         entities, [DomainOutput(proposals=[proposal])], run["current_tick"], lineage_key,
         run_id, run["next_order_index"], f"{run_id}-ext-{influence_id}",
@@ -290,7 +336,11 @@ async def api_submit_intervention(run_id: str, body: InterventionRequest):
         {"run_id": run_id, "tick": run["current_tick"]},
         {"$set": {"ending_state_hash": ending_hash},
          "$setOnInsert": {"id": f"{run_id}-frame-{run['current_tick']}", "starting_state_hash": None,
-                           "accepted_event_ids": [], "rejected_proposal_ids": []}},
+                           "tick": run["current_tick"]},
+         "$push": {
+             "accepted_event_ids": {"$each": [e["id"] for e in accepted]},
+             "rejected_proposal_ids": {"$each": [r["id"] for r in rejected]},
+         }},
         upsert=True,
     )
 

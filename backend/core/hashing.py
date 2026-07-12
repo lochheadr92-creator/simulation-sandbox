@@ -16,3 +16,17 @@ def canonical_json(obj) -> str:
 
 def canonical_hash(obj) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
+
+
+def canonical_entity_list(entities: dict) -> list:
+    """Storage-neutral entity representation shared by fork/hash contracts."""
+    return [{"id": eid, **entities[eid]} for eid in sorted(entities)]
+
+
+def state_content_hash(entities: dict, tick: int, world_context_hash: str) -> str:
+    """Lineage-neutral boundary content hash used only for fork comparison."""
+    return canonical_hash({
+        "tick": tick,
+        "entities": canonical_entity_list(entities),
+        "world_context_hash": world_context_hash,
+    })

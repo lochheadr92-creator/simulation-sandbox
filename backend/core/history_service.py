@@ -106,6 +106,8 @@ def resource_exhausted_entity_id(ev: dict):
 
 
 def shelter_completed_entity_id(ev: dict):
+    if ev.get("event_type") == "fork_genesis":
+        return None
     for eid, spec in ev.get("mutation", {}).get("new_entities", {}).items():
         if spec.get("type") == "shelter":
             return eid
@@ -218,7 +220,13 @@ def provenance_for_entity(entity_id: str, entity: dict, events: list) -> dict:
     """`events` must be the entity_touch_query result, sorted chronologically
     (ascending order_index). Returns ONLY facts derived from `entity`/`events`."""
     etype = entity.get("type") if entity else None
-    genesis = next((ev for ev in events if ev.get("is_exogenous") and ev.get("simulation_time") == 0), None)
+    genesis = next((
+        ev for ev in events
+        if ev.get("event_type") in ("spawn_entity", "fork_genesis")
+    ), None)
+    origin = None
+    if genesis:
+        origin = "fork snapshot" if genesis.get("event_type") == "fork_genesis" else "genesis spawn"
     common = {
         "entity_id": entity_id, "entity_type": etype,
         "spawned_at_tick": genesis["simulation_time"] if genesis else None,
@@ -233,7 +241,7 @@ def provenance_for_entity(entity_id: str, entity: dict, events: list) -> dict:
         for ev in events:
             if ev.get("entity_id") == entity_id:
                 action_counts[ev["event_type"]] = action_counts.get(ev["event_type"], 0) + 1
-        return {**common, "origin": "genesis spawn" if genesis else "unknown", "action_counts": action_counts,
+        return {**common, "origin": origin or "unknown", "action_counts": action_counts,
                 "discoveries": _discoveries_for_person(events, entity_id)[:15],
                 "injuries": [{"tick": ev["simulation_time"], "event_id": ev["id"], "explanation": ev.get("explanation")} for ev in injuries],
                 "death": ({"tick": death_ev["simulation_time"], "event_id": death_ev["id"],
@@ -247,7 +255,7 @@ def provenance_for_entity(entity_id: str, entity: dict, events: list) -> dict:
         for ev in events:
             if ev.get("entity_id") == entity_id:
                 action_counts[ev["event_type"]] = action_counts.get(ev["event_type"], 0) + 1
-        return {**common, "origin": "genesis spawn" if genesis else "unknown", "action_counts": action_counts,
+        return {**common, "origin": origin or "unknown", "action_counts": action_counts,
                 "hunted_by_events": [{"tick": ev["simulation_time"], "event_id": ev["id"], "hunter_id": ev["entity_id"],
                                        "explanation": ev.get("explanation")} for ev in hunt_events],
                 "death": ({"tick": death_ev["simulation_time"], "event_id": death_ev["id"],

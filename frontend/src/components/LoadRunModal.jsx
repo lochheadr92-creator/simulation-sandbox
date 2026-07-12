@@ -66,6 +66,11 @@ export default function LoadRunModal({ open, onClose, onLoaded }) {
                 <div className="text-[10px] text-zinc-500 font-data mt-0.5">
                   {r.scenario_name || r.scenario_id} - seed:{r.seed} - tick {r.current_tick} - {r.status}
                 </div>
+                {r.parent_run_id && (
+                  <div className="text-[10px] text-cyan-700 font-data mt-0.5" data-testid={`fork-lineage-${r.id}`}>
+                    forked from {r.parent_run_id} @ tick {r.forked_from_tick}
+                  </div>
+                )}
               </div>
               <Button
                 variant="outline"

@@ -58,7 +58,8 @@ def build_genesis(seed: str, scenario, lineage_key: str):
 
 
 def run_tick(run_id: str, entities: dict, terrain: list, tick: int, rng, order_index_start: int,
-             lineage_key: str, enabled_domains: list):
+             lineage_key: str, enabled_domains: list,
+             valid_causal_parent_event_ids: set | None = None):
     """Runs exactly one deterministic commit frame at `tick`. Mutates `entities` in place.
 
     `enabled_domains` is a generic list of domain_id strings (from the
@@ -79,6 +80,7 @@ def run_tick(run_id: str, entities: dict, terrain: list, tick: int, rng, order_i
     frame_id = f"frame-{tick}"
     accepted, rejected, next_order = run_commit_frame(
         entities, outputs, tick, lineage_key, run_id, order_index_start, frame_id,
+        valid_causal_parent_event_ids=valid_causal_parent_event_ids,
     )
 
     diagnostics = {}

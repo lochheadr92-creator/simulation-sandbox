@@ -7,6 +7,8 @@ export const api = {
   createRun: (seed, scenario_id) => axios.post(`${BASE}/runs`, { seed, scenario_id }).then((r) => r.data),
   listRuns: () => axios.get(`${BASE}/runs`).then((r) => r.data),
   getRun: (runId) => axios.get(`${BASE}/runs/${runId}`).then((r) => r.data),
+  forkRun: (runId, fork_tick, branch_key = "default") =>
+    axios.post(`${BASE}/runs/${runId}/fork`, { fork_tick, branch_key }).then((r) => r.data),
   getState: (runId) => axios.get(`${BASE}/runs/${runId}/state`).then((r) => r.data),
   step: (runId, ticks = 1) => axios.post(`${BASE}/runs/${runId}/step`, { ticks }).then((r) => r.data),
   pause: (runId) => axios.post(`${BASE}/runs/${runId}/pause`).then((r) => r.data),

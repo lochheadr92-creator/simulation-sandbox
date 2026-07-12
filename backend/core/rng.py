@@ -12,10 +12,20 @@ should embed the calling entity and the simulation tick, so that:
 import hashlib
 import random
 
+RNG_POLICY_VERSION = "named-stream-v1"
+RNG_NAMESPACE = "seed-only-v1"
+
 
 class DeterministicRNG:
-    def __init__(self, run_seed: str):
+    def __init__(self, run_seed: str, namespace: str = RNG_NAMESPACE,
+                 policy_version: str = RNG_POLICY_VERSION):
+        if policy_version != RNG_POLICY_VERSION:
+            raise ValueError(f"unsupported RNG policy: {policy_version}")
+        if namespace != RNG_NAMESPACE:
+            raise ValueError(f"unsupported RNG namespace: {namespace}")
         self.run_seed = str(run_seed)
+        self.namespace = namespace
+        self.policy_version = policy_version
         self._streams = {}
 
     def stream(self, name: str) -> random.Random:

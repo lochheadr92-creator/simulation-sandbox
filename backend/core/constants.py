@@ -1,7 +1,13 @@
 """Core-owned constants and simulation-time helpers. No wall-clock, ever."""
 
-ENGINE_VERSION = "0.3.0"
-SCHEMA_VERSION = "0.2.0"
+ENGINE_VERSION = "0.4.0"
+SCHEMA_VERSION = "0.3.0"
+
+# Phase 5A: versioned Core contracts. These are stored on every new run and
+# fail closed when fork/replay code does not recognize them.
+HASH_POLICY_VERSION = "tick-bound-v1"
+LEGACY_HASH_POLICY_VERSION = "legacy-carry-v0"
+FORK_SEMANTICS_VERSION = "fork-semantics-v1"
 
 REGROWTH_INTERVAL = 5
 REGROWTH_AMOUNT = 6
