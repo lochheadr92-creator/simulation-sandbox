@@ -1,4 +1,6 @@
 """Utility scoring (Phase 2) - transparent, multi-factor, fully inspectable.
+Phase 5B: travel cost is path length of a reachable route (not Manhattan);
+unreachable targets are excluded from availability.
 
     score = severity*W_SEVERITY + predicted*W_PREDICTED - travel*W_TRAVEL
             - interrupt*W_INTERRUPT + availability*W_AVAILABILITY - risk*W_RISK
@@ -9,7 +11,8 @@ opaque number. Nothing here is random; all lookups go through the actor's
 own `knowledge` (resource memory), never an omniscient global search.
 """
 from core.geometry import manhattan
-from core.constants import SEEK_THRESHOLD, VISION_RADIUS
+from core.navigation import ARRIVAL_ADJACENT, ARRIVAL_EXACT, path_length
+from core.constants import SEEK_THRESHOLD, VISION_RADIUS, GATHER_TICKS, HUNT_TICKS
 
 W_SEVERITY = 1.0
 W_PREDICTED = 0.5
@@ -29,126 +32,198 @@ UNAVAILABLE_NEED_CAP = 45  # hard cap on severity/predicted contribution when a 
                             # water" deadlock.
 
 
-def _score(goal, severity, predicted, travel_cost, availability, risk, interrupt_cost):
+def _score(goal, severity, predicted, travel_cost, availability, risk, interrupt_cost,
+           extra=None):
     need_term = severity * W_SEVERITY + predicted * W_PREDICTED
     if availability <= 0:
         need_term = min(need_term, UNAVAILABLE_NEED_CAP)
     score = (need_term - travel_cost * W_TRAVEL - interrupt_cost * W_INTERRUPT
              + availability * W_AVAILABILITY - risk * W_RISK)
-    return {
+    row = {
         "goal": goal, "severity": round(severity, 1), "predicted_severity": round(predicted, 1),
         "travel_cost": travel_cost, "availability": availability, "risk": risk,
         "interruption_cost": interrupt_cost, "score": round(score, 2),
     }
+    if extra:
+        row.update(extra)
+    return row
 
 
-def nearest_known_water(pos, knowledge):
+def nearest_known_water(pos, knowledge, terrain=None):
+    """Nearest *reachable* known water by adjacent-arrival path length.
+
+    When terrain is omitted (legacy callers), falls back to Manhattan.
+    Unreachable water is skipped when terrain is provided.
+    """
     best, best_d = None, None
     for key in sorted(knowledge.get("known_water_tiles", [])):
         x, y = (int(v) for v in key.split(","))
-        d = manhattan(pos, {"x": x, "y": y})
+        wpos = {"x": x, "y": y}
+        if terrain is not None:
+            d = path_length(pos, wpos, terrain, ARRIVAL_ADJACENT)
+            if d is None:
+                continue
+        else:
+            d = manhattan(pos, wpos)
         if best_d is None or d < best_d:
-            best_d, best = d, {"x": x, "y": y}
+            best_d, best = d, wpos
     return best, best_d
 
 
-def nearest_known_tree(pos, knowledge, min_resource=1):
-    best, best_d, best_id = None, None, None
+def nearest_known_tree(pos, knowledge, min_resource=1, terrain=None):
+    best, best_d, best_id, best_res = None, None, None, 0
     known_trees = knowledge.get("known_trees", {})
     for tid in sorted(known_trees):
         info = known_trees[tid]
-        if info.get("last_known_resource", 0) < min_resource:
+        res = info.get("last_known_resource", 0)
+        if res < min_resource:
             continue
-        d = manhattan(pos, info["position"])
+        tpos = info["position"]
+        if terrain is not None:
+            d = path_length(pos, tpos, terrain, ARRIVAL_EXACT)
+            if d is None:
+                continue
+        else:
+            d = manhattan(pos, tpos)
         if best_d is None or d < best_d:
-            best_d, best, best_id = d, info["position"], tid
-    return best_id, best, best_d
+            best_d, best, best_id, best_res = d, tpos, tid, res
+    return best_id, best, best_d, best_res
 
 
-def nearest_known_shelter(pos, knowledge, owner_id=None):
+def nearest_known_shelter(pos, knowledge, owner_id=None, terrain=None):
     best, best_d, best_id = None, None, None
     known_shelters = knowledge.get("known_shelters", {})
     for sid in sorted(known_shelters):
         info = known_shelters[sid]
         if owner_id is not None and info.get("owner_id") != owner_id:
             continue
-        d = manhattan(pos, info["position"])
+        spos = info["position"]
+        if terrain is not None:
+            d = path_length(pos, spos, terrain, ARRIVAL_EXACT)
+            if d is None:
+                continue
+        else:
+            d = manhattan(pos, spos)
         if best_d is None or d < best_d:
-            best_d, best, best_id = d, info["position"], sid
+            best_d, best, best_id = d, spos, sid
     return best_id, best, best_d
 
 
-def nearest_known_carcass(pos, knowledge, min_resource=1):
+def nearest_known_carcass(pos, knowledge, min_resource=1, terrain=None):
     """Mirrors nearest_known_tree - carcasses are tracked in resource
     memory exactly like trees (Phase 4B: minimal survival food chain)."""
-    best, best_d, best_id = None, None, None
+    best, best_d, best_id, best_res = None, None, None, 0
     known_carcasses = knowledge.get("known_carcasses", {})
     for cid in sorted(known_carcasses):
         info = known_carcasses[cid]
-        if info.get("last_known_resource", 0) < min_resource:
+        res = info.get("last_known_resource", 0)
+        if res < min_resource:
             continue
-        d = manhattan(pos, info["position"])
+        cpos = info["position"]
+        if terrain is not None:
+            d = path_length(pos, cpos, terrain, ARRIVAL_EXACT)
+            if d is None:
+                continue
+        else:
+            d = manhattan(pos, cpos)
         if best_d is None or d < best_d:
-            best_d, best, best_id = d, info["position"], cid
-    return best_id, best, best_d
+            best_d, best, best_id, best_res = d, cpos, cid, res
+    return best_id, best, best_d, best_res
 
 
-def nearest_known_food(pos, knowledge, min_resource=1):
+def nearest_known_food(pos, knowledge, min_resource=1, terrain=None):
     """A person's food source can be a tree (foraged wood/food, unchanged
-    since Phase 2) OR a carcass (meat, Phase 4B) - whichever known source
-    is nearer wins. Returns (id, pos, distance, kind)."""
-    tree_id, tree_pos, tree_d = nearest_known_tree(pos, knowledge, min_resource)
-    carcass_id, carcass_pos, carcass_d = nearest_known_carcass(pos, knowledge, min_resource)
+    since Phase 2) OR a carcass (meat, Phase 4B) - whichever known *reachable*
+    source is nearer by path length wins. Returns (id, pos, distance, kind, resource)."""
+    tree_id, tree_pos, tree_d, tree_res = nearest_known_tree(pos, knowledge, min_resource, terrain)
+    carcass_id, carcass_pos, carcass_d, carcass_res = nearest_known_carcass(
+        pos, knowledge, min_resource, terrain)
     if tree_id and (carcass_id is None or tree_d <= carcass_d):
-        return tree_id, tree_pos, tree_d, "tree"
+        return tree_id, tree_pos, tree_d, "tree", tree_res
     if carcass_id:
-        return carcass_id, carcass_pos, carcass_d, "carcass"
-    return None, None, None, "tree"
+        return carcass_id, carcass_pos, carcass_d, "carcass", carcass_res
+    return None, None, None, "tree", 0
 
 
-def nearest_huntable_animal(pos, entities):
-    """Live-perception targeting (NOT persistent knowledge memory, unlike
-    trees/water/shelters/carcasses) - animals move constantly, so a
-    remembered animal position from many ticks ago would almost certainly
-    be stale/wrong. "Huntable" is a derived, inspectable state - alive AND
-    not currently fleeing - not a stored field, so it can never desync from
-    the real driving conditions (AnimalDomain's own flee logic)."""
+def nearest_huntable_animal(pos, knowledge, terrain=None, perception_delta=None, entities=None):
+    """Hunt targets from personal knowledge and/or this-tick perception only.
+
+    Never scans the full entity table for animals the observer has not
+    perceived or retained. Prefer currently perceived live animals; fall back
+    to last-known positions from knowledge (may be stale — strike can fail).
+    """
+    entities = entities or {}
+    known = dict((knowledge or {}).get("known_animals", {}))
+    sighted = dict((perception_delta or {}).get("animal_sightings", {}))
+    candidate_ids = sorted(set(known) | set(sighted))
     best, best_d, best_id = None, None, None
-    for eid in sorted(entities):
-        e = entities[eid]
-        if e.get("type") != "animal" or not e.get("alive", True):
-            continue
-        if (e.get("action") or {}).get("type") == "flee":
-            continue
-        d = manhattan(pos, e["position"])
-        if d > VISION_RADIUS:
-            continue
-        if best_d is None or d < best_d:
-            best_d, best, best_id = d, e["position"], eid
+    for eid in candidate_ids:
+        live = entities.get(eid)
+        if live is not None:
+            if live.get("type") != "animal" or not live.get("alive", True):
+                continue
+            if (live.get("action") or {}).get("type") == "flee":
+                continue
+            apos = live["position"]
+            # Live target must still be in vision for a current strike plan
+            if manhattan(pos, apos) > VISION_RADIUS and eid not in known:
+                continue
+        else:
+            info = known.get(eid) or sighted.get(eid)
+            if not info:
+                continue
+            apos = info.get("position")
+            if not apos:
+                continue
+        if terrain is not None:
+            d = path_length(pos, apos, terrain, ARRIVAL_EXACT)
+            if d is None:
+                continue
+        else:
+            d = manhattan(pos, apos)
+        # Prefer currently perceived over stale-only knowledge at equal distance
+        prefer = 0 if eid in sighted else 1
+        rank = (d, prefer, eid)
+        best_rank = None if best_id is None else (
+            best_d, 0 if best_id in sighted else 1, best_id,
+        )
+        if best_rank is None or rank < best_rank:
+            best_d, best, best_id = d, dict(apos), eid
     return best_id, best, best_d
 
 
-def nearest_unknown_tile(pos, knowledge, terrain, width, height):
-    """Only considers PASSABLE unknown tiles as travel targets - walking
-    toward an unknown water tile would never "arrive" since water tiles are
-    impassable. Water tiles still get discovered naturally via vision radius
-    once the actor is near their (passable) shore."""
-    known = set(knowledge.get("known_tiles", []))
-    best, best_d = None, None
-    for y in range(height):
-        for x in range(width):
-            if terrain[y][x] == "water":
-                continue
-            key = f"{x},{y}"
-            if key in known:
-                continue
-            d = manhattan(pos, {"x": x, "y": y})
-            if best_d is None or d < best_d:
-                best_d, best = d, {"x": x, "y": y}
-    return best, best_d
+def nearest_unknown_tile(pos, knowledge, terrain, width=None, height=None):
+    """Exploration target: first passable unknown 4-neighbour (N,E,S,W).
+
+    No full-map frontier scan (Phase 5A5). If every neighbour is known or
+    blocked, returns (None, None) so utility can fall through to WANDER.
+    """
+    from domains.perception import neighbor_unknown_tiles
+    neighbours = neighbor_unknown_tiles(pos, knowledge, terrain)
+    if not neighbours:
+        return None, None
+    # neighbour_unknown_tiles already uses fixed NEIGHBOR_DELTAS order
+    target = neighbours[0]
+    return target, 1
 
 
-def score_candidates(e, knowledge, pos, tick, night, current_action, terrain, entities=None):
+def _resource_availability(resource_amount, carried=False):
+    """Bounded availability from known remaining resource (or carried food)."""
+    if carried:
+        return 1.0
+    if not resource_amount:
+        return 0.0
+    # Cap at 1.0 once resource covers a full gather yield-ish amount.
+    return min(1.0, float(resource_amount) / 40.0)
+
+
+def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
+                     entities=None, perception_delta=None):
+    """Score plan goals from Needs urgency + personal Knowledge only.
+
+    `entities` may be consulted only to resolve currently perceived subjects
+    already present in knowledge/perception_delta (never as a global target scan).
+    """
     height = len(terrain)
     width = len(terrain[0]) if height else 0
     hunger, thirst, energy = e["hunger"], e["thirst"], e["energy"]
@@ -163,53 +238,98 @@ def score_candidates(e, knowledge, pos, tick, night, current_action, terrain, en
 
     candidates = []
 
-    water_pos, water_d = nearest_known_water(pos, knowledge)
+    water_pos, water_d = nearest_known_water(pos, knowledge, terrain)
     travel = water_d if water_d is not None else 0
     predicted = thirst + THIRST_RATE * travel
     avail = 1.0 if water_pos else 0.0
     sev = thirst if thirst >= SEEK_THRESHOLD else thirst * 0.25
-    candidates.append(_score("SEEK_WATER", sev, predicted, travel, avail, 0, interrupt_for(("drink", "travel"))))
+    candidates.append(_score(
+        "SEEK_WATER", sev, predicted, travel, avail, 0, interrupt_for(("drink", "travel")),
+        extra={"path_length": water_d, "reachable": bool(water_pos), "target_pos": water_pos},
+    ))
 
-    tree_id, tree_pos, tree_d = nearest_known_tree(pos, knowledge)
-    food_id, food_pos, food_d, food_kind = nearest_known_food(pos, knowledge)
+    tree_id, tree_pos, tree_d, tree_res = nearest_known_tree(pos, knowledge, terrain=terrain)
+    food_id, food_pos, food_d, food_kind, food_res = nearest_known_food(pos, knowledge, terrain=terrain)
     has_carried_food = e["inventory"] > 0 or e.get("food_inventory", 0) > 0
     travel = 0 if has_carried_food else (food_d if food_d is not None else 0)
-    predicted = hunger + HUNGER_RATE * travel
-    avail = 1.0 if (has_carried_food or food_id) else 0.0
+    # Include gather duration in predicted need growth when travel is required.
+    action_time = 0 if has_carried_food else (GATHER_TICKS if food_id else 0)
+    predicted = hunger + HUNGER_RATE * (travel + action_time)
+    avail = _resource_availability(food_res, carried=has_carried_food) if (has_carried_food or food_id) else 0.0
+    if has_carried_food:
+        avail = 1.0
     sev = hunger if hunger >= SEEK_THRESHOLD else hunger * 0.25
-    candidates.append(_score("SEEK_FOOD", sev, predicted, travel, avail, 0, interrupt_for(("eat", "gather", "travel"))))
+    candidates.append(_score(
+        "SEEK_FOOD", sev, predicted, travel, avail, 0, interrupt_for(("eat", "gather", "travel")),
+        extra={
+            "path_length": food_d if not has_carried_food else 0,
+            "reachable": bool(has_carried_food or food_id),
+            "target_pos": food_pos if not has_carried_food else None,
+            "target_resource": food_res if not has_carried_food else None,
+            "action_time": action_time,
+        },
+    ))
 
     rest_threshold = 600 if night else 300
     deficit = max(0, rest_threshold - energy)
-    shelter_id, shelter_pos, shelter_d = nearest_known_shelter(pos, knowledge, owner_id=e.get("id"))
+    shelter_id, shelter_pos, shelter_d = nearest_known_shelter(pos, knowledge, owner_id=e.get("id"), terrain=terrain)
     sleep_travel = shelter_d if shelter_pos else 0
-    candidates.append(_score("SLEEP", deficit * 1.4, deficit * 1.4, sleep_travel, 1.0, 0, interrupt_for(("sleep", "travel"))))
+    candidates.append(_score(
+        "SLEEP", deficit * 1.4, deficit * 1.4, sleep_travel, 1.0, 0, interrupt_for(("sleep", "travel")),
+        extra={"path_length": shelter_d, "reachable": True, "target_pos": shelter_pos},
+    ))
 
     want_shelter = e["inventory"] >= 10 and not e.get("has_shelter")
     build_avail = 1.0 if want_shelter else 0.0
-    candidates.append(_score("BUILD_SHELTER", 240 if want_shelter else 0, 240 if want_shelter else 0,
-                              0, build_avail, 0, interrupt_cost))
+    # Build plan may require a reachable tree; if none, still score but availability reflects want.
+    build_travel = tree_d if (want_shelter and tree_d is not None) else 0
+    candidates.append(_score(
+        "BUILD_SHELTER", 240 if want_shelter else 0, 240 if want_shelter else 0,
+        build_travel, build_avail, 0, interrupt_cost,
+        extra={"path_length": tree_d if want_shelter else 0, "reachable": bool(tree_id) if want_shelter else True},
+    ))
 
+    # Surplus gather when already on or adjacent to a reachable tree (historical adjacency).
     gather_avail = 1.0 if (tree_id and tree_d is not None and tree_d <= 1) else 0.0
-    candidates.append(_score("GATHER_SURPLUS", 95 if (gather_avail and e["inventory"] < 20) else 0,
-                              0, 0, gather_avail, 0, interrupt_cost))
+    candidates.append(_score(
+        "GATHER_SURPLUS", 95 if (gather_avail and e["inventory"] < 20) else 0,
+        0, 0, gather_avail, 0, interrupt_cost,
+        extra={"path_length": tree_d, "reachable": bool(tree_id and tree_d is not None and tree_d <= 1)},
+    ))
 
-    animal_id, animal_pos, animal_d = nearest_huntable_animal(pos, entities or {})
+    animal_id, animal_pos, animal_d = nearest_huntable_animal(
+        pos, knowledge, terrain, perception_delta=perception_delta, entities=entities or {},
+    )
     hunt_avail = 1.0 if animal_id else 0.0
     hunt_travel = animal_d if animal_d is not None else 0
-    hunt_predicted = hunger + HUNGER_RATE * hunt_travel
+    hunt_predicted = hunger + HUNGER_RATE * (hunt_travel + HUNT_TICKS)
     hunt_sev = (hunger if hunger >= SEEK_THRESHOLD else hunger * 0.25) * 0.7  # discounted: slower/riskier than foraging
     hunt_risk = 15 if night else 5
-    candidates.append(_score("HUNT", hunt_sev, hunt_predicted, hunt_travel, hunt_avail, hunt_risk, interrupt_for(("hunt_strike", "travel"))))
+    candidates.append(_score(
+        "HUNT", hunt_sev, hunt_predicted, hunt_travel, hunt_avail, hunt_risk, interrupt_for(("hunt_strike", "travel")),
+        extra={
+            "path_length": animal_d, "reachable": bool(animal_id), "target_pos": animal_pos,
+            "action_time": HUNT_TICKS, "target_source": "knowledge_or_perception",
+        },
+    ))
 
     frontier, frontier_d = nearest_unknown_tile(pos, knowledge, terrain, width, height)
     explore_avail = 1.0 if frontier else 0.0
     urgent_but_blind = (hunger >= SEEK_THRESHOLD or thirst >= SEEK_THRESHOLD) and not (water_pos or food_id)
     explore_sev = 55 + (35 if urgent_but_blind else 0)
     explore_risk = 35 if night else 0
-    candidates.append(_score("EXPLORE", explore_sev, explore_sev, frontier_d or 0, explore_avail, explore_risk, interrupt_cost))
+    candidates.append(_score(
+        "EXPLORE", explore_sev, explore_sev, frontier_d or 0, explore_avail, explore_risk, interrupt_cost,
+        extra={
+            "path_length": frontier_d, "reachable": bool(frontier), "target_pos": frontier,
+            "explore_mode": "neighbour_only", "urgent_without_known_solution": urgent_but_blind,
+        },
+    ))
 
-    candidates.append(_score("WANDER", 25, 25, 0, 1.0, 0, interrupt_cost))
+    candidates.append(_score(
+        "WANDER", 25, 25, 0, 1.0, 0, interrupt_cost,
+        extra={"path_length": 0, "reachable": True},
+    ))
 
     context = {
         "water_target": water_pos, "tree_target_id": tree_id, "tree_target_pos": tree_pos,

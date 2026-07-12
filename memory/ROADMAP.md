@@ -8,13 +8,28 @@ The detailed fork decision and implementation boundary are recorded in [ADR-001:
 
 1. 5A1 - Fork Semantics Contract
 2. 5A2 - Fork Implementation
-3. 5B - Economy
-4. 5C1 - Canonical World-State Entity
-5. 5C2 - Weather Transitions and Effects
-6. 5D - Combat
-7. 5E - Reproduction and Genetics
+3. 5A3 - Deterministic Navigation (behaviour; implemented)
+4. 5A4a - Transactional Tick Persistence (implemented)
+5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — **current**
+6. 5B - Economy
+7. 5C1 - Canonical World-State Entity
+8. 5C2 - Weather Transitions and Effects
+9. 5D - Combat
+10. 5E - Reproduction and Genetics
 
 No phase may be marked complete from workflow labels such as `testing_agent_v4`. Completion requires reproducible repository commands and recorded results.
+
+## 5A5 - Cognitive Grounding Vertical Slice
+
+**Status:** in progress / implemented as a vertical slice.
+
+**Goal:** close remaining omniscient decision paths so survival targets come only from bounded perception and sparse personal knowledge.
+
+- Perception: integer Manhattan vision; detections for people, animals, food, water, shelter, danger; material-change only knowledge writes.
+- Knowledge: observer-owned facts (`knowledge-v2`) with last-known locations; no full world copy; caps per category.
+- Planning: Needs drive urgency; eligible targets only from knowledge / this-tick detections; exploration is 4-neighbour unknown tiles only.
+- Animals are not globally scanned for hunting; last-known animal positions may go stale without becoming live truth.
+- Economy, weather, combat, and reproduction remain later stages (unchanged goals below).
 
 ## 5A1 - Fork Semantics Contract
 

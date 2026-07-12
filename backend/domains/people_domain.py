@@ -1,32 +1,19 @@
-"""PeopleDomain (Phase 2): multi-stage actions, short plans, knowledge-driven
-utility, deterministic interruption/resume. Still proposal-only, still reads
-only Core-issued named RNG streams, still never mutates or touches storage.
+"""PeopleDomain (Phase 2 + 5A5 cognitive grounding).
 
-Phase 4B note: this domain no longer proposes person death itself - that is
-now owned entirely by LifecycleDomain (see domains/lifecycle_domain.py),
-which runs earlier in the same tick (environment phase) so a person's death
-always commits before their own action proposal is evaluated. This domain
-only guards against acting AFTER death by adding an `alive == True`
-precondition to every action proposal (see _build_proposal below) - Core's
-existing sequential commit-time revalidation is what makes a same-tick
-death correctly cancel that tick's action, with zero Core changes.
+Per-tick cognitive chain (same activation, proposal-only):
+  1. Observation frame is version-pinned by Core (entities_view deepcopy).
+  2. Bounded perceive() — integer Manhattan vision; sorted entity IDs.
+  3. merge_knowledge — material changes only (no silent full-world copy).
+  4. Needs evaluation + score_candidates from knowledge / this-tick detections.
+  5. form_plan / start_step / execute_action_tick.
+  6. Single proposal; knowledge field omitted when unchanged (bounded growth).
+  7. Core commit pipeline remains authoritative.
 
-Per-tick flow for each living person:
-  1. perceive() + merge into persistent `knowledge` (canonical, discovered-only)
-  2. decide WHICH action should be active this tick:
-       a. a critical need (>= CRITICAL_THRESHOLD) interrupts an unrelated
-          in-progress interruptible action -> pause it, plan the critical goal
-       b. otherwise keep continuing an in-progress action as-is
-       c. otherwise resume a previously paused action if one exists
-       d. otherwise score fresh candidates (people_utility.score_candidates)
-          and form a new short plan (people_planning.form_plan)
-  3. always progress the (possibly just-decided) action by exactly one tick
-     (people_planning.execute_action_tick) - this is what makes actions
-     multi-frame and each step individually observable
-  4. if the step finished, advance the plan to its next step (or complete it)
+Omniscient target scans are not used for planning. Hunting uses known/perceived
+animals only. Exploration uses passable unknown 4-neighbours only.
 """
 from domains.base import DomainEngine, DomainOutput
-from domains.perception import perceive, merge_knowledge, empty_knowledge
+from domains.perception import perceive, merge_knowledge, empty_knowledge, _compat_knowledge
 from domains.people_utility import score_candidates
 from domains.people_planning import (
     idle_action, empty_plan, check_critical_interrupt, form_plan, start_step,
@@ -36,7 +23,7 @@ from domains.people_planning import (
 
 class PeopleDomain(DomainEngine):
     engine_id = "people"
-    engine_version = "2.0.0"
+    engine_version = "2.1.0"
     engine_priority = 10
     phase = "agent"
 
@@ -48,10 +35,9 @@ class PeopleDomain(DomainEngine):
         diagnostics = {}
         night = getattr(frame, "night", False)
         terrain = frame.terrain
-        height = len(terrain)
-        width = len(terrain[0]) if height else 0
 
-        for eid in frame.due_entity_ids:
+        # Stable activation order
+        for eid in sorted(frame.due_entity_ids):
             e = frame.entities.get(eid)
             if not e or e["type"] != "person" or not e.get("alive", True):
                 continue
@@ -60,15 +46,21 @@ class PeopleDomain(DomainEngine):
             pos = e["position"]
             rng = frame.rng.stream(f"people.{eid}.decision.{tick}")
 
-            existing_knowledge = e.get("knowledge") or empty_knowledge()
-            delta = perceive(pos, frame.entities, terrain, tick)
-            knowledge, _discovered = merge_knowledge(existing_knowledge, delta)
+            existing_knowledge = _compat_knowledge(e.get("knowledge") or empty_knowledge())
+            # Perception from pinned frame only (frame.entities is the observation view).
+            delta = perceive(pos, frame.entities, terrain, tick, observer_id=eid)
+            knowledge, knowledge_changed, learned = merge_knowledge(
+                existing_knowledge, delta, observer_id=eid,
+            )
 
             action = dict(e.get("action") or idle_action())
             plan = dict(e.get("plan") or empty_plan())
             paused = e.get("paused")
 
-            candidates, context = score_candidates(e, knowledge, pos, tick, night, action, terrain, frame.entities)
+            candidates, context = score_candidates(
+                e, knowledge, pos, tick, night, action, terrain,
+                entities=frame.entities, perception_delta=delta,
+            )
             cand_by_goal = {c["goal"]: c for c in candidates}
 
             critical_goal = check_critical_interrupt(e)
@@ -89,7 +81,7 @@ class PeopleDomain(DomainEngine):
                 decision_note = f"CRITICAL: {critical_goal} interrupts in-progress {paused['action']['type']}"
 
             elif active_now:
-                decision_note = ""  # just continue; nothing new decided this tick
+                decision_note = ""  # continue; nothing new decided this tick
 
             elif paused and not critical_available:
                 action = dict(paused["action"])
@@ -101,13 +93,22 @@ class PeopleDomain(DomainEngine):
 
             else:
                 best = max(candidates, key=lambda c: c["score"])
+                ranked = sorted(candidates, key=lambda c: (-c["score"], c["goal"]))
+                runner = next((c for c in ranked if c["goal"] != best["goal"]), None)
                 plan = form_plan(best["goal"], e, context, tick)
                 action = start_step(plan["steps"][0], e, eid, context, terrain, tick, pos)
                 selected_goal = best["goal"]
                 candidates_out = candidates
-                decision_note = f"selected {best['goal']} (score={best['score']})"
+                if runner:
+                    decision_note = (
+                        f"selected {best['goal']} (score={best['score']}, travel={best.get('travel_cost')}) "
+                        f"over {runner['goal']} (score={runner['score']}, travel={runner.get('travel_cost')})"
+                    )
+                else:
+                    decision_note = f"selected {best['goal']} (score={best['score']})"
+                if best["goal"] == "EXPLORE" and best.get("urgent_without_known_solution"):
+                    decision_note += "; explore: urgent need without known solution"
 
-            # Always progress the (possibly just-decided) action by one tick.
             result = execute_action_tick(e, eid, action, frame.entities, terrain, tick, night, rng)
             action = result["action"]
             tree_delta = action.pop("_tree_delta", None)
@@ -115,6 +116,8 @@ class PeopleDomain(DomainEngine):
             animal_delta = action.pop("_animal_delta", None)
             step_note = result["explanation"]
             explanation = f"{decision_note} -> {step_note}" if decision_note else step_note
+            if knowledge_changed and learned:
+                explanation = f"learned {len(learned)} fact(s); {explanation}"
 
             if result["advance_plan"]:
                 plan["step_index"] = plan.get("step_index", 0) + 1
@@ -125,24 +128,59 @@ class PeopleDomain(DomainEngine):
                 else:
                     plan["status"] = "completed" if action["status"] != "failed" else "abandoned"
 
-            proposal = self._build_proposal(e, eid, action, plan, paused, knowledge, result,
-                                             tree_delta, carcass_delta, animal_delta, tick, explanation)
+            proposal = self._build_proposal(
+                e, eid, action, plan, paused, knowledge, knowledge_changed, result,
+                tree_delta, carcass_delta, animal_delta, tick, explanation,
+            )
             proposals.append(proposal)
             diagnostics[eid] = {
-                "candidates": candidates_out, "selected_goal": selected_goal, "explanation": explanation,
-                "rng_stream": f"people.{eid}.decision.{tick}", "night": night,
+                "candidates": candidates_out,
+                "selected_goal": selected_goal,
+                "explanation": explanation,
+                "rng_stream": f"people.{eid}.decision.{tick}",
+                "night": night,
+                "perception": {
+                    "radius": delta.get("radius"),
+                    "rule_version": delta.get("perception_rule_version"),
+                    "detection_count": len(delta.get("detections") or []),
+                    "detections": (delta.get("detections") or [])[:12],
+                    "knowledge_changed": knowledge_changed,
+                    "learned": learned[:12],
+                },
+                "planning": {
+                    "selected_goal": selected_goal,
+                    "target_from_knowledge": bool(
+                        context.get("water_target") or context.get("food_target_id")
+                        or context.get("animal_target_id") or context.get("frontier_target")
+                    ),
+                    "explore_neighbour_only": True,
+                },
             }
 
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
-    def _build_proposal(self, e, eid, action, plan, paused, knowledge, result,
-                         tree_delta, carcass_delta, animal_delta, tick, explanation):
-        entity_updates = {eid: {
-            "position": result["pos"], "hunger": result["hunger"], "thirst": result["thirst"],
-            "energy": result["energy"], "inventory": result["inventory"], "food_inventory": result["food_inventory"],
-            "has_shelter": result["has_shelter"], "knowledge": knowledge, "action": action, "plan": plan,
-            "paused": paused, "current_goal": plan.get("goal"),
-        }}
+    def _build_proposal(self, e, eid, action, plan, paused, knowledge, knowledge_changed,
+                        result, tree_delta, carcass_delta, animal_delta, tick, explanation):
+        entity_updates = {
+            eid: {
+                "position": result["pos"],
+                "hunger": result["hunger"],
+                "thirst": result["thirst"],
+                "energy": result["energy"],
+                "inventory": result["inventory"],
+                "food_inventory": result["food_inventory"],
+                "has_shelter": result["has_shelter"],
+                "action": action,
+                "plan": plan,
+                "paused": paused,
+                "current_goal": plan.get("goal"),
+            }
+        }
+        # Bounded growth: rewrite knowledge only on material perception change
+        # (accepted event still carries the action; knowledge rides along when new).
+        if knowledge_changed:
+            entity_updates[eid]["knowledge"] = knowledge
+
         touched_scope = list(result["touched_scope"])
         preconditions = list(result["preconditions"])
         preconditions.append({"entity_id": eid, "field": "alive", "op": "eq", "value": True})
@@ -150,7 +188,9 @@ class PeopleDomain(DomainEngine):
 
         for delta in (tree_delta, carcass_delta):
             if delta:
-                entity_updates[delta["id"]] = {"resource": delta["resource"], "claimed_tick": delta["claimed_tick"]}
+                entity_updates[delta["id"]] = {
+                    "resource": delta["resource"], "claimed_tick": delta["claimed_tick"],
+                }
                 if delta["id"] not in touched_scope:
                     touched_scope.append(delta["id"])
 

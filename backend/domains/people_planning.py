@@ -1,10 +1,14 @@
 """Multi-stage actions + short plans (Phase 2; extended in Phase 4B with a
-minimal hunting/carcass step for the survival food chain).
+minimal hunting/carcass step for the survival food chain; Phase 5B navigation
+stores canonical routes and advances them deterministically).
 
 Canonical `action` shape:
     {"type", "status", "target_entity_id", "target_pos", "ticks_spent",
      "ticks_required", "interruptible", "started_tick", "arrival_action",
-     "shelter_bonus", "target_kind"}
+     "shelter_bonus", "target_kind",
+     # travel route fields (Phase 5B; present when type == travel)
+     "arrival_mode", "travel_purpose", "remaining_path", "route_length",
+     "planned_from", "route_version", "unreachable", "invalidation_reason"}
 status in: planned | travelling | performing | paused | completed | failed | cancelled
 
 Canonical `plan` shape:
@@ -27,15 +31,18 @@ mutate a tree's `resource` via `_tree_delta`/`_carcass_delta` (any domain
 may propose a mutation on any entity id; Core's precondition-driven commit
 ordering is what resolves conflicts, not domain ownership).
 """
-from core.geometry import step_toward, manhattan, is_water_adjacent
+from core.geometry import manhattan, is_water_adjacent, is_passable
+from core.navigation import (
+    ARRIVAL_ADJACENT, ARRIVAL_EXACT, ROUTE_VERSION,
+    copy_pos, find_path, is_goal, pos_eq,
+)
 from core.constants import (GATHER_TICKS, BUILD_TICKS, SHELTER_COST, GATHER_YIELD,
                              SLEEP_ENERGY_TARGET, CRITICAL_THRESHOLD, HUNT_TICKS, HUNT_DAMAGE,
                              ANIMAL_MAX_HEALTH, CARCASS_MEAT_YIELD, CARCASS_HARVEST_YIELD,
                              MEAT_HUNGER_REDUCTION)
 
 TRAVEL_STALL_LIMIT = 25  # deterministic safety net: abandon a travel step that
-                          # cannot make progress (e.g. a target boxed in by water)
-                          # rather than looping forever - triggers a clean replan.
+                          # cannot make progress rather than looping forever.
 
 PLAN_STEPS = {
     "SEEK_WATER": ["TRAVEL_WATER", "DRINK"],
@@ -46,6 +53,18 @@ PLAN_STEPS = {
     "HUNT": ["TRAVEL_ANIMAL", "HUNT_STRIKE"],   # Phase 4B: minimal survival food-chain extension
     "EXPLORE": ["TRAVEL_FRONTIER"],
     "WANDER": ["WANDER_STEP"],
+}
+
+# Travel step -> (arrival_mode, arrival_action or None)
+# Passable destinations use exact-tile arrival; impassable water uses adjacent.
+TRAVEL_ARRIVAL = {
+    "TRAVEL_WATER": (ARRIVAL_ADJACENT, "DRINK"),
+    "TRAVEL_TREE": (ARRIVAL_EXACT, "GATHER"),
+    "TRAVEL_FOOD": (ARRIVAL_EXACT, "GATHER_FOOD"),
+    "TRAVEL_SITE": (ARRIVAL_EXACT, "BUILD"),
+    "TRAVEL_SHELTER": (ARRIVAL_EXACT, "SLEEP"),
+    "TRAVEL_FRONTIER": (ARRIVAL_EXACT, None),
+    "TRAVEL_ANIMAL": (ARRIVAL_EXACT, "HUNT_STRIKE"),
 }
 
 
@@ -94,34 +113,73 @@ def form_plan(goal, e, context, tick):
     return {"goal": goal, "steps": steps, "step_index": 0, "status": "active"}
 
 
+def _bind_route(action, pos, terrain, arrival_mode, invalidation_reason=None):
+    """Attach a freshly computed deterministic route to a travel action."""
+    target = action.get("target_pos")
+    path = find_path(pos, target, terrain, arrival_mode) if target is not None else None
+    action["arrival_mode"] = arrival_mode
+    action["planned_from"] = copy_pos(pos)
+    action["route_version"] = ROUTE_VERSION
+    action["invalidation_reason"] = invalidation_reason
+    if path is None:
+        action["remaining_path"] = []
+        action["route_length"] = None
+        action["unreachable"] = True
+        return action, False
+    action["remaining_path"] = [copy_pos(p) for p in path]
+    action["route_length"] = len(path)
+    action["unreachable"] = False
+    return action, True
+
+
 def start_step(step, e, eid, context, terrain, tick, pos):
     base = {"ticks_spent": 0, "interruptible": True, "started_tick": tick,
             "target_entity_id": None, "target_pos": None, "ticks_required": 0, "arrival_action": None}
-    if step == "TRAVEL_WATER":
-        return {**base, "type": "travel", "status": "travelling", "target_pos": context["water_target"], "arrival_action": "DRINK"}
-    if step == "TRAVEL_TREE":
-        return {**base, "type": "travel", "status": "travelling", "target_entity_id": context["tree_target_id"],
-                "target_pos": context["tree_target_pos"], "arrival_action": "GATHER"}
-    if step == "TRAVEL_FOOD":
-        return {**base, "type": "travel", "status": "travelling", "target_entity_id": context.get("food_target_id"),
-                "target_pos": context.get("food_target_pos"), "arrival_action": "GATHER_FOOD",
-                "target_kind": context.get("food_target_kind", "tree")}
-    if step == "TRAVEL_SITE":
-        return {**base, "type": "travel", "status": "travelling", "target_pos": context.get("shelter_site", pos), "arrival_action": "BUILD"}
-    if step == "TRAVEL_SHELTER":
-        return {**base, "type": "travel", "status": "travelling", "target_entity_id": context.get("shelter_target_id"),
-                "target_pos": context.get("shelter_target_pos"), "arrival_action": "SLEEP"}
-    if step == "TRAVEL_FRONTIER":
-        return {**base, "type": "travel", "status": "travelling", "target_pos": context.get("frontier_target")}
-    if step == "TRAVEL_ANIMAL":
-        return {**base, "type": "travel", "status": "travelling", "target_entity_id": context.get("animal_target_id"),
-                "target_pos": context.get("animal_target_pos"), "arrival_action": "HUNT_STRIKE"}
+    if step in TRAVEL_ARRIVAL:
+        arrival_mode, arrival_action = TRAVEL_ARRIVAL[step]
+        target = None
+        target_entity_id = None
+        target_kind = None
+        if step == "TRAVEL_WATER":
+            target = context.get("water_target")
+        elif step == "TRAVEL_TREE":
+            target_entity_id = context.get("tree_target_id")
+            target = context.get("tree_target_pos")
+        elif step == "TRAVEL_FOOD":
+            target_entity_id = context.get("food_target_id")
+            target = context.get("food_target_pos")
+            target_kind = context.get("food_target_kind", "tree")
+        elif step == "TRAVEL_SITE":
+            target = context.get("shelter_site", pos)
+        elif step == "TRAVEL_SHELTER":
+            target_entity_id = context.get("shelter_target_id")
+            target = context.get("shelter_target_pos")
+        elif step == "TRAVEL_FRONTIER":
+            target = context.get("frontier_target")
+        elif step == "TRAVEL_ANIMAL":
+            target_entity_id = context.get("animal_target_id")
+            target = context.get("animal_target_pos")
+        action = {
+            **base,
+            "type": "travel",
+            "status": "travelling",
+            "target_entity_id": target_entity_id,
+            "target_pos": copy_pos(target) if target else None,
+            "arrival_action": arrival_action,
+            "travel_purpose": step,
+        }
+        if target_kind is not None:
+            action["target_kind"] = target_kind
+        action, _ok = _bind_route(action, pos, terrain, arrival_mode)
+        return action
     if step == "GATHER":
         return {**base, "type": "gather", "status": "performing", "target_entity_id": context.get("tree_target_id"),
-                "target_pos": context.get("tree_target_pos"), "ticks_required": GATHER_TICKS, "target_kind": "tree"}
+                "target_pos": copy_pos(context.get("tree_target_pos")) if context.get("tree_target_pos") else None,
+                "ticks_required": GATHER_TICKS, "target_kind": "tree"}
     if step == "GATHER_FOOD":
         return {**base, "type": "gather", "status": "performing", "target_entity_id": context.get("food_target_id"),
-                "target_pos": context.get("food_target_pos"), "ticks_required": GATHER_TICKS,
+                "target_pos": copy_pos(context.get("food_target_pos")) if context.get("food_target_pos") else None,
+                "ticks_required": GATHER_TICKS,
                 "target_kind": context.get("food_target_kind", "tree")}
     if step == "EAT":
         return {**base, "type": "eat", "status": "performing", "target_pos": dict(pos), "ticks_required": 1}
@@ -134,8 +192,141 @@ def start_step(step, e, eid, context, terrain, tick, pos):
         return {**base, "type": "build_shelter", "status": "performing", "target_pos": dict(pos), "ticks_required": BUILD_TICKS}
     if step == "HUNT_STRIKE":
         return {**base, "type": "hunt_strike", "status": "performing", "target_entity_id": context.get("animal_target_id"),
-                "target_pos": context.get("animal_target_pos"), "ticks_required": HUNT_TICKS}
+                "target_pos": copy_pos(context.get("animal_target_pos")) if context.get("animal_target_pos") else None,
+                "ticks_required": HUNT_TICKS}
     return {**base, "type": "wander", "status": "performing"}
+
+
+def _validate_travel_route(action, pos, target, terrain, arrival_mode, entities):
+    """Return (invalidation_reason_or_None, updated_target).
+
+    Recompute is allowed only when a reason is returned (caller recomputes once).
+    """
+    if not target:
+        return "missing_target", target
+
+    tid = action.get("target_entity_id")
+    if tid:
+        live = entities.get(tid)
+        if not live:
+            return "target_disappeared", target
+        if live.get("type") == "animal" and not live.get("alive", True):
+            return "target_disappeared", target
+        if live.get("type") in ("tree", "carcass") and live.get("resource", 0) <= 0:
+            return "target_disappeared", target
+        live_pos = live.get("position")
+        if live_pos is not None and not pos_eq(live_pos, target):
+            return "target_moved", copy_pos(live_pos)
+
+    if action.get("unreachable"):
+        return "destination_unreachable", target
+
+    if is_goal(pos, target, arrival_mode):
+        return None, target  # already arrived; no invalidation
+
+    remaining = action.get("remaining_path") or []
+    if not remaining:
+        return "route_exhausted", target
+
+    if action.get("route_version") != ROUTE_VERSION:
+        return "route_version_mismatch", target
+
+    next_step = remaining[0]
+    if not is_passable(next_step, terrain):
+        return "next_tile_impassable", target
+    if manhattan(pos, next_step) != 1:
+        return "position_desync", target
+
+    return None, target
+
+
+def _execute_travel(e, action, entities, terrain):
+    """Advance travel by at most one deterministic route step."""
+    pos = dict(e["position"])
+    new_action = dict(action)
+    target = copy_pos(action.get("target_pos"))
+    arrival_mode = action.get("arrival_mode") or ARRIVAL_EXACT
+    # Legacy safety: DRINK-bound travel without arrival_mode is adjacent.
+    if action.get("arrival_mode") is None and action.get("arrival_action") == "DRINK":
+        arrival_mode = ARRIVAL_ADJACENT
+        new_action["arrival_mode"] = arrival_mode
+
+    inv_reason, target = _validate_travel_route(new_action, pos, target, terrain, arrival_mode, entities)
+    recomputed = False
+    recompute_reason = None
+
+    if inv_reason in ("target_disappeared", "missing_target"):
+        new_action["status"] = "failed"
+        new_action["invalidation_reason"] = inv_reason
+        new_action["target_pos"] = target
+        return {
+            "pos": pos, "action": new_action, "advance_plan": True,
+            "explanation": f"travel failed: {inv_reason}",
+        }
+
+    if inv_reason is not None:
+        # Explicit recompute under the recorded reason (not silent every tick).
+        recompute_reason = inv_reason
+        new_action["target_pos"] = target
+        new_action, ok = _bind_route(new_action, pos, terrain, arrival_mode, invalidation_reason=inv_reason)
+        recomputed = True
+        if not ok:
+            new_action["status"] = "failed"
+            return {
+                "pos": pos, "action": new_action, "advance_plan": True,
+                "explanation": f"route invalidated ({inv_reason}); no alternate path to {target}",
+            }
+
+    if is_goal(pos, target, arrival_mode):
+        new_action["status"] = "completed"
+        new_action["remaining_path"] = []
+        new_action["invalidation_reason"] = None
+        return {
+            "pos": pos, "action": new_action, "advance_plan": True,
+            "explanation": f"arrived at {target} (mode={arrival_mode})",
+        }
+
+    if action.get("ticks_spent", 0) >= TRAVEL_STALL_LIMIT:
+        new_action["status"] = "failed"
+        new_action["invalidation_reason"] = "travel_stall_limit"
+        return {
+            "pos": pos, "action": new_action, "advance_plan": True,
+            "explanation": f"unable to make progress toward {target} after {TRAVEL_STALL_LIMIT} ticks; abandoning",
+        }
+
+    remaining = list(new_action.get("remaining_path") or [])
+    if not remaining:
+        new_action["status"] = "failed"
+        new_action["invalidation_reason"] = "route_exhausted"
+        return {
+            "pos": pos, "action": new_action, "advance_plan": True,
+            "explanation": f"route exhausted before arrival at {target}",
+        }
+
+    next_step = remaining[0]
+    pos = copy_pos(next_step)
+    remaining = remaining[1:]
+    new_action["remaining_path"] = remaining
+    new_action["ticks_spent"] = action.get("ticks_spent", 0) + 1
+    new_action["status"] = "travelling"
+    # Keep invalidation_reason only on the recompute tick for inspector visibility.
+    new_action["invalidation_reason"] = recompute_reason
+
+    left = len(remaining)
+    purpose = new_action.get("travel_purpose") or "travel"
+    arrival = new_action.get("arrival_action")
+    bits = []
+    if recomputed:
+        bits.append(f"route recomputed ({recompute_reason})")
+    bits.append(f"travelling ({purpose}) toward {target}")
+    bits.append(f"{left} route steps remaining")
+    if arrival:
+        bits.append(f"then {arrival}")
+
+    return {
+        "pos": pos, "action": new_action, "advance_plan": False,
+        "explanation": "; ".join(bits),
+    }
 
 
 def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
@@ -159,24 +350,11 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
     atype = action["type"]
 
     if atype == "travel":
-        target = action.get("target_pos")
-        if not target:
-            new_action["status"] = "failed"
-            advance_plan = True
-            explanation = "travel target no longer known; abandoning step"
-        elif manhattan(pos, target) <= 1:
-            new_action["status"] = "completed"
-            advance_plan = True
-            explanation = f"arrived near {target}"
-        elif action.get("ticks_spent", 0) >= TRAVEL_STALL_LIMIT:
-            new_action["status"] = "failed"
-            advance_plan = True
-            explanation = f"unable to make progress toward {target} after {TRAVEL_STALL_LIMIT} ticks; abandoning"
-        else:
-            pos = step_toward(pos, target, terrain)
-            new_action["ticks_spent"] = action.get("ticks_spent", 0) + 1
-            new_action["status"] = "travelling"
-            explanation = f"travelling toward {target} ({manhattan(pos, target)} tiles remaining)"
+        travel = _execute_travel(e, action, entities, terrain)
+        pos = travel["pos"]
+        new_action = travel["action"]
+        advance_plan = travel["advance_plan"]
+        explanation = travel["explanation"]
 
     elif atype == "gather":
         target_id = action.get("target_entity_id")
@@ -293,7 +471,6 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
 
     else:  # wander
         dx, dy = rng.choice([(-1, 0), (1, 0), (0, -1), (0, 1), (0, 0)])
-        from core.geometry import is_passable
         candidate = {"x": pos["x"] + dx, "y": pos["y"] + dy}
         if is_passable(candidate, terrain):
             pos = candidate
