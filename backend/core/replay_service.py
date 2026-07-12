@@ -6,7 +6,8 @@ from core.hashing import canonical_hash
 from core.mutations import apply_mutation, snapshot_for_hash
 from core.kernel import build_genesis, run_tick
 from core.run_service import (
-    hash_policy_for_run, lineage_key_for_run, reconstruct_entities, rng_for_run,
+    assert_run_version_compatible, hash_policy_for_run, lineage_key_for_run,
+    reconstruct_entities, rng_for_run, RunVersionCompatibilityError,
 )
 from core.constants import HASH_POLICY_VERSION
 from core.commit_pipeline import run_commit_frame
@@ -226,6 +227,15 @@ async def verify_determinism(run_id: str):
     run = await db.kernel_runs.find_one({"id": run_id}, {"_id": 0})
     if not run:
         raise ValueError("run not found")
+    try:
+        assert_run_version_compatible(run)
+    except RunVersionCompatibilityError as exc:
+        return {
+            "status": "unsupported",
+            "reason": "engine_schema_not_executable",
+            "detail": str(exc),
+            "recorded_replay_available": True,
+        }
 
     genesis_tick = run.get("genesis_tick", 0)
     genesis_kind = run.get("genesis_kind", "world")

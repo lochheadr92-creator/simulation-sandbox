@@ -28,6 +28,7 @@ export const api = {
   getRejections: (runId, limit = 150) => axios.get(`${BASE}/runs/${runId}/rejections`, { params: { limit } }).then((r) => r.data),
   getCausal: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/causal`).then((r) => r.data),
   getCognitiveProjection: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/cognitive-projection`).then((r) => r.data),
+  getLivingAgentProjection: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/living-agent`).then((r) => r.data),
   submitIntervention: (runId, type, payload) =>
     axios.post(`${BASE}/runs/${runId}/interventions`, { type, payload }).then((r) => r.data),
   verifyReplay: (runId) => axios.post(`${BASE}/runs/${runId}/replay/verify`).then((r) => r.data),

@@ -15,13 +15,14 @@ from core.run_service import (
     TransactionUnavailable,
     ConcurrentModification, CommitStatusUnknown, FrameCapacityError,
     RunIntegrityMismatch, RunQuarantined, RunUnderMaintenance,
-    FramePersistenceError,
+    FramePersistenceError, RunVersionCompatibilityError,
 )
 from core.replay_service import verify_replay, verify_determinism
 from core import history_service
 from domains.base import DomainOutput
 from domains.lifecycle_domain import lifecycle_diag_key
 from api.cognitive_projection import build_cognitive_projection
+from api.living_agent_projection import build_living_agent_projection
 from scenarios import list_scenarios, get_scenario
 
 router = APIRouter()
@@ -113,6 +114,11 @@ async def api_fork_run(run_id: str, body: ForkRunRequest):
 async def api_step_run(run_id: str, body: StepRequest):
     try:
         frames = await step_run(run_id, max(1, min(body.ticks, 50)))
+    except RunVersionCompatibilityError as exc:
+        raise HTTPException(409, {
+            "error_code": "RUN_VERSION_UNSUPPORTED",
+            "detail": str(exc),
+        })
     except ValueError:
         raise HTTPException(404, "run not found")
     except ConcurrentModification as exc:
@@ -310,6 +316,28 @@ async def api_get_cognitive_projection(run_id: str, entity_id: str):
     )
     return build_cognitive_projection(
         observer, entity_map, run["terrain"], run["current_tick"],
+        diagnostics=diag.get("diagnostics") if diag else None,
+    )
+
+
+@router.get("/runs/{run_id}/entities/{entity_id}/living-agent")
+async def api_get_living_agent_projection(run_id: str, entity_id: str):
+    """Return a bounded read-only explanation of one person's owned state."""
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    entity = await db.entities.find_one(
+        {"run_id": run_id, "id": entity_id}, {"_id": 0, "run_id": 0},
+    )
+    if not entity:
+        raise HTTPException(404, "entity not found")
+    if entity.get("type") != "person":
+        raise HTTPException(400, "living-agent projection requires a person")
+    diag = await db.activation_diagnostics.find_one(
+        {"run_id": run_id, "entity_id": entity_id}, {"_id": 0},
+    )
+    return build_living_agent_projection(
+        entity, run["current_tick"],
         diagnostics=diag.get("diagnostics") if diag else None,
     )
 

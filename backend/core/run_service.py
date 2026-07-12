@@ -64,6 +64,23 @@ class TransactionUnavailable(ForkError):
     pass
 
 
+class RunVersionCompatibilityError(RuntimeError):
+    """Stored run cannot be continued by this executable engine/schema."""
+
+
+def assert_run_version_compatible(run: dict) -> None:
+    stored_engine = run.get("engine_version")
+    stored_schema = run.get("schema_version")
+    if stored_engine == ENGINE_VERSION and stored_schema == SCHEMA_VERSION:
+        return
+    raise RunVersionCompatibilityError(
+        "run engine/schema is recorded-only in this process: "
+        f"stored engine={stored_engine!r} schema={stored_schema!r}; "
+        f"executable engine={ENGINE_VERSION!r} schema={SCHEMA_VERSION!r}. "
+        "Recorded replay remains available, but stepping and shadow re-simulation require a new compatible run."
+    )
+
+
 # Re-export storage errors for API mapping
 StepConcurrentModification = ConcurrentModification
 StepCommitStatusUnknown = CommitStatusUnknown
@@ -339,6 +356,8 @@ async def step_run(run_id: str, n_ticks: int = 1):
     run = await get_run(run_id)
     if not run:
         raise ValueError("run not found")
+
+    assert_run_version_compatible(run)
 
     lineage_key = lineage_key_for_run(run)
     await assert_run_steppable(run, lineage_key)

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../api";
 import { Badge } from "./ui/badge";
 import EntitySummary from "./EntitySummary";
+import LivingAgentView from "./LivingAgentView";
 import { labelReasonCode } from "../lib/presentation";
 
 function DataRow({ label, value, mono = true }) {
@@ -38,15 +39,32 @@ export default function EntityInspector({ runId, entityId, refreshKey, viewMode 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loadErrorDetail, setLoadErrorDetail] = useState(null);
+  const [livingAgentProjection, setLivingAgentProjection] = useState(null);
 
   useEffect(() => {
     if (!runId || !entityId) return;
     setError(null);
     setLoadErrorDetail(null);
-    api.getCausal(runId, entityId).then(setData).catch((err) => {
+    let cancelled = false;
+    setData(null);
+    setLivingAgentProjection(null);
+    api.getCausal(runId, entityId).then(async (causal) => {
+      if (cancelled) return;
+      setData(causal);
+      if (causal.entity?.type === "person") {
+        try {
+          const projection = await api.getLivingAgentProjection(runId, entityId);
+          if (!cancelled) setLivingAgentProjection(projection);
+        } catch (_) {
+          if (!cancelled) setLivingAgentProjection(null);
+        }
+      }
+    }).catch((err) => {
+      if (cancelled) return;
       setError("Entity not found");
       setLoadErrorDetail(err?.message || String(err));
     });
+    return () => { cancelled = true; };
   }, [runId, entityId, refreshKey]);
 
   if (!entityId) {
@@ -82,7 +100,10 @@ export default function EntityInspector({ runId, entityId, refreshKey, viewMode 
   return (
     <div className="p-3 space-y-4" data-testid="entity-inspector-panel">
       {simple ? (
-        <EntitySummary entity={entity} diagnostics={diagnostics} />
+        <>
+          <EntitySummary entity={entity} diagnostics={diagnostics} />
+          {isPerson && <LivingAgentView projection={livingAgentProjection} viewMode={viewMode} />}
+        </>
       ) : (
       <>
       <div>
@@ -104,6 +125,8 @@ export default function EntityInspector({ runId, entityId, refreshKey, viewMode 
         {entity.type === "shelter" && <DataRow label="owner_id" value={entity.owner_id} />}
         {(isPerson || isAnimal) && <DataRow label="current_goal" value={entity.current_goal || "-"} />}
       </div>
+
+      {isPerson && <LivingAgentView projection={livingAgentProjection} viewMode={viewMode} />}
 
       {(isPerson || isAnimal) && (
         <div>
