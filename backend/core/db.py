@@ -38,3 +38,17 @@ async def ensure_indexes():
     await db.entities.create_index(
         [("run_id", 1), ("id", 1)], unique=True, name="uq_run_entity_id",
     )
+    await db.rejected_proposals.create_index(
+        [("run_id", 1), ("id", 1)], unique=True, name="uq_run_rejection_id",
+    )
+    # Partial unique: only frames that carry a string identity (legacy frames
+    # without the field must not collide on null).
+    await db.commit_frames.create_index(
+        [("run_id", 1), ("frame_identity_hash", 1)],
+        unique=True,
+        name="uq_run_frame_identity",
+        partialFilterExpression={"frame_identity_hash": {"$type": "string"}},
+    )
+    await db.recovery_records.create_index(
+        "recovery_id", unique=True, name="uq_recovery_id",
+    )

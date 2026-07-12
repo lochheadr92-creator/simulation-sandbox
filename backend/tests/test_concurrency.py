@@ -1,0 +1,98 @@
+"""Concurrency stress for transactional tick CAS (Phase 5A4a)."""
+from __future__ import annotations
+
+import asyncio
+import os
+import sys
+import uuid
+from functools import wraps
+from pathlib import Path
+
+import motor.motor_asyncio
+import pytest
+
+BACKEND_ROOT = Path(__file__).resolve().parents[1]
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+from core import db as core_db
+from core import run_service, retention_service
+from core.storage import frame_transaction as frame_tx
+from core.run_service import create_run, get_run, load_entities, step_run, build_precomputed_frame
+from core.storage.frame_transaction import (
+    ConcurrentModification,
+    clear_test_failure_injection,
+    commit_frame_atomically,
+    head_revision_of,
+)
+
+
+def _rebind_motor_to_running_loop():
+    """Motor clients bind to the creating loop; rebind after asyncio.run resets."""
+    client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGO_URL"])
+    database = client[os.environ["DB_NAME"]]
+    core_db.client = client
+    core_db.db = database
+    run_service.db = database
+    run_service.client = client
+    retention_service.db = database
+    frame_tx.db = database
+    frame_tx.client = client
+    return database
+
+
+def async_test(function):
+    @wraps(function)
+    def run(*args, **kwargs):
+        async def _runner():
+            _rebind_motor_to_running_loop()
+            return await function(*args, **kwargs)
+        return asyncio.run(_runner())
+    return run
+
+
+@async_test
+async def test_concurrent_identical_steps_single_head_advance():
+    db = _rebind_motor_to_running_loop()
+    await core_db.ensure_indexes()
+    clear_test_failure_injection()
+    run = await create_run(f"conc-{uuid.uuid4().hex[:8]}", "basic_survival")
+    head = await get_run(run["id"])
+    rev0 = head_revision_of(head)
+
+    async def attempt():
+        try:
+            return ("ok", await step_run(run["id"], 1))
+        except ConcurrentModification:
+            return ("cas", None)
+        except Exception as exc:
+            return ("err", type(exc).__name__)
+
+    results = await asyncio.gather(attempt(), attempt())
+    statuses = [r[0] for r in results]
+    assert "err" not in statuses, results
+    assert statuses.count("ok") >= 1
+    head2 = await get_run(run["id"])
+    assert head2["current_tick"] == head["current_tick"] + 1
+    assert head_revision_of(head2) == rev0 + 1
+    assert await db.commit_frames.count_documents(
+        {"run_id": run["id"], "tick": head2["current_tick"]}
+    ) == 1
+
+
+@async_test
+async def test_stale_precomputed_frame_cas_conflict():
+    _rebind_motor_to_running_loop()
+    await core_db.ensure_indexes()
+    clear_test_failure_injection()
+    run = await create_run(f"stale-{uuid.uuid4().hex[:8]}", "basic_survival")
+    head = await get_run(run["id"])
+    entities = await load_entities(run["id"])
+    await step_run(run["id"], 1)
+    stale = build_precomputed_frame(
+        head, entities, [], [], head["current_tick"] + 1,
+        head["last_state_hash"], "ffff" * 16,
+        head["next_order_index"], head["next_order_index"] + 1, set(),
+    )
+    with pytest.raises(ConcurrentModification):
+        await commit_frame_atomically(stale)

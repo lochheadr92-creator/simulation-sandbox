@@ -23,6 +23,20 @@ from core.forking import (
     validate_external_anchor_manifest, world_context_for_run,
 )
 from core.retention_service import prune_old_rejections
+from core.storage.frame_transaction import (
+    ConcurrentModification,
+    CommitStatusUnknown,
+    FrameCapacityError,
+    FramePersistenceError,
+    PrecomputedFrame,
+    RunIntegrityMismatch,
+    RunQuarantined,
+    RunUnderMaintenance,
+    TransactionUnavailable as FrameTransactionUnavailable,
+    assert_run_steppable,
+    commit_frame_atomically,
+    head_revision_of,
+)
 from scenarios import get_scenario
 
 
@@ -48,6 +62,16 @@ class ForkIntegrityError(ForkError):
 
 class TransactionUnavailable(ForkError):
     pass
+
+
+# Re-export storage errors for API mapping
+StepConcurrentModification = ConcurrentModification
+StepCommitStatusUnknown = CommitStatusUnknown
+StepFrameCapacityError = FrameCapacityError
+StepRunIntegrityMismatch = RunIntegrityMismatch
+StepRunQuarantined = RunQuarantined
+StepRunUnderMaintenance = RunUnderMaintenance
+StepPersistenceError = FramePersistenceError
 
 
 def lineage_key_for(seed: str, engine_version: str = ENGINE_VERSION,
@@ -135,6 +159,10 @@ async def create_run(seed: str, scenario_id: str = "basic_survival"):
         "lineage_key": lineage_key,
         "current_tick": 0,
         "next_order_index": next_order,
+        "head_revision": 0,
+        "maintenance_mode": False,
+        "maintenance_operation_id": None,
+        "quarantined": False,
         "status": "paused",
         "last_state_hash": ending_hash,
         "width": world["width"],
@@ -237,24 +265,125 @@ async def _valid_causal_parent_ids(run_id: str, entities: dict, run: dict) -> se
     return referenced
 
 
+def _build_entity_docs(run_id: str, entities: dict, touched_ids: set) -> tuple[list, list]:
+    docs = []
+    removed = []
+    for entity_id in sorted(touched_ids):
+        if entity_id in entities:
+            doc = dict(entities[entity_id])
+            doc["id"] = entity_id
+            doc["run_id"] = run_id
+            docs.append(doc)
+        else:
+            removed.append(entity_id)
+    return docs, removed
+
+
+def build_precomputed_frame(
+    run: dict,
+    entities: dict,
+    accepted: list,
+    rejected: list,
+    next_tick: int,
+    starting_hash: str | None,
+    ending_hash: str | None,
+    expected_order_index: int,
+    next_order_index: int,
+    touched: set,
+    diagnostics: dict | None = None,
+) -> PrecomputedFrame:
+    """Pure construction of a deterministic frame (no DB I/O)."""
+    run_id = run["id"]
+    entity_docs, removed = _build_entity_docs(run_id, entities, touched)
+    commit_frame = {
+        "id": f"{run_id}-frame-{next_tick}",
+        "run_id": run_id,
+        "tick": next_tick,
+        "starting_state_hash": starting_hash,
+        "ending_state_hash": ending_hash,
+        "accepted_event_ids": [e["id"] for e in accepted],
+        "rejected_proposal_ids": [r["id"] for r in rejected],
+        "hash_policy_version": hash_policy_for_run(run),
+    }
+    frame = PrecomputedFrame(
+        run_id=run_id,
+        expected_tick=run["current_tick"],
+        new_tick=next_tick,
+        expected_head_revision=head_revision_of(run),
+        expected_state_hash=run.get("last_state_hash"),
+        expected_next_order_index=expected_order_index,
+        starting_state_hash=starting_hash,
+        ending_state_hash=ending_hash,
+        next_order_index=next_order_index,
+        accepted_events=[dict(e) for e in accepted],
+        rejected_proposals=[dict(r) for r in rejected],
+        entity_docs=entity_docs,
+        removed_entity_ids=removed,
+        commit_frame=commit_frame,
+        hash_policy_version=hash_policy_for_run(run),
+        schema_context_hash=run.get("schema_context_hash"),
+        engine_version=run.get("engine_version"),
+        schema_version=run.get("schema_version"),
+        diagnostics=diagnostics or {},
+    )
+    frame.compute_identity()
+    return frame
+
+
 async def step_run(run_id: str, n_ticks: int = 1):
+    """Advance a run by n_ticks with atomic transactional frame persistence.
+
+    Domain activation and RNG draws complete before any transaction opens.
+    Each tick is one precomputed frame committed in one Mongo transaction.
+    """
     run = await get_run(run_id)
     if not run:
         raise ValueError("run not found")
+
+    lineage_key = lineage_key_for_run(run)
+    await assert_run_steppable(run, lineage_key)
+
+    # Ensure legacy runs carry head_revision=0 after integrity passed.
+    if "head_revision" not in run:
+        await db.kernel_runs.update_one(
+            {"id": run_id, "head_revision": {"$exists": False}},
+            {"$set": {
+                "head_revision": 0,
+                "maintenance_mode": False,
+                "quarantined": False,
+            }},
+        )
+        run = await get_run(run_id)
 
     scenario = get_scenario(run["scenario_id"])
     entities = await load_entities(run_id)
     rng = rng_for_run(run)
     terrain = run["terrain"]
     order_index = run["next_order_index"]
-    lineage_key = lineage_key_for_run(run)
     frames_summary = []
 
     for _ in range(n_ticks):
+        # Re-load head fields for multi-tick CAS chain
+        head = await get_run(run_id)
+        if not head:
+            raise ValueError("run not found")
+        if head.get("maintenance_mode") is True:
+            raise RunUnderMaintenance("run entered maintenance during multi-tick step")
+        if head.get("quarantined") is True:
+            raise RunQuarantined("run quarantined during multi-tick step")
+
+        run["current_tick"] = head["current_tick"]
+        run["last_state_hash"] = head["last_state_hash"]
+        run["next_order_index"] = head["next_order_index"]
+        run["head_revision"] = head_revision_of(head)
+        order_index = head["next_order_index"]
+
         next_tick = run["current_tick"] + 1
         starting_hash = run["last_state_hash"]
+        expected_order_index = order_index
         valid_causal_ids = await _valid_causal_parent_ids(run_id, entities, run)
 
+        # --- Frame calculation: pure in-memory (no DB writes) ---
         accepted, rejected, order_index, diagnostics = run_tick(
             run_id, entities, terrain, next_tick, rng, order_index,
             lineage_key, scenario.enabled_domains,
@@ -275,40 +404,44 @@ async def step_run(run_id: str, n_ticks: int = 1):
             entities, next_tick, lineage_key, run, starting_hash, accepted,
         )
 
-        if accepted:
-            await db.accepted_events.insert_many([dict(e) for e in accepted])
-        if rejected:
-            await db.rejected_proposals.insert_many([dict(r) for r in rejected])
+        frame = build_precomputed_frame(
+            run, entities, accepted, rejected, next_tick,
+            starting_hash, ending_hash, expected_order_index, order_index,
+            touched, diagnostics,
+        )
+
+        # --- Atomic persistence of the precomputed frame ---
+        try:
+            result = await commit_frame_atomically(frame)
+        except FrameTransactionUnavailable as exc:
+            raise TransactionUnavailable(str(exc)) from exc
+
+        # Post-transaction: non-critical diagnostics (failure does not roll back truth)
         for entity_id, diagnostics_for_entity in diagnostics.items():
-            await db.activation_diagnostics.replace_one(
-                {"run_id": run_id, "entity_id": entity_id},
-                {"run_id": run_id, "entity_id": entity_id, "tick": next_tick,
-                 "diagnostics": diagnostics_for_entity},
-                upsert=True,
-            )
-        await save_entities_delta(run_id, entities, touched)
-        await db.commit_frames.insert_one({
-            "id": f"{run_id}-frame-{next_tick}", "run_id": run_id,
-            "tick": next_tick, "starting_state_hash": starting_hash,
-            "ending_state_hash": ending_hash,
-            "accepted_event_ids": [e["id"] for e in accepted],
-            "rejected_proposal_ids": [r["id"] for r in rejected],
-            "hash_policy_version": hash_policy_for_run(run),
-        })
+            try:
+                await db.activation_diagnostics.replace_one(
+                    {"run_id": run_id, "entity_id": entity_id},
+                    {"run_id": run_id, "entity_id": entity_id, "tick": next_tick,
+                     "diagnostics": diagnostics_for_entity},
+                    upsert=True,
+                )
+            except Exception:
+                pass  # diagnostic write failures are non-fatal
 
         run["current_tick"] = next_tick
         run["last_state_hash"] = ending_hash
+        run["next_order_index"] = order_index
+        run["head_revision"] = result.get(
+            "head_revision", head_revision_of(run) + 1,
+        )
         frames_summary.append({
             "tick": next_tick, "accepted_count": len(accepted),
             "rejected_count": len(rejected), "ending_state_hash": ending_hash,
+            "frame_identity_hash": frame.frame_identity_hash,
+            "head_revision": run["head_revision"],
         })
 
-    await db.kernel_runs.update_one({"id": run_id}, {"$set": {
-        "current_tick": run["current_tick"],
-        "last_state_hash": run["last_state_hash"],
-        "next_order_index": order_index,
-        "status": "running",
-    }})
+    # Retention cleanup is outside the frame transaction by design.
     await prune_old_rejections(run_id, run["current_tick"])
     return frames_summary
 
@@ -551,6 +684,10 @@ async def _fork_run_transaction(parent_run_id: str, fork_tick: int,
         "source_horizon": "parent-full-at-creation",
         "current_tick": fork_tick,
         "next_order_index": parent_next_order_index,
+        "head_revision": 0,
+        "maintenance_mode": False,
+        "maintenance_operation_id": None,
+        "quarantined": False,
         "status": "paused",
         "last_state_hash": child_genesis_hash,
         "width": world_context["width"],
