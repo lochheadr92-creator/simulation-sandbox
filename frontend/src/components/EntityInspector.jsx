@@ -184,6 +184,37 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
         </div>
       )}
 
+      {isPerson && (knowledge_summary || diagnostics?.perception || diagnostics?.planning) && (
+        <div data-testid="cognitive-summary-section">
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Cognition (personal, bounded)</h4>
+          {knowledge_summary && (
+            <>
+              <DataRow label="knowledge schema" value={knowledge_summary.schema_version || "-"} />
+              <DataRow label="known people" value={knowledge_summary.known_people} />
+              <DataRow label="known animals" value={knowledge_summary.known_animals} />
+              <DataRow label="known dangers" value={knowledge_summary.known_dangers} />
+              <DataRow label="fact count" value={knowledge_summary.fact_count} />
+              <p className="mt-1 text-[10px] text-amber-300/80" data-testid="stale-knowledge-warning">{knowledge_summary.note}</p>
+            </>
+          )}
+          {diagnostics?.perception && (
+            <>
+              <DataRow label="perception rule" value={diagnostics.perception.rule_version || "-"} />
+              <DataRow label="perception radius" value={diagnostics.perception.radius ?? "-"} />
+              <DataRow label="current detections" value={diagnostics.perception.detection_count ?? 0} />
+              <DataRow label="newly learned" value={(diagnostics.perception.learned || []).length} />
+            </>
+          )}
+          {diagnostics?.planning && (
+            <>
+              <DataRow label="plan source" value={diagnostics.planning.target_from_knowledge ? "personal knowledge/current perception" : "local/default"} />
+              <DataRow label="explore mode" value={diagnostics.planning.explore_neighbour_only ? "unknown neighbour only" : "-"} />
+            </>
+          )}
+          {action?.type === "travel" && <DataRow label="next route step" value={action.remaining_path?.[0] ? `(${action.remaining_path[0].x}, ${action.remaining_path[0].y})` : "-"} />}
+        </div>
+      )}
+
       {knowledge_summary && (
         <div data-testid="known-resources-section">
           <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Known Resources (resource memory)</h4>

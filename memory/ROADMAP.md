@@ -10,12 +10,13 @@ The detailed fork decision and implementation boundary are recorded in [ADR-001:
 2. 5A2 - Fork Implementation
 3. 5A3 - Deterministic Navigation (behaviour; implemented)
 4. 5A4a - Transactional Tick Persistence (implemented)
-5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — **current**
-6. 5B - Economy
-7. 5C1 - Canonical World-State Entity
-8. 5C2 - Weather Transitions and Effects
-9. 5D - Combat
-10. 5E - Reproduction and Genetics
+5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — implemented
+6. **5A6 - Cognitive Visualisation and Live World Readability** — implemented
+7. 5B - Economy
+8. 5C1 - Canonical World-State Entity
+9. 5C2 - Weather Transitions and Effects
+10. 5D - Combat
+11. 5E - Reproduction and Genetics
 
 No phase may be marked complete from workflow labels such as `testing_agent_v4`. Completion requires reproducible repository commands and recorded results.
 
@@ -30,6 +31,17 @@ No phase may be marked complete from workflow labels such as `testing_agent_v4`.
 - Planning: Needs drive urgency; eligible targets only from knowledge / this-tick detections; exploration is 4-neighbour unknown tiles only.
 - Animals are not globally scanned for hunting; last-known animal positions may go stale without becoming live truth.
 - Economy, weather, combat, and reproduction remain later stages (unchanged goals below).
+
+## 5A6 — Cognitive Visualisation and Live World Readability
+
+**Status:** implemented as a frontend projection stage.
+
+**Goal:** make existing canonical action state and selected-person cognition observable without introducing any new simulation authority.
+
+- The selected-person canvas overlay uses a bounded, versioned, observer-specific projection for current perception, retained knowledge, stale last-known entity markers, latest discoveries, and stored route state.
+- Route, target, arrival-mode, planning, action, injury, death, urgent-need, and accepted-change indicators are presentation only. They never create state, recalculate routes, or alter decision results.
+- The normal observer view remains complete when no person is selected; personal fog is never applied automatically.
+- 5B Economy remains the next simulation-mechanic stage.
 
 ## 5A1 - Fork Semantics Contract
 

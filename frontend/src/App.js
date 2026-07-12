@@ -18,6 +18,10 @@ export default function App() {
   const [worldState, setWorldState] = useState(null);
   const [selectedEntityId, setSelectedEntityId] = useState(null);
   const [selectedTile, setSelectedTile] = useState(null);
+  const [cognitiveProjection, setCognitiveProjection] = useState(null);
+  const [overlayOptions, setOverlayOptions] = useState({
+    cognitive: true, route: true, labels: "selected", animations: true,
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(4);
   const [showNewRunModal, setShowNewRunModal] = useState(true);
@@ -37,6 +41,22 @@ export default function App() {
     if (run) refreshState(run.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [run]);
+
+  useEffect(() => {
+    const selected = worldState?.entities?.find((entity) => entity.id === selectedEntityId);
+    if (!run || !selected || selected.type !== "person") {
+      setCognitiveProjection(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const expectedTick = worldState.current_tick;
+    api.getCognitiveProjection(run.id, selected.id)
+      .then((projection) => {
+        if (!cancelled && projection.world_tick === expectedTick) setCognitiveProjection(projection);
+      })
+      .catch(() => { if (!cancelled) setCognitiveProjection(null); });
+    return () => { cancelled = true; };
+  }, [run, worldState, selectedEntityId]);
 
   useEffect(() => {
     clearInterval(intervalRef.current);
@@ -74,6 +94,7 @@ export default function App() {
     setRun(newRun);
     setSelectedEntityId(null);
     setSelectedTile(null);
+    setCognitiveProjection(null);
     setIsPlaying(false);
     setShowNewRunModal(false);
     setShowLoadRunModal(false);
@@ -115,6 +136,9 @@ export default function App() {
             <WorldCanvas
               state={worldState}
               selectedEntityId={selectedEntityId}
+              cognitiveProjection={cognitiveProjection}
+              overlayOptions={overlayOptions}
+              onOverlayOptionsChange={setOverlayOptions}
               onSelectEntity={handleSelectEntity}
               onSelectTile={handleSelectTile}
             />

@@ -21,6 +21,7 @@ from core.replay_service import verify_replay, verify_determinism
 from core import history_service
 from domains.base import DomainOutput
 from domains.lifecycle_domain import lifecycle_diag_key
+from api.cognitive_projection import build_cognitive_projection
 from scenarios import list_scenarios, get_scenario
 
 router = APIRouter()
@@ -284,6 +285,33 @@ async def api_get_causal(run_id: str, entity_id: str):
         "action_history": action_history,
         "knowledge_summary": knowledge_summary,
     }
+
+
+@router.get("/runs/{run_id}/entities/{entity_id}/cognitive-projection")
+async def api_get_cognitive_projection(run_id: str, entity_id: str):
+    """Return a bounded, observer-specific display projection.
+
+    It is deliberately separate from the state endpoint: this payload contains
+    only the selected person's cognitive view and never writes canonical state.
+    """
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    observer = await db.entities.find_one({"run_id": run_id, "id": entity_id}, {"_id": 0, "run_id": 0})
+    if not observer:
+        raise HTTPException(404, "entity not found")
+    if observer.get("type") != "person":
+        raise HTTPException(400, "cognitive projection requires a person observer")
+
+    entities = await db.entities.find({"run_id": run_id}, {"_id": 0, "run_id": 0}).to_list(5000)
+    entity_map = {entity["id"]: entity for entity in entities}
+    diag = await db.activation_diagnostics.find_one(
+        {"run_id": run_id, "entity_id": entity_id}, {"_id": 0},
+    )
+    return build_cognitive_projection(
+        observer, entity_map, run["terrain"], run["current_tick"],
+        diagnostics=diag.get("diagnostics") if diag else None,
+    )
 
 
 # ---------- history: timeline, milestones, provenance, tile history (Phase 4A) ----------
