@@ -7,19 +7,72 @@ The detailed fork decision and implementation boundary are recorded in [ADR-001:
 ## Priority and gates
 
 1. 5A1 - Fork Semantics Contract
-2. 5A2 - Fork Implementation
+2. 5A2 - Fork Implementation (`Implemented — Verification Pending` for live transaction-capable Mongo)
 3. 5A3 - Deterministic Navigation (behaviour; implemented)
 4. 5A4a - Transactional Tick Persistence (implemented)
 5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — implemented
 6. **5A6 - Cognitive Visualisation and Live World Readability** — implemented
-7. **5B - Social Behaviour Foundations** (`5B1` implemented)
+7. **5B - Social Behaviour Foundations** (`5B1`–`5B2` implemented; **5B3 next active**)
 8. 5C - Resource Organisation and Economic Foundations
-9. 5D - Canonical World State and Environment
+9. 5D - Canonical World State and Environment (controlled parallel workstream if 5B3 is blocked)
 10. 5E - Social Conflict
 11. 5F - Pairing, Kinship and Reproduction
 12. 6 - Groups, Settlements and Civilisation (deferred)
 
 No phase may be marked complete from workflow labels such as `testing_agent_v4`. Completion requires reproducible repository commands and recorded results.
+
+Status labels used in this roadmap:
+
+- **implementation complete** — code and focused tests land; does not by itself close the phase
+- **Implemented — Verification Pending** — implementation complete, but one or more acceptance criteria remain unexercised solely due to missing infrastructure (see policy below)
+- **fully verified** — all deterministic acceptance gates for the phase have passed with recorded results
+- **Reopened — Blocking** — a previously implemented or completed phase later failed an acceptance gate
+
+### Infrastructure-gated verification policy
+
+When an acceptance criterion cannot be exercised because the available local environment lacks required infrastructure, the phase may be marked `Implemented — Verification Pending` only when:
+
+- the blocked check depends solely on a documented infrastructure capability;
+- the implementation fails closed when that capability is unavailable;
+- all available deterministic unit, contract, replay, and failure-path tests pass;
+- the exact unverified criteria, required infrastructure, and reproduction commands are recorded.
+
+Unrelated phases may continue.
+
+Dependent phases may be developed cautiously, but they must not be marked fully verified or closed while a required prerequisite remains `Verification Pending`.
+
+When the required infrastructure becomes available, the deferred acceptance checks must be run.
+
+Failure reopens the prerequisite phase and blocks closure of dependent phases until the defect is repaired or affected dependent work is reverted.
+
+Known Phase 5 infrastructure gate: 5A2 live fork creation (and any other criterion that requires multi-document transactional commit) depends on a transaction-capable Mongo replica set. Standalone Mongo is not sufficient for those live checks; fail-closed behaviour on unsupported deployments remains required.
+
+### Acceptance regression and rollback policy
+
+If an implemented or completed phase later fails one of its deterministic acceptance gates, its status changes to `Reopened — Blocking`.
+
+Closure of dependent phases is paused immediately.
+
+Patch-forward is preferred when canonical state, replay compatibility, determinism, and persistence contracts can be preserved safely.
+
+Revert the affected phase and dependent work when those contracts cannot be preserved safely.
+
+Clearly distinguish:
+
+- implementation complete
+- verification pending
+- fully verified
+- reopened and blocking
+
+Development on dependency-independent work may continue under the parallel-work rule below; formal closure of any dependent phase remains blocked while a prerequisite is `Reopened — Blocking` or `Verification Pending` when that pending check is required.
+
+### Controlled parallel work when 5B3 is blocked
+
+**Phase 5B3 is the next active phase** on the social interaction chain.
+
+If Phase 5B3 is blocked, dependency-independent Phase 5D work may proceed as the controlled parallel workstream.
+
+Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict motives (`5E3`), reproduction (`5F3`), lifecycle-dependent social systems, or other phases whose declared prerequisites are incomplete. From this roadmap, that includes at least `5B4`–`5B6`, Phase `5C` (depends on `5B1`–`5B6`), Phase `5E` (depends on 5B social foundations and 5C ownership/resource contracts), and Phase `5F` (depends on 5B social facts/memory and lifecycle state). Phase 5D depends only on completed 5A Core/replay contracts and is the permitted parallel track.
 
 ## 5A5 - Cognitive Grounding Vertical Slice
 
@@ -42,7 +95,7 @@ No phase may be marked complete from workflow labels such as `testing_agent_v4`.
 - The selected-person canvas overlay uses a bounded, versioned, observer-specific projection for current perception, retained knowledge, stale last-known entity markers, latest discoveries, and stored route state.
 - Route, target, arrival-mode, planning, action, injury, death, urgent-need, and accepted-change indicators are presentation only. They never create state, recalculate routes, or alter decision results.
 - The normal observer view remains complete when no person is selected; personal fog is never applied automatically.
-- 5B1 Food Ownership and Atomic Transfer is the completed next simulation-mechanic stage; 5B2 Social Observation Facts is now next.
+- 5B1 Food Ownership and Atomic Transfer and 5B2 Social Observation Facts are implemented. **Phase 5B3 (Request, Offer and Response Protocol) is the next active phase.**
 
 ## 5A1 - Fork Semantics Contract
 
@@ -87,7 +140,7 @@ Storage-only IDs and timestamps may be retained for operations and display, but 
 
 ## 5A2 - Fork Implementation
 
-**Status:** implemented, covered by the focused backend contract suite, and exposed through the existing timeline/load surfaces. Successful live creation requires a transaction-capable Mongo replica set; the current local standalone deployment was verified to fail closed before child writes.
+**Status:** `Implemented — Verification Pending` for live transaction-capable Mongo. Covered by the focused backend contract suite and exposed through the existing timeline/load surfaces. Successful live creation requires a transaction-capable Mongo replica set; the current local standalone deployment was verified to fail closed before child writes. Deferred live criteria: full atomic child-create success path and multi-document transaction commit under a replica set (see Infrastructure-gated verification policy).
 
 **Goal:** implement the contract in ADR-001 without adding branch comparison, fork trees, UI redesign, or gameplay behavior.
 
@@ -177,9 +230,11 @@ The complete verification matrix is in ADR-001.
 
 ### 5B3 — Request, Offer and Response Protocol
 
+**Status:** next active phase (not started).
+
 **Goal:** add one bounded food-interaction state machine: pending, accepted, fulfilled, refused, expired, and invalidated.
 
-**Dependencies:** 5B1 transfer primitive and 5B2 visible social facts.
+**Dependencies:** 5B1 transfer primitive and 5B2 visible social facts (both implemented).
 
 **Bounded implementation scope:** proposal-owned interaction records with deterministic expiry, response authority, causal parents, and duplicate prevention; fulfilment invokes 5B1 rather than mutating inventory directly.
 
@@ -479,4 +534,6 @@ The complete verification matrix is in ADR-001.
 
 ## Sequencing rule
 
-5A2 must satisfy its contract before later Phase 5 mechanics. Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; 5B2 is the exact recommended next stage. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
+5A2 must satisfy its contract before later Phase 5 mechanics that depend on fork/lineage semantics. Live 5A2 success-path verification remains infrastructure-gated (transaction-capable Mongo) under the Infrastructure-gated verification policy; fail-closed behaviour on unsupported deployments does not by itself block unrelated work.
+
+Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B2 is implemented**; **5B3 is the next active stage** on the social interaction chain. If 5B3 is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
