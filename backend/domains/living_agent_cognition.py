@@ -206,6 +206,10 @@ def perceive_living(
         properties = _visible_properties(subject_id, subject, base)
         if subject_type not in OBJECT_TYPES and not properties:
             continue
+        # Position is perceptible without becoming omniscient canonical state.
+        # Candidate generation needs the observed location in order to form a
+        # path toward an entity; keep it inside this bounded observation only.
+        properties.setdefault("position", copy.deepcopy(subject_pos))
         confidence = _bounded(
             1000 - distance * 90 - profile["weather_penalty"] * 80
             - profile["lighting_penalty"] * 100 - profile["fatigue_penalty"] * 60,

@@ -204,7 +204,8 @@ def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str
                         and int(receipt.get("tick", -1)) == tick):
                     receipt["accepted_event_id"] = event_id
             for relation in (living.get("relationships") or {}).values():
-                if int(relation.get("pending_event_tick", -1)) == tick:
+                pending_tick = relation.get("pending_event_tick")
+                if pending_tick is not None and int(pending_tick) == tick:
                     causal = list(relation.get("causal_event_ids") or [])
                     applied = list(relation.get("applied_event_ids") or [])
                     if event_id not in causal:
@@ -219,7 +220,8 @@ def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str
                 if (commitment.get("created_event_id") is None
                         and int(commitment.get("created_tick", -1)) == tick):
                     commitment["created_event_id"] = event_id
-                if int(commitment.get("last_changed_tick", -1)) == tick:
+                changed_tick = commitment.get("last_changed_tick")
+                if changed_tick is not None and int(changed_tick) == tick:
                     commitment["last_event_id"] = event_id
         knowledge = update.get("knowledge")
         if isinstance(knowledge, dict):
@@ -258,6 +260,15 @@ def _stamp_living_action_provenance(
         if new_entity.get("type") == "signal":
             new_entity["source_event_id"] = event_id
             new_entity["last_event_id"] = event_id
+
+
+def _stamp_new_entity_provenance(mutation: dict, event_id: str) -> None:
+    """Give every canonically created entity an accepted-event origin."""
+    for new_entity in (mutation.get("new_entities") or {}).values():
+        new_entity.setdefault("creation_event_id", event_id)
+        new_entity.setdefault("last_event_id", event_id)
+        if new_entity.get("type") == "signal" and not new_entity.get("source_event_id"):
+            new_entity["source_event_id"] = event_id
 
 
 def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int) -> dict:
@@ -355,6 +366,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         mutation = proposal["mutation"]
         mutation.setdefault("entity_updates", {}).setdefault(proposal["entity_id"], {})
         mutation["entity_updates"][proposal["entity_id"]]["last_event_id"] = event_id
+        _stamp_new_entity_provenance(mutation, event_id)
         _stamp_food_interaction_provenance(proposal, mutation, event_id)
         _stamp_living_agent_provenance(proposal, mutation, event_id)
         _stamp_living_action_provenance(proposal, mutation, event_id)

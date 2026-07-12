@@ -423,6 +423,10 @@ def build_physical_action_proposal(
         effects.extend(["inventory_change", "internal_state_change"])
 
     elif action_type == "drink":
+        if target_id:
+            require_adjacent()
+            if target.get("type") != "water_source":
+                raise ValueError("drink target must be a water source")
         actor_update["thirst"] = 0
         effects.append("internal_state_change")
 

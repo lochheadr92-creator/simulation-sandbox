@@ -11,6 +11,8 @@ mutates, so it is not event-sourced. Entities (trees, people, animals) DO
 mutate over time (resource depletion, needs, position) so they are created
 as genesis accepted events, giving them causal origin like everything else.
 """
+import copy
+
 from core.rng import DeterministicRNG
 from core.constants import MAX_HEALTH, ANIMAL_MAX_HEALTH
 from domains.living_agent_contracts import default_affordances, empty_living_agent_state
@@ -60,14 +62,40 @@ def generate_world(seed: str, scenario):
     p_thirst = cfg.get("person_thirst_range", (100, 300))
     p_energy = cfg.get("person_energy_range", (700, 1000))
     p_age = cfg.get("person_age_range", (3000, 30000))  # all genesis people start as adults (no birth mechanic)
+    person_positions = list(cfg.get("person_positions") or [])
+    person_profiles = list(cfg.get("person_profiles") or [])
     for person_index in range(cfg.get("num_people", 0)):
-        x, y = random_empty_tile()
+        if person_index < len(person_positions):
+            x, y = int(person_positions[person_index]["x"]), int(person_positions[person_index]["y"])
+            if not (0 <= x < width and 0 <= y < height) or terrain[y][x] == "water":
+                raise ValueError(f"invalid fixed person position at index {person_index}")
+        else:
+            x, y = random_empty_tile()
         person_id = f"person-{person_index:03d}"
-        genesis_specs.append({
+        profile = copy.deepcopy(person_profiles[person_index]) if person_index < len(person_profiles) else {}
+        living_state = empty_living_agent_state(person_id, 0, rng)
+        for subject_id, relation_values in sorted((profile.pop("relationships", {}) or {}).items()):
+            relation = {
+                "schema_version": "relationship-v1", "subject_id": subject_id,
+                "familiarity": 0, "trust": 0, "affection": 0, "fear": 0,
+                "respect": 0, "resentment": 0, "obligation": 0,
+                "perceived_reliability": 0, "last_changed_tick": 0,
+                "last_cause": "genesis_relationship", "causal_event_ids": [],
+                "applied_event_ids": [], "pending_event_tick": None,
+                "perceived_intention": None,
+            }
+            relation.update(copy.deepcopy(relation_values))
+            living_state["relationships"][subject_id] = relation
+        spec = {
             "type": "person", "position": {"x": x, "y": y},
-            "hunger": spawn_rng.randint(*p_hunger), "thirst": spawn_rng.randint(*p_thirst),
-            "energy": spawn_rng.randint(*p_energy), "inventory": 0, "food_inventory": 0, "has_shelter": False,
-            "carried_resources": {"wood": 0, "food": 0}, "inventory_capacity": 30,
+            "hunger": profile.pop("hunger", spawn_rng.randint(*p_hunger)),
+            "thirst": profile.pop("thirst", spawn_rng.randint(*p_thirst)),
+            "energy": profile.pop("energy", spawn_rng.randint(*p_energy)),
+            "inventory": profile.pop("inventory", 0),
+            "food_inventory": profile.pop("food_inventory", 0),
+            "has_shelter": profile.pop("has_shelter", False),
+            "carried_resources": profile.pop("carried_resources", {"wood": 0, "food": 0}),
+            "inventory_capacity": profile.pop("inventory_capacity", 30),
             "carried_item_ids": [],
             "current_goal": "IDLE", "alive": True,
             "action": {"type": "idle", "status": "completed", "target_entity_id": None, "target_pos": None,
@@ -79,8 +107,13 @@ def generate_world(seed: str, scenario):
             "age_ticks": spawn_rng.randint(*p_age), "life_stage": "adult",
             "health": MAX_HEALTH, "injury": {"injured": False, "severity": 0, "cause": None},
             "death_cause": None, "death_tick": None,
-            "living_agent": empty_living_agent_state(person_id, 0, rng),
-        })
+            "living_agent": living_state,
+        }
+        spec.update(profile)
+        # Keep legacy scalar and versioned resource inventory aligned.
+        spec["inventory"] = int(spec["carried_resources"].get("wood", spec["inventory"]))
+        spec["food_inventory"] = int(spec["carried_resources"].get("food", spec["food_inventory"]))
+        genesis_specs.append(spec)
 
     a_hunger = cfg.get("animal_hunger_range", (100, 300))
     a_energy = cfg.get("animal_energy_range", (700, 1000))
@@ -93,6 +126,9 @@ def generate_world(seed: str, scenario):
             "action": {"type": "idle", "status": "completed", "ticks_spent": 0, "flee_ticks_remaining": 0},
             "health": ANIMAL_MAX_HEALTH, "injured": False, "death_cause": None, "death_tick": None,
         })
+
+    for extra in cfg.get("extra_genesis_specs", []):
+        genesis_specs.append(copy.deepcopy(extra))
 
     for spec in genesis_specs:
         if spec["type"] == "tree":

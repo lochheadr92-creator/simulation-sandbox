@@ -25,11 +25,23 @@ GOAL_PRESSURES = {
     "GIVE_FOOD": ("belonging", "attachment", "perceived_obligation"),
     "EXPLORE": ("curiosity",),
     "WANDER": ("curiosity", "comfort"),
-    "STORE_SURPLUS": ("safety",),
-    "REPAIR_SHELTER": ("comfort", "exposure"),
+    "STORE_SURPLUS": ("safety", "hunger"),
+    "REPAIR_SHELTER": ("comfort", "exposure", "safety"),
     "HELP_PERSON": ("attachment", "belonging", "perceived_obligation"),
     "WARN_PERSON": ("attachment", "perceived_obligation"),
     "VERIFY_INFORMATION": ("curiosity", "fear"),
+    "REQUEST_HELP": ("hunger", "thirst", "safety"),
+    "RESPOND_HELP": ("belonging", "attachment", "perceived_obligation"),
+    "PROMISE_HELP": ("attachment", "perceived_obligation"),
+    "REPAY_DEBT": ("perceived_obligation", "belonging"),
+    "WARN_DANGER": ("fear", "attachment", "perceived_obligation"),
+    "SHARE_RUMOUR": ("curiosity", "belonging"),
+    "APOLOGISE": ("belonging", "perceived_obligation"),
+    "RECONCILE": ("belonging", "attachment"),
+    "THREATEN": ("fear", "safety"),
+    "TAKE_FOOD": ("hunger", "safety"),
+    "RETRIEVE_FOOD": ("hunger",),
+    "GATHER_FOOD": ("hunger",),
 }
 
 WANT_GOALS = {
@@ -339,7 +351,26 @@ def record_decision(state: dict, receipt: dict, plan: dict) -> dict:
     out = copy.deepcopy(state)
     prior = list(out.get("decision_history") or [])
     prior = [row for row in prior if row.get("receipt_id") != receipt.get("receipt_id")]
-    prior.append(copy.deepcopy(receipt))
+    # Canonical history is deliberately compact.  The current receipt retains
+    # full candidate scoring for inspection; keeping twelve complete candidate
+    # matrices per person made every later state hash increasingly expensive.
+    prior.append({
+        "schema_version": receipt.get("schema_version"),
+        "receipt_id": receipt.get("receipt_id"),
+        "actor_id": receipt.get("actor_id"),
+        "tick": receipt.get("tick"),
+        "decision_kind": receipt.get("decision_kind"),
+        "selected_goal_id": receipt.get("selected_goal_id"),
+        "selected_goal": receipt.get("selected_goal"),
+        "selected_score": receipt.get("selected_score"),
+        "plan_id": receipt.get("plan_id"),
+        "knowledge_used": list(receipt.get("knowledge_used") or []),
+        "memory_references": list(receipt.get("memory_references") or []),
+        "want_references": list(receipt.get("want_references") or []),
+        "relationship_references": list(receipt.get("relationship_references") or []),
+        "uncertainty": receipt.get("uncertainty"),
+        "accepted_event_id": receipt.get("accepted_event_id"),
+    })
     out["current_decision"] = copy.deepcopy(receipt)
     out["decision_history"] = prior[-LIMITS.decision_receipts_retained:]
     link = {

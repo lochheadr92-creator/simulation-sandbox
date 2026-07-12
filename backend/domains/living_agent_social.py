@@ -636,6 +636,7 @@ def apply_observed_social_information(
             continue
         already_applied = any(
             fact.get("source_event_id") == source_event_id
+            and fact.get("provenance_kind") in ("reported", "inferred", "rumoured")
             for fact in (out_knowledge.get("facts") or {}).values()
         )
         if already_applied:

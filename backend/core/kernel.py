@@ -30,9 +30,11 @@ def build_genesis(seed: str, scenario, lineage_key: str):
     counters = {}
 
     for spec in world["genesis_specs"]:
+        spec = dict(spec)
+        explicit_id = spec.pop("id", None)
         t = spec["type"]
         counters.setdefault(t, 0)
-        eid = f"{t}-{counters[t]:03d}"
+        eid = explicit_id or f"{t}-{counters[t]:03d}"
         counters[t] += 1
         proposals.append({
             "proposal_family": "genesis",
