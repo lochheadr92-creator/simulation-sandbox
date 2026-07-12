@@ -13,6 +13,9 @@ from core.run_service import (
     step_run, set_run_status, fork_run, lineage_key_for_run,
     ForkNotFound, ForkConflict, ForkCompatibilityError, ForkIntegrityError,
     TransactionUnavailable,
+    ConcurrentModification, CommitStatusUnknown, FrameCapacityError,
+    RunIntegrityMismatch, RunQuarantined, RunUnderMaintenance,
+    FramePersistenceError,
 )
 from core.replay_service import verify_replay, verify_determinism
 from core import history_service
@@ -111,6 +114,46 @@ async def api_step_run(run_id: str, body: StepRequest):
         frames = await step_run(run_id, max(1, min(body.ticks, 50)))
     except ValueError:
         raise HTTPException(404, "run not found")
+    except ConcurrentModification as exc:
+        raise HTTPException(409, {
+            "error_code": "CONCURRENT_MODIFICATION",
+            "detail": str(exc),
+        })
+    except RunUnderMaintenance as exc:
+        raise HTTPException(409, {
+            "error_code": "RUN_UNDER_MAINTENANCE",
+            "detail": str(exc),
+        })
+    except RunQuarantined as exc:
+        raise HTTPException(409, {
+            "error_code": "RUN_QUARANTINED",
+            "detail": str(exc),
+        })
+    except RunIntegrityMismatch as exc:
+        raise HTTPException(409, {
+            "error_code": "RUN_INTEGRITY_MISMATCH",
+            "detail": str(exc),
+        })
+    except FrameCapacityError as exc:
+        raise HTTPException(413, {
+            "error_code": getattr(exc, "code", "FRAME_CAPACITY_EXCEEDED"),
+            "detail": str(exc),
+        })
+    except CommitStatusUnknown as exc:
+        raise HTTPException(503, {
+            "error_code": "COMMIT_STATUS_UNKNOWN",
+            "detail": str(exc),
+        })
+    except TransactionUnavailable as exc:
+        raise HTTPException(503, {
+            "error_code": "TRANSACTION_UNAVAILABLE",
+            "detail": str(exc),
+        })
+    except FramePersistenceError as exc:
+        raise HTTPException(500, {
+            "error_code": getattr(exc, "code", "DB_TX_FAILURE"),
+            "detail": str(exc),
+        })
     return {"frames": frames}
 
 
@@ -217,11 +260,17 @@ async def api_get_causal(run_id: str, entity_id: str):
     knowledge_summary = None
     if knowledge:
         knowledge_summary = {
+            "schema_version": knowledge.get("schema_version"),
             "explored_tiles": len(knowledge.get("known_tiles", [])),
             "known_water_tiles": len(knowledge.get("known_water_tiles", [])),
             "known_trees": len(knowledge.get("known_trees", {})),
             "known_shelters": len(knowledge.get("known_shelters", {})),
             "known_carcasses": len(knowledge.get("known_carcasses", {})),
+            "known_animals": len(knowledge.get("known_animals", {})),
+            "known_people": len(knowledge.get("known_people", {})),
+            "known_dangers": len(knowledge.get("known_dangers", {})),
+            "fact_count": len(knowledge.get("facts", {})),
+            "note": "personal knowledge — not current world truth; last-known positions may be stale",
         }
 
     return {
