@@ -152,6 +152,21 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
             </div>
           )}
           {action.target_pos && <DataRow label="target" value={`(${action.target_pos.x}, ${action.target_pos.y})`} />}
+          {action.type === "travel" && (
+            <div data-testid="travel-route-section" className="mt-1 space-y-0">
+              {action.travel_purpose && <DataRow label="travel purpose" value={action.travel_purpose} />}
+              {action.arrival_action && <DataRow label="arrival action" value={action.arrival_action} />}
+              {action.arrival_mode && <DataRow label="arrival mode" value={action.arrival_mode} />}
+              {action.route_length != null && <DataRow label="route length" value={action.route_length} />}
+              {Array.isArray(action.remaining_path) && (
+                <DataRow label="remaining steps" value={action.remaining_path.length} />
+              )}
+              {action.unreachable && <DataRow label="unreachable" value="true" />}
+              {action.invalidation_reason && (
+                <DataRow label="route invalidation" value={action.invalidation_reason} />
+              )}
+            </div>
+          )}
           {paused && <DataRow label="paused_action" value={`${paused.action.type} (${paused.plan.goal})`} mono />}
         </div>
       )}

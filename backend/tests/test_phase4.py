@@ -204,8 +204,12 @@ class TestDeathDoctrine:
         assert determinism["status"] == "pass"
 
     def test_same_seed_runs_produce_identical_death_timing_and_cause(self, session):
-        """Force two identical-seed runs into starvation via repeated boost_need
-        (thirst up, never resolved) and confirm both die at the same tick with the same cause."""
+        """Force two identical-seed runs into sustained critical thirst and confirm
+        both die at the same death_tick with the same cause (dehydration).
+
+        Navigation can reach water and drink within multi-tick steps, so thirst must
+        be reboosted before every individual simulation tick (not once per 5 ticks).
+        """
         seed = "TEST_phase4_death_sameseed"
         r1 = create_run(session, seed)
         r2 = create_run(session, seed)
@@ -213,27 +217,55 @@ class TestDeathDoctrine:
         person2 = next(e for e in get_state(session, r2["id"])["entities"] if e["type"] == "person")["id"]
         assert person1 == person2
 
-        # Dehydration health decay is DEHYDRATION_HEALTH_DECAY=4/tick from MAX_HEALTH=1000,
-        # so >=250 ticks of sustained critical thirst are needed; reboost every tick to
-        # counter any successful drinking, with generous headroom (80*5=400 ticks).
+        # DEHYDRATION_HEALTH_DECAY=4/tick from MAX_HEALTH=1000 => >=250 ticks of
+        # sustained critical thirst; reboost every tick so drinking cannot clear it.
         deaths = {}
         for run_id, pid in ((r1["id"], person1), (r2["id"], person2)):
-            for _ in range(80):
-                session.post(f"{API}/runs/{run_id}/interventions", json={
-                    "type": "boost_need", "payload": {"entity_id": pid, "field": "thirst", "delta": 1000},
-                })
-                step(session, run_id, 5)
-                st = get_state(session, run_id)
-                p = next(e for e in st["entities"] if e["id"] == pid)
-                if not p.get("alive", True):
-                    deaths[run_id] = (st["current_tick"], p.get("death_cause"))
+            for _ in range(300):
+                response = session.post(
+                    f"{API}/runs/{run_id}/interventions",
+                    json={
+                        "type": "boost_need",
+                        "payload": {
+                            "entity_id": pid,
+                            "field": "thirst",
+                            "delta": 1000,
+                        },
+                    },
+                )
+                assert response.status_code == 200
+
+                step(session, run_id, 1)
+
+                state = get_state(session, run_id)
+                person = next(
+                    entity
+                    for entity in state["entities"]
+                    if entity["id"] == pid
+                )
+
+                if not person.get("alive", True):
+                    deaths[run_id] = (
+                        person.get("death_tick"),
+                        person.get("death_cause"),
+                    )
                     break
 
-        assert len(deaths) == 2, f"both runs should have produced a death: {deaths}"
-        (_t1, c1), (_t2, c2) = deaths.values()
-        ticks = [t for t, _ in deaths.values()]
-        assert ticks[0] == ticks[1], f"same seed must die at the same tick: {deaths}"
-        assert c1 == c2, f"same seed must die of the same cause: {deaths}"
+        assert len(deaths) == 2, (
+            f"both runs should have produced a death: {deaths}"
+        )
+
+        results = list(deaths.values())
+
+        assert results[0][0] == results[1][0], (
+            f"same seed must die at the same tick: {deaths}"
+        )
+
+        assert results[0][1] == results[1][1], (
+            f"same seed must die of the same cause: {deaths}"
+        )
+
+        assert results[0][1] == "dehydration"
 
     def test_no_population_replacement(self, session):
         """After a death, entity COUNT for that type must never increase back
