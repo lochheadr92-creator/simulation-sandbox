@@ -44,7 +44,7 @@ def _score(goal, severity, predicted, travel_cost, availability, risk, interrupt
 
 def nearest_known_water(pos, knowledge):
     best, best_d = None, None
-    for key in knowledge.get("known_water_tiles", []):
+    for key in sorted(knowledge.get("known_water_tiles", [])):
         x, y = (int(v) for v in key.split(","))
         d = manhattan(pos, {"x": x, "y": y})
         if best_d is None or d < best_d:
@@ -54,7 +54,9 @@ def nearest_known_water(pos, knowledge):
 
 def nearest_known_tree(pos, knowledge, min_resource=1):
     best, best_d, best_id = None, None, None
-    for tid, info in knowledge.get("known_trees", {}).items():
+    known_trees = knowledge.get("known_trees", {})
+    for tid in sorted(known_trees):
+        info = known_trees[tid]
         if info.get("last_known_resource", 0) < min_resource:
             continue
         d = manhattan(pos, info["position"])
@@ -65,7 +67,9 @@ def nearest_known_tree(pos, knowledge, min_resource=1):
 
 def nearest_known_shelter(pos, knowledge, owner_id=None):
     best, best_d, best_id = None, None, None
-    for sid, info in knowledge.get("known_shelters", {}).items():
+    known_shelters = knowledge.get("known_shelters", {})
+    for sid in sorted(known_shelters):
+        info = known_shelters[sid]
         if owner_id is not None and info.get("owner_id") != owner_id:
             continue
         d = manhattan(pos, info["position"])
@@ -78,7 +82,9 @@ def nearest_known_carcass(pos, knowledge, min_resource=1):
     """Mirrors nearest_known_tree - carcasses are tracked in resource
     memory exactly like trees (Phase 4B: minimal survival food chain)."""
     best, best_d, best_id = None, None, None
-    for cid, info in knowledge.get("known_carcasses", {}).items():
+    known_carcasses = knowledge.get("known_carcasses", {})
+    for cid in sorted(known_carcasses):
+        info = known_carcasses[cid]
         if info.get("last_known_resource", 0) < min_resource:
             continue
         d = manhattan(pos, info["position"])
@@ -108,7 +114,8 @@ def nearest_huntable_animal(pos, entities):
     not currently fleeing - not a stored field, so it can never desync from
     the real driving conditions (AnimalDomain's own flee logic)."""
     best, best_d, best_id = None, None, None
-    for eid, e in entities.items():
+    for eid in sorted(entities):
+        e = entities[eid]
         if e.get("type") != "animal" or not e.get("alive", True):
             continue
         if (e.get("action") or {}).get("type") == "flee":

@@ -55,7 +55,8 @@ def find_nearest_water(pos: dict, terrain: list):
 def find_nearest_entity(entities: dict, pos: dict, etype: str, predicate=None):
     best = None
     best_d = None
-    for eid, e in entities.items():
+    for eid in sorted(entities):
+        e = entities[eid]
         if e["type"] != etype:
             continue
         if predicate and not predicate(e):

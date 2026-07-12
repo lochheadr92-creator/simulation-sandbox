@@ -12,12 +12,16 @@ time and during replay, guaranteeing identical application logic.
 
 
 def apply_mutation(entities: dict, mutation: dict) -> None:
-    for eid, spec in mutation.get("new_entities", {}).items():
+    new_entities = mutation.get("new_entities", {})
+    for eid in sorted(new_entities):
+        spec = new_entities[eid]
         entities[eid] = dict(spec)
-    for eid, updates in mutation.get("entity_updates", {}).items():
+    entity_updates = mutation.get("entity_updates", {})
+    for eid in sorted(entity_updates):
+        updates = entity_updates[eid]
         if eid in entities:
             entities[eid].update(updates)
-    for eid in mutation.get("removed_entities", []):
+    for eid in sorted(mutation.get("removed_entities", [])):
         entities.pop(eid, None)
 
 
