@@ -52,9 +52,18 @@ export function routeOverlay(selectedEntity, projection, enabled = true) {
 }
 
 export function actionLabel(entity) {
-  const action = entity?.action || {};
-  const purpose = action.travel_purpose || action.type || "idle";
-  return String(purpose).replace("TRAVEL_", "").replace(/_/g, " ").toUpperCase();
+  // Central simple-view wording from presentation layer.
+  try {
+    // eslint-disable-next-line global-require
+    const { describeActivity } = require("./presentation");
+    return describeActivity(entity);
+  } catch (_) {
+    const action = entity?.action || {};
+    if (action.type === "travel" && action.travel_purpose) {
+      return String(action.travel_purpose).replace("TRAVEL_", "").replace(/_/g, " ");
+    }
+    return String(action.type || "idle").replace(/_/g, " ");
+  }
 }
 
 export function entityIndicators(entities, selectedEntityId, labelMode = "selected") {

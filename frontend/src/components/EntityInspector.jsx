@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api";
 import { Badge } from "./ui/badge";
+import EntitySummary from "./EntitySummary";
+import { labelReasonCode } from "../lib/presentation";
 
 function DataRow({ label, value, mono = true }) {
   return (
@@ -32,20 +34,42 @@ const ACTION_STATUS_VARIANT = {
   completed: "success", failed: "danger", cancelled: "danger",
 };
 
-export default function EntityInspector({ runId, entityId, refreshKey }) {
+export default function EntityInspector({ runId, entityId, refreshKey, viewMode = "simple" }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [loadErrorDetail, setLoadErrorDetail] = useState(null);
 
   useEffect(() => {
     if (!runId || !entityId) return;
-    api.getCausal(runId, entityId).then(setData).catch(() => setError("Entity not found"));
+    setError(null);
+    setLoadErrorDetail(null);
+    api.getCausal(runId, entityId).then(setData).catch((err) => {
+      setError("Entity not found");
+      setLoadErrorDetail(err?.message || String(err));
+    });
   }, [runId, entityId, refreshKey]);
 
   if (!entityId) {
-    return <div className="p-4 text-xs text-zinc-500" data-testid="inspector-empty-state">Select an entity on the canvas to inspect it.</div>;
+    return (
+      <div className="p-4 text-xs text-zinc-500" data-testid="inspector-empty-state">
+        Select an entity to see what it is doing.
+      </div>
+    );
   }
-  if (error) return <div className="p-4 text-xs text-red-400">{error}</div>;
-  if (!data) return <div className="p-4 text-xs text-zinc-500">Loading...</div>;
+  if (error) {
+    return (
+      <div className="p-4 text-xs" data-testid="inspector-error">
+        <p className="text-red-400">{error}</p>
+        {loadErrorDetail && (
+          <details className="mt-2 text-zinc-600">
+            <summary className="cursor-pointer">Technical details</summary>
+            <pre className="mt-1 whitespace-pre-wrap font-data text-[10px]">{loadErrorDetail}</pre>
+          </details>
+        )}
+      </div>
+    );
+  }
+  if (!data) return <div className="p-4 text-xs text-zinc-500">Loading entity…</div>;
 
   const { entity, diagnostics, lifecycle_diagnostics, accepted_action, recent_rejected_proposals, causal_chain, action_history, knowledge_summary } = data;
   const isPerson = entity.type === "person";
@@ -53,9 +77,14 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
   const action = entity.action;
   const plan = entity.plan;
   const paused = entity.paused;
+  const simple = viewMode !== "diagnostics";
 
   return (
     <div className="p-3 space-y-4" data-testid="entity-inspector-panel">
+      {simple ? (
+        <EntitySummary entity={entity} diagnostics={diagnostics} />
+      ) : (
+      <>
       <div>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-zinc-100 font-data">{entity.id}</h3>
@@ -78,10 +107,10 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
 
       {(isPerson || isAnimal) && (
         <div>
-          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Needs</h4>
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Needs (raw values)</h4>
           <NeedBar label="hunger" value={entity.hunger} />
           {isPerson && <NeedBar label="thirst" value={entity.thirst} />}
-          <NeedBar label="energy" value={1000 - entity.energy} />
+          <NeedBar label="energy remaining" value={entity.energy} />
           {isPerson && <DataRow label="inventory (wood)" value={entity.inventory} />}
           {isPerson && <DataRow label="food_inventory (meat)" value={entity.food_inventory ?? 0} />}
           {isPerson && <DataRow label="has_shelter" value={String(entity.has_shelter)} />}
@@ -305,7 +334,8 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
                 <Badge variant="danger">{r.reason_code}</Badge>
                 <span className="text-zinc-600 font-data">t={r.simulation_time}</span>
               </div>
-              <p className="text-[11px] text-zinc-500 mt-1 font-data">{r.reason_detail}</p>
+              <p className="text-[11px] text-zinc-500 mt-1 font-data">{labelReasonCode(r.reason_code)}</p>
+              <p className="text-[11px] text-zinc-600 mt-0.5 font-data">{r.reason_detail}</p>
             </div>
           ))}
         </div>
@@ -329,6 +359,8 @@ export default function EntityInspector({ runId, entityId, refreshKey }) {
       )}
 
       <ProvenanceSection runId={runId} entityId={entityId} refreshKey={refreshKey} />
+      </>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { acceptedChangeEffects, actionLabel, cognitiveLayers, entityIndicators, routeOverlay } from "../lib/worldOverlay";
+import { acceptedChangeEffects, cognitiveLayers, entityIndicators, routeOverlay } from "../lib/worldOverlay";
+import { canvasTooltipLines } from "../lib/presentation";
 
 const TILE = 26;
 const COLORS = {
@@ -124,7 +125,7 @@ function drawGhosts(ctx, ghosts) {
   }
 }
 
-export default function WorldCanvas({ state, selectedEntityId, cognitiveProjection, overlayOptions, onOverlayOptionsChange, onSelectEntity, onSelectTile }) {
+export default function WorldCanvas({ state, selectedEntityId, cognitiveProjection, overlayOptions, onOverlayOptionsChange, onSelectEntity, onSelectTile, followSelected = false, viewMode = "simple" }) {
   const canvasRef = useRef(null);
   const pulseRef = useRef(0);
   const rafRef = useRef(null);
@@ -138,6 +139,23 @@ export default function WorldCanvas({ state, selectedEntityId, cognitiveProjecti
     previousEntitiesRef.current = state.entities.map((entity) => ({ ...entity, position: entity.position ? { ...entity.position } : null, action: entity.action ? { ...entity.action } : null, injury: entity.injury ? { ...entity.injury } : null }));
     tickRef.current = state.current_tick;
   }, [state, overlayOptions.animations]);
+
+  // Keep selected entity in the scrollable viewport when Follow is enabled (presentation only).
+  useEffect(() => {
+    if (!followSelected || !selectedEntityId || !canvasRef.current) return;
+    const entity = state?.entities?.find((e) => e.id === selectedEntityId);
+    if (!entity?.position) return;
+    const canvas = canvasRef.current;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    const px = entity.position.x * TILE + TILE / 2;
+    const py = entity.position.y * TILE + TILE / 2;
+    parent.scrollTo({
+      left: Math.max(0, px - parent.clientWidth / 2 + canvas.offsetLeft),
+      top: Math.max(0, py - parent.clientHeight / 2 + canvas.offsetTop),
+      behavior: "smooth",
+    });
+  }, [followSelected, selectedEntityId, state?.current_tick, state?.entities]);
 
   useEffect(() => {
     function tick() {
@@ -197,17 +215,36 @@ export default function WorldCanvas({ state, selectedEntityId, cognitiveProjecti
 
   const setOption = (name, value) => onOverlayOptionsChange({ ...overlayOptions, [name]: value });
   const displaySelected = state?.entities?.find((entity) => entity.id === selectedEntityId);
+  const simple = viewMode !== "diagnostics";
+  const tooltipLines = displaySelected
+    ? canvasTooltipLines(displaySelected, { viewMode, projection: cognitiveProjection })
+    : [];
   return <div className="relative" data-testid="world-canvas-shell">
     <canvas ref={canvasRef} onClick={handleClick} data-testid="world-canvas" className="cursor-pointer shadow-none" style={{ imageRendering: "pixelated" }} />
-    <div className="absolute top-2 left-2 max-w-[260px] rounded border border-zinc-700/80 bg-zinc-950/85 p-2 text-[10px] text-zinc-300" data-testid="world-overlay-controls">
+    <div className="absolute top-2 left-2 max-w-[280px] rounded border border-zinc-700/80 bg-zinc-950/85 p-2 text-[10px] text-zinc-300" data-testid="world-overlay-controls">
       <div className="mb-1 flex flex-wrap gap-1">
         <button onClick={() => setOption("cognitive", !overlayOptions.cognitive)}>{`Cognition: ${overlayOptions.cognitive ? "on" : "off"}`}</button>
         <button onClick={() => setOption("route", !overlayOptions.route)}>{`Route: ${overlayOptions.route ? "on" : "off"}`}</button>
         <button onClick={() => setOption("labels", overlayOptions.labels === "selected" ? "all" : overlayOptions.labels === "all" ? "off" : "selected")}>{`Labels: ${overlayOptions.labels}`}</button>
         <button onClick={() => setOption("animations", !overlayOptions.animations)}>{`Animation: ${overlayOptions.animations ? "on" : "off"}`}</button>
       </div>
-      <div className="text-zinc-500">cyan=current perception · slate=known/unseen · dark=unknown · dashed=last-known · blue=route · yellow=target · red=injury/danger</div>
-      {displaySelected && <div className="mt-1 text-sky-200">{actionLabel(displaySelected)} {cognitiveProjection?.planning?.goal ? `· ${cognitiveProjection.planning.goal}` : ""}{cognitiveProjection?.planning?.target_origin ? ` · ${cognitiveProjection.planning.target_origin.replace(/_/g, " ")}` : ""}</div>}
+      {!simple && (
+        <div className="text-zinc-500" data-testid="overlay-legend-technical">
+          cyan=current perception · slate=known/unseen · dark=unknown · dashed=last-known · blue=route · yellow=target · red=injury/danger
+        </div>
+      )}
+      {simple && (
+        <div className="text-zinc-500" data-testid="overlay-legend-simple">
+          Blue path = planned route · Yellow = destination · Dashed = last known position
+        </div>
+      )}
+      {displaySelected && (
+        <div className="mt-1 text-sky-200 space-y-0.5" data-testid="canvas-entity-tooltip">
+          {tooltipLines.map((line) => (
+            <div key={line}>{line}</div>
+          ))}
+        </div>
+      )}
     </div>
   </div>;
 }

@@ -1,8 +1,20 @@
 import axios from "axios";
 
-const BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+// CRA bakes REACT_APP_* in at process start. Fall back so a missing env does not
+// silently request "undefined/api/..." with no usable UI error.
+export function resolveBackendUrl(envValue = process.env.REACT_APP_BACKEND_URL) {
+  const raw = (envValue && String(envValue).trim()) || "http://127.0.0.1:8000";
+  return raw.replace(/\/+$/, "");
+}
+
+const BACKEND_URL = resolveBackendUrl();
+const BASE = `${BACKEND_URL}/api`;
 
 export const api = {
+  /** Origin only, e.g. http://127.0.0.1:8000 */
+  backendUrl: BACKEND_URL,
+  /** API root, e.g. http://127.0.0.1:8000/api */
+  backendBase: BASE,
   getScenarios: () => axios.get(`${BASE}/scenarios`).then((r) => r.data),
   createRun: (seed, scenario_id) => axios.post(`${BASE}/runs`, { seed, scenario_id }).then((r) => r.data),
   listRuns: () => axios.get(`${BASE}/runs`).then((r) => r.data),

@@ -27,7 +27,13 @@ export const SelectContent = React.forwardRef(({ className, children, ...props }
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
-      className={cn("z-50 overflow-hidden rounded-sm border border-zinc-800 bg-surface text-xs", className)}
+      // Above modal overlays (z-50). Without this, scenario options render
+      // behind the New Run modal and appear as an empty dropdown.
+      position="popper"
+      className={cn(
+        "z-[200] overflow-hidden rounded-sm border border-zinc-800 bg-surface text-xs shadow-lg",
+        className,
+      )}
       {...props}
     >
       <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
