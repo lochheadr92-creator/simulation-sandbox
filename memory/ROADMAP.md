@@ -161,11 +161,15 @@ The complete verification matrix is in ADR-001.
 
 ### 5B2 — Social Observation Facts
 
+**Status:** implemented as `social-observation-v1` nested within compatible `knowledge-v2` `known_people` records.
+
 **Goal:** extend bounded perception and `known_people` with visible action, visible injury/distress, apparent urgent need, and apparent carried food.
 
 **Dependencies:** 5B1 and 5A5 perception/knowledge caps.
 
 **Bounded implementation scope:** versioned observer-owned facts derived only from current visible frames, with explicit visibility semantics and bounded retention.
+
+**Visibility contract (`social-observation-v1`):** only a living non-observer person inside the current integer-Manhattan perception radius is observed. The retained record contains the subject ID, last-known position/tick, a whitelisted coarse action kind/status, `appears_injured`, `apparent_urgent_need` (`none`, `distressed`, or `critical` from existing seek/critical hunger-thirst thresholds plus visible injury), and boolean `appears_to_carry_food` from existing carried-food fields. It never contains health, hunger, thirst, energy, quantities, plan/goal, target, route, utility, or motive. Identical re-observation does not write solely for tick advancement; unseen records remain last-known until material refresh or deterministic eviction.
 
 **Explicit deferrals:** exact private inventory without an explicit visibility rule, telepathy, global social knowledge, relationships, and interaction protocol state.
 

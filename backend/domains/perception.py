@@ -9,11 +9,23 @@ Knowledge is sparse, observer-owned, and mutates only when an accepted
 people_action (or equivalent) commits a material knowledge change.
 """
 from core.geometry import manhattan, is_passable
-from core.constants import VISION_RADIUS
+from core.constants import CRITICAL_THRESHOLD, SEEK_THRESHOLD, VISION_RADIUS
 from core.hashing import canonical_hash
 
 PERCEPTION_RULE_VERSION = "perception-manhattan-v1"
 KNOWLEDGE_SCHEMA_VERSION = "knowledge-v2"
+SOCIAL_OBSERVATION_VERSION = "social-observation-v1"
+
+# Social observations deliberately expose only what can be read as a coarse
+# outward appearance.  Plans, targets, route state, utility, and goals remain
+# private to the observed person.
+VISIBLE_PERSON_ACTION_KINDS = frozenset({
+    "idle", "travel", "gather", "eat", "drink", "sleep",
+    "build_shelter", "hunt_strike", "give_food", "wander",
+})
+VISIBLE_PERSON_ACTION_STATUSES = frozenset({
+    "travelling", "performing", "completed", "failed", "paused",
+})
 
 # Bounded growth caps (hard integer limits; deterministic replacement by age)
 MAX_KNOWN_TILES = 200
@@ -83,6 +95,56 @@ def _make_fact(observer_id, fact_type, subject, location, tick, confidence=100,
     if extra:
         body.update(extra)
     return fid, body
+
+
+def _apparent_urgent_need(person: dict) -> str:
+    """Return the versioned coarse urgency appearance for a visible person.
+
+    ``critical`` uses the existing critical hunger/thirst threshold;
+    ``distressed`` uses the existing seek threshold or a visible injury.  The
+    returned category intentionally does not identify a cause or expose any
+    underlying need/health value.
+    """
+    hunger = person.get("hunger", 0)
+    thirst = person.get("thirst", 0)
+    if hunger >= CRITICAL_THRESHOLD or thirst >= CRITICAL_THRESHOLD:
+        return "critical"
+    if hunger >= SEEK_THRESHOLD or thirst >= SEEK_THRESHOLD or _person_appears_injured(person):
+        return "distressed"
+    return "none"
+
+
+def _person_appears_injured(person: dict) -> bool:
+    injury = person.get("injury") or {}
+    return bool(injury.get("injured") or person.get("injured"))
+
+
+def _person_social_observation(eid: str, person: dict, tick: int) -> dict:
+    """Create the bounded social-observation-v1 record for one visible person."""
+    action = person.get("action") or {}
+    action_kind = action.get("type")
+    action_status = action.get("status")
+    visible_action_kind = action_kind if action_kind in VISIBLE_PERSON_ACTION_KINDS else None
+    return {
+        "subject_id": eid,
+        "last_seen_tick": tick,
+        "position": dict(person["position"]),
+        "alive": True,
+        "social_observation_version": SOCIAL_OBSERVATION_VERSION,
+        "visible_action_kind": visible_action_kind,
+        "visible_action_status": (
+            action_status
+            if visible_action_kind and action_status in VISIBLE_PERSON_ACTION_STATUSES
+            else None
+        ),
+        "appears_injured": _person_appears_injured(person),
+        "apparent_urgent_need": _apparent_urgent_need(person),
+        # Both fields are existing carried-food sources.  Only the existence
+        # of visible carried food is retained; no quantity or inventory shape.
+        "appears_to_carry_food": bool(
+            person.get("food_inventory", 0) > 0 or person.get("inventory", 0) > 0
+        ),
+    }
 
 
 def perceive(pos: dict, entities: dict, terrain: list, tick: int,
@@ -163,11 +225,7 @@ def perceive(pos: dict, entities: dict, terrain: list, tick: int,
                 }
                 detections.append(_detection(observer_id, eid, "danger", pos, epos, dist, tick))
         elif et == "person" and e.get("alive", True) and eid != observer_id:
-            person_sightings[eid] = {
-                "last_seen_tick": tick,
-                "position": dict(epos),
-                "alive": True,
-            }
+            person_sightings[eid] = _person_social_observation(eid, e, tick)
             detections.append(_detection(observer_id, eid, "person", pos, epos, dist, tick))
 
         if len(detections) >= MAX_DETECTIONS_PER_ACTIVATION:
@@ -270,7 +328,7 @@ def merge_knowledge(existing: dict, delta: dict, observer_id: str | None = None,
             tuple(info.get(f) for f in resource_fields),
         )
 
-    def _upsert_entity_map(store, sightings, fact_type, resource_fields=()):
+    def _upsert_entity_map(store, sightings, fact_type, resource_fields=(), fact_fields=()):
         nonlocal changed
         for sid in sorted(sightings):
             info = sightings[sid]
@@ -293,7 +351,10 @@ def merge_knowledge(existing: dict, delta: dict, observer_id: str | None = None,
             fid, fact = _make_fact(
                 observer_id, fact_type, sid, pos, tick,
                 source_event_id=source_event_id,
-                extra={"last_known_resource": info.get("last_known_resource")},
+                extra={
+                    "last_known_resource": info.get("last_known_resource"),
+                    **{field: info.get(field) for field in fact_fields},
+                },
             )
             if fid in facts:
                 facts[fid]["last_confirmed_tick"] = tick
@@ -301,6 +362,8 @@ def merge_knowledge(existing: dict, delta: dict, observer_id: str | None = None,
                 facts[fid]["status"] = "confirmed"
                 if "last_known_resource" in info:
                     facts[fid]["last_known_resource"] = info["last_known_resource"]
+                for field in fact_fields:
+                    facts[fid][field] = info.get(field)
                 if source_event_id:
                     facts[fid]["source_event_id"] = source_event_id
             else:
@@ -324,7 +387,17 @@ def merge_knowledge(existing: dict, delta: dict, observer_id: str | None = None,
                        ("last_known_resource",))
     _upsert_entity_map(known_animals, delta.get("animal_sightings", {}), "animal",
                        ("alive", "injured", "action_type"))
-    _upsert_entity_map(known_people, delta.get("person_sightings", {}), "person")
+    _upsert_entity_map(
+        known_people, delta.get("person_sightings", {}), "person",
+        (
+            "social_observation_version", "visible_action_kind", "visible_action_status",
+            "appears_injured", "apparent_urgent_need", "appears_to_carry_food",
+        ),
+        (
+            "social_observation_version", "visible_action_kind", "visible_action_status",
+            "appears_injured", "apparent_urgent_need", "appears_to_carry_food",
+        ),
+    )
     _upsert_entity_map(known_dangers, delta.get("danger_sightings", {}), "danger", ("kind",))
 
     # Cap growth deterministically

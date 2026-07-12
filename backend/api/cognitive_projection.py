@@ -16,6 +16,16 @@ MAX_PROJECTED_TILES = 200
 MAX_GHOST_MARKERS = 24
 MAX_DISCOVERY_PULSES = 12
 MAX_ROUTE_POINTS = 64
+MAX_SOCIAL_OBSERVATIONS = 24
+
+SOCIAL_OBSERVATION_FIELDS = (
+    "social_observation_version",
+    "visible_action_kind",
+    "visible_action_status",
+    "appears_injured",
+    "apparent_urgent_need",
+    "appears_to_carry_food",
+)
 
 
 def _coord(value):
@@ -56,6 +66,32 @@ def _discoveries(knowledge, tick):
             "position": _coord(fact["location"]),
         })
     return discoveries[:MAX_DISCOVERY_PULSES]
+
+
+def _social_observation(record, observation_state):
+    """Return only the nested social-observation-v1 public display fields."""
+    out = {
+        "id": record.get("subject_id"),
+        "position": _coord(record["position"]),
+        "last_seen_tick": record.get("last_seen_tick"),
+        "observation_state": observation_state,
+    }
+    out.update({field: record.get(field) for field in SOCIAL_OBSERVATION_FIELDS if field in record})
+    return out
+
+
+def _social_observations(current, knowledge):
+    observed = []
+    current_people = current.get("person_sightings") or {}
+    for subject_id, record in sorted(current_people.items()):
+        observed.append(_social_observation({"subject_id": subject_id, **record}, "observed"))
+
+    last_known = []
+    for subject_id, record in sorted((knowledge.get("known_people") or {}).items()):
+        if subject_id in current_people or not record.get("position"):
+            continue
+        last_known.append(_social_observation({"subject_id": subject_id, **record}, "last-known"))
+    return (observed + last_known)[:MAX_SOCIAL_OBSERVATIONS]
 
 
 def _route(action):
@@ -105,6 +141,7 @@ def build_cognitive_projection(observer, entities, terrain, tick, diagnostics=No
         },
         "known_tiles": _bounded_coords(knowledge.get("known_tiles", []), MAX_PROJECTED_TILES),
         "last_known_entities": _ghosts(knowledge, perceived_ids),
+        "social_observations": _social_observations(current, knowledge),
         "new_discoveries": _discoveries(knowledge, tick),
         "route": _route(observer.get("action")),
         "planning": {
@@ -117,6 +154,7 @@ def build_cognitive_projection(observer, entities, terrain, tick, diagnostics=No
             "max_ghost_markers": MAX_GHOST_MARKERS,
             "max_discovery_pulses": MAX_DISCOVERY_PULSES,
             "max_route_points": MAX_ROUTE_POINTS,
+            "max_social_observations": MAX_SOCIAL_OBSERVATIONS,
         },
         "stale_knowledge_warning": "Last-known markers are personal memory, not current world truth.",
     }
