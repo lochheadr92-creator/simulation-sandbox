@@ -13,6 +13,7 @@ as genesis accepted events, giving them causal origin like everything else.
 """
 from core.rng import DeterministicRNG
 from core.constants import MAX_HEALTH, ANIMAL_MAX_HEALTH
+from domains.living_agent_contracts import empty_living_agent_state
 
 
 def generate_world(seed: str, scenario):
@@ -59,8 +60,9 @@ def generate_world(seed: str, scenario):
     p_thirst = cfg.get("person_thirst_range", (100, 300))
     p_energy = cfg.get("person_energy_range", (700, 1000))
     p_age = cfg.get("person_age_range", (3000, 30000))  # all genesis people start as adults (no birth mechanic)
-    for _ in range(cfg.get("num_people", 0)):
+    for person_index in range(cfg.get("num_people", 0)):
         x, y = random_empty_tile()
+        person_id = f"person-{person_index:03d}"
         genesis_specs.append({
             "type": "person", "position": {"x": x, "y": y},
             "hunger": spawn_rng.randint(*p_hunger), "thirst": spawn_rng.randint(*p_thirst),
@@ -75,6 +77,7 @@ def generate_world(seed: str, scenario):
             "age_ticks": spawn_rng.randint(*p_age), "life_stage": "adult",
             "health": MAX_HEALTH, "injury": {"injured": False, "severity": 0, "cause": None},
             "death_cause": None, "death_tick": None,
+            "living_agent": empty_living_agent_state(person_id, 0, rng),
         })
 
     a_hunger = cfg.get("animal_hunger_range", (100, 300))

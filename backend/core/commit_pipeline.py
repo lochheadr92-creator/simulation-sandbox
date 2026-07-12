@@ -172,6 +172,32 @@ def _stamp_food_interaction_provenance(proposal: dict, mutation: dict, event_id:
         updates["fulfilment_transfer_event_id"] = event_id
 
 
+def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str) -> None:
+    """Attach the accepting event to newly acquired cognition records.
+
+    Domains cannot know an accepted event id before Core orders and accepts a
+    proposal.  Core stamps only records created at this proposal's tick; the
+    resulting mutation is what is persisted and replayed.
+    """
+    tick = int(proposal.get("requested_time", 0))
+    for update in (mutation.get("entity_updates") or {}).values():
+        living = update.get("living_agent")
+        if isinstance(living, dict):
+            for memory in (living.get("memories") or {}).values():
+                if (memory.get("acquired_event_id") is None
+                        and int(memory.get("last_recalled_tick", -1)) == tick):
+                    memory["acquired_event_id"] = event_id
+            for link in living.get("causal_links") or []:
+                if link.get("accepted_event_id") is None and int(link.get("tick", -1)) == tick:
+                    link["accepted_event_id"] = event_id
+        knowledge = update.get("knowledge")
+        if isinstance(knowledge, dict):
+            for fact in (knowledge.get("facts") or {}).values():
+                if (fact.get("learned_event_id") is None
+                        and int(fact.get("first_known_tick", -1)) == tick):
+                    fact["learned_event_id"] = event_id
+
+
 def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int) -> dict:
     return {
         "id": f"rej-{tick}-{proposal['content_hash'][:10]}-{proposal['entity_id']}",
@@ -252,6 +278,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         mutation.setdefault("entity_updates", {}).setdefault(proposal["entity_id"], {})
         mutation["entity_updates"][proposal["entity_id"]]["last_event_id"] = event_id
         _stamp_food_interaction_provenance(proposal, mutation, event_id)
+        _stamp_living_agent_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
         post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))

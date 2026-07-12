@@ -13,7 +13,15 @@ Omniscient target scans are not used for planning. Hunting uses known/perceived
 animals only. Exploration uses passable unknown 4-neighbours only.
 """
 from domains.base import DomainEngine, DomainOutput
-from domains.perception import perceive, merge_knowledge, empty_knowledge, _compat_knowledge
+from domains.perception import merge_knowledge, empty_knowledge, _compat_knowledge
+from domains.living_agent_contracts import compat_living_agent_state
+from domains.living_agent_cognition import (
+    derive_internal_pressures,
+    merge_meaningful_memories,
+    merge_observations_into_knowledge,
+    perceive_living,
+    refresh_wants,
+)
 from domains.people_utility import score_candidates
 from domains.people_planning import (
     idle_action, empty_plan, check_critical_interrupt, form_plan, start_step,
@@ -54,11 +62,22 @@ class PeopleDomain(DomainEngine):
             rng = frame.rng.stream(f"people.{eid}.decision.{tick}")
 
             existing_knowledge = _compat_knowledge(e.get("knowledge") or empty_knowledge())
-            # Perception from pinned frame only (frame.entities is the observation view).
-            delta = perceive(pos, frame.entities, terrain, tick, observer_id=eid)
+            # Stage 6A perception still reads only the pinned observation frame,
+            # but now applies declared attention/lighting/health factors and
+            # produces whitelisted provenance-bearing observations.
+            delta = perceive_living(
+                eid, e, frame.entities, terrain, tick, night=night,
+                weather=frame.entities.get("weather-000"),
+            )
             knowledge, knowledge_changed, learned = merge_knowledge(
                 existing_knowledge, delta, observer_id=eid,
             )
+            knowledge, observation_changed, observation_learned = merge_observations_into_knowledge(
+                knowledge, delta.get("observations") or [],
+            )
+            if observation_changed:
+                knowledge_changed = True
+                learned = list(learned) + list(observation_learned)
             # Phase 5B4: event-backed interaction memory from canonical interactions.
             knowledge, im_changed, im_learned = merge_interaction_memory(
                 knowledge, observer_id=eid, entities=frame.entities, tick=tick,
@@ -66,6 +85,22 @@ class PeopleDomain(DomainEngine):
             if im_changed:
                 knowledge_changed = True
                 learned = list(learned) + list(im_learned)
+
+            living_state = compat_living_agent_state(
+                e.get("living_agent"), eid, tick, frame.rng,
+            )
+            living_state = derive_internal_pressures(
+                e, living_state, knowledge, delta, tick, night=night,
+                weather=frame.entities.get("weather-000"),
+            )
+            living_state, memory_learned = merge_meaningful_memories(
+                living_state,
+                actor_id=eid,
+                tick=tick,
+                observations=delta.get("observations") or [],
+                learned=learned,
+            )
+            living_state = refresh_wants(living_state, eid, tick)
 
             action = dict(e.get("action") or idle_action())
             plan = dict(e.get("plan") or empty_plan())
@@ -137,6 +172,32 @@ class PeopleDomain(DomainEngine):
             if knowledge_changed and learned:
                 explanation = f"learned {len(learned)} fact(s); {explanation}"
 
+            # Persist post-action pressure truth (for example drinking lowers
+            # thirst) and meaningful success/failure/interruption memories in
+            # the same proposal as the canonical action consequence.
+            post_entity = {
+                **e,
+                "position": result["pos"],
+                "hunger": result["hunger"],
+                "thirst": result["thirst"],
+                "energy": result["energy"],
+                "inventory": result["inventory"],
+                "food_inventory": result["food_inventory"],
+                "has_shelter": result["has_shelter"],
+                "action": action,
+            }
+            living_state = derive_internal_pressures(
+                post_entity, living_state, knowledge, delta, tick, night=night,
+                weather=frame.entities.get("weather-000"),
+            )
+            living_state, action_memories = merge_meaningful_memories(
+                living_state,
+                actor_id=eid,
+                tick=tick,
+                action_result={**result, "action": action},
+            )
+            living_state = refresh_wants(living_state, eid, tick)
+
             if result["advance_plan"]:
                 plan["step_index"] = plan.get("step_index", 0) + 1
                 if action["status"] != "failed" and plan["step_index"] < len(plan.get("steps", [])):
@@ -147,7 +208,7 @@ class PeopleDomain(DomainEngine):
                     plan["status"] = "completed" if action["status"] != "failed" else "abandoned"
 
             proposal = self._build_proposal(
-                e, eid, action, plan, paused, knowledge, knowledge_changed, result,
+                e, eid, action, plan, paused, knowledge, knowledge_changed, living_state, result,
                 tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation,
             )
             proposals.append(proposal)
@@ -185,6 +246,18 @@ class PeopleDomain(DomainEngine):
                     ),
                     "explore_neighbour_only": True,
                 },
+                "living_agent": {
+                    "schema_version": living_state.get("schema_version"),
+                    "pressures": living_state.get("pressures"),
+                    "active_wants": [
+                        want for want in (living_state.get("wants") or {}).values()
+                        if want.get("status") == "active"
+                    ][:8],
+                    "memory_count": len(living_state.get("memories") or {}),
+                    "new_memories": (memory_learned + action_memories)[:8],
+                    "perception_version": delta.get("living_perception_version"),
+                    "attention": delta.get("attention"),
+                },
                 "interaction_memory": {
                     "learned": im_learned[:MAX_IM_DIAGNOSTICS] if im_changed else [],
                     "fact_count": len(
@@ -203,7 +276,7 @@ class PeopleDomain(DomainEngine):
 
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
-    def _build_proposal(self, e, eid, action, plan, paused, knowledge, knowledge_changed,
+    def _build_proposal(self, e, eid, action, plan, paused, knowledge, knowledge_changed, living_state,
                         result, tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation):
         entity_updates = {
             eid: {
@@ -218,6 +291,7 @@ class PeopleDomain(DomainEngine):
                 "plan": plan,
                 "paused": paused,
                 "current_goal": plan.get("goal"),
+                "living_agent": living_state,
             }
         }
         # Bounded growth: rewrite knowledge only on material perception change
