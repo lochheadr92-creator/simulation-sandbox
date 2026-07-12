@@ -14,7 +14,7 @@ animals only. Exploration uses passable unknown 4-neighbours only.
 """
 from domains.base import DomainEngine, DomainOutput
 from domains.perception import merge_knowledge, empty_knowledge, _compat_knowledge
-from domains.living_agent_contracts import compat_living_agent_state, compat_plan
+from domains.living_agent_contracts import compat_action, compat_living_agent_state, compat_plan
 from domains.living_agent_cognition import (
     derive_internal_pressures,
     merge_meaningful_memories,
@@ -30,6 +30,11 @@ from domains.living_agent_reasoning import (
     score_goal_candidates,
     select_goal,
     update_plan_progress,
+)
+from domains.living_agent_actions import (
+    established_action_effects,
+    evidence_signal_for_action,
+    living_action_metadata,
 )
 from domains.people_utility import score_candidates
 from domains.people_planning import (
@@ -204,6 +209,8 @@ class PeopleDomain(DomainEngine):
             carcass_delta = action.pop("_carcass_delta", None)
             animal_delta = action.pop("_animal_delta", None)
             food_transfer = action.pop("_food_transfer", None)
+            action["physical_effects"] = established_action_effects(action.get("type"))
+            action = compat_action(action, actor_id=eid, tick=tick, plan=plan)
             step_note = result["explanation"]
             explanation = f"{decision_note} -> {step_note}" if decision_note else step_note
             if knowledge_changed and learned:
@@ -220,6 +227,10 @@ class PeopleDomain(DomainEngine):
                 "energy": result["energy"],
                 "inventory": result["inventory"],
                 "food_inventory": result["food_inventory"],
+                "carried_resources": {
+                    "wood": result["inventory"],
+                    "food": result["food_inventory"],
+                },
                 "has_shelter": result["has_shelter"],
                 "action": action,
             }
@@ -340,6 +351,12 @@ class PeopleDomain(DomainEngine):
                 "energy": result["energy"],
                 "inventory": result["inventory"],
                 "food_inventory": result["food_inventory"],
+                "carried_resources": {
+                    "wood": result["inventory"],
+                    "food": result["food_inventory"],
+                },
+                "inventory_capacity": int(e.get("inventory_capacity", 30)),
+                "carried_item_ids": list(e.get("carried_item_ids") or []),
                 "has_shelter": result["has_shelter"],
                 "action": action,
                 "plan": plan,
@@ -354,17 +371,34 @@ class PeopleDomain(DomainEngine):
             entity_updates[eid]["knowledge"] = knowledge
 
         touched_scope = list(result["touched_scope"])
+        for target_id in action.get("target_entity_ids") or []:
+            if target_id and target_id not in touched_scope:
+                touched_scope.append(target_id)
         preconditions = list(result["preconditions"])
         preconditions.append({"entity_id": eid, "field": "alive", "op": "eq", "value": True})
         # Every people action writes this field.  Revalidation prevents a
         # later single-person proposal from overwriting an accepted transfer.
         preconditions.append({"entity_id": eid, "field": "food_inventory", "op": "eq", "value": e.get("food_inventory", 0)})
         new_entities = dict(result["new_entities"])
+        signal = evidence_signal_for_action(action, position=result["pos"], tick=tick)
+        if signal:
+            signal_id, signal_spec = signal
+            new_entities[signal_id] = signal_spec
+            if signal_id not in touched_scope:
+                touched_scope.append(signal_id)
 
         if food_transfer:
             receiver_id = food_transfer["receiver_id"]
+            receiver = result.get("receiver") or {}
+            receiver_resources = dict(
+                (receiver.get("carried_resources") if isinstance(receiver, dict) else None)
+                or (e.get("carried_resources") if receiver_id == eid else {})
+                or {"wood": 0, "food": food_transfer["receiver_food_inventory"]}
+            )
+            receiver_resources["food"] = food_transfer["receiver_food_inventory"] + food_transfer["quantity"]
             entity_updates[receiver_id] = {
                 "food_inventory": food_transfer["receiver_food_inventory"] + food_transfer["quantity"],
+                "carried_resources": receiver_resources,
             }
             if receiver_id not in touched_scope:
                 touched_scope.append(receiver_id)
@@ -404,4 +438,5 @@ class PeopleDomain(DomainEngine):
                 key: food_transfer[key]
                 for key in ("contract_version", "giver_id", "receiver_id", "field", "quantity")
             }
+        proposal["living_action"] = living_action_metadata(action, plan)
         return proposal

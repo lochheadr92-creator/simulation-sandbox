@@ -42,6 +42,7 @@ from core.constants import (GATHER_TICKS, BUILD_TICKS, SHELTER_COST, GATHER_YIEL
                              MEAT_HUNGER_REDUCTION, FOOD_TRANSFER_QUANTITY,
                              FOOD_TRANSFER_SURPLUS)
 from domains.living_agent_contracts import compat_plan
+from domains.living_agent_contracts import default_affordances
 
 TRAVEL_STALL_LIMIT = 25  # deterministic safety net: abandon a travel step that
                           # cannot make progress rather than looping forever.
@@ -510,7 +511,13 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
         new_action["ticks_spent"] = ticks_spent
         if ticks_spent >= action.get("ticks_required", BUILD_TICKS):
             shelter_id = f"shelter-{eid.split('-')[-1]}-{tick}"
-            new_entities[shelter_id] = {"type": "shelter", "position": dict(pos), "alive": True, "owner_id": eid}
+            shelter = {
+                "type": "shelter", "position": dict(pos), "alive": True,
+                "owner_id": eid, "access": "private", "condition": 1000,
+                "max_condition": 1000,
+            }
+            shelter["affordances"] = default_affordances(shelter)
+            new_entities[shelter_id] = shelter
             inventory = max(0, inventory - SHELTER_COST)
             has_shelter = True
             new_action["status"] = "completed"

@@ -305,7 +305,9 @@ def compat_plan(plan: dict | None, *, actor_id: str, tick: int) -> dict:
         "schema_version": PLAN_SCHEMA_VERSION,
         "plan_id": plan_id,
         "goal": goal,
-        "goal_id": plan.get("goal_id"),
+        "goal_id": plan.get("goal_id") or (
+            _stable_id("goal", actor_id, created_tick, goal) if goal else None
+        ),
         "steps": steps,
         "step_records": step_records[:LIMITS.planning_depth],
         "step_index": min(max(0, int(plan.get("step_index", 0))), len(steps)),
@@ -358,6 +360,11 @@ def compat_action(action: dict | None, *, actor_id: str, tick: int, plan: dict |
         "causal_parent_event_ids": list(action.get("causal_parent_event_ids") or []),
         "source_proposal_id": action.get("source_proposal_id"),
         "accepted_event_id": action.get("accepted_event_id"),
+        "source_proposal_ids": list(action.get("source_proposal_ids") or []),
+        "accepted_event_ids": list(action.get("accepted_event_ids") or []),
+        "physical_effects": list(action.get("physical_effects") or []),
+        "resource_transfer": copy.deepcopy(action.get("resource_transfer")),
+        "access_violation": bool(action.get("access_violation", False)),
     }
 
 

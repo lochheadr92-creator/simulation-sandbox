@@ -13,7 +13,7 @@ as genesis accepted events, giving them causal origin like everything else.
 """
 from core.rng import DeterministicRNG
 from core.constants import MAX_HEALTH, ANIMAL_MAX_HEALTH
-from domains.living_agent_contracts import empty_living_agent_state
+from domains.living_agent_contracts import default_affordances, empty_living_agent_state
 
 
 def generate_world(seed: str, scenario):
@@ -67,6 +67,8 @@ def generate_world(seed: str, scenario):
             "type": "person", "position": {"x": x, "y": y},
             "hunger": spawn_rng.randint(*p_hunger), "thirst": spawn_rng.randint(*p_thirst),
             "energy": spawn_rng.randint(*p_energy), "inventory": 0, "food_inventory": 0, "has_shelter": False,
+            "carried_resources": {"wood": 0, "food": 0}, "inventory_capacity": 30,
+            "carried_item_ids": [],
             "current_goal": "IDLE", "alive": True,
             "action": {"type": "idle", "status": "completed", "target_entity_id": None, "target_pos": None,
                        "ticks_spent": 0, "ticks_required": 0, "interruptible": True, "started_tick": 0},
@@ -91,5 +93,14 @@ def generate_world(seed: str, scenario):
             "action": {"type": "idle", "status": "completed", "ticks_spent": 0, "flee_ticks_remaining": 0},
             "health": ANIMAL_MAX_HEALTH, "injured": False, "death_cause": None, "death_tick": None,
         })
+
+    for spec in genesis_specs:
+        if spec["type"] == "tree":
+            spec.setdefault("resource_kind", "wood")
+            spec.setdefault("quality", 500)
+            spec.setdefault("regeneration_rule", "ecology_interval")
+        elif spec["type"] == "person":
+            spec.setdefault("access", "private")
+        spec["affordances"] = default_affordances(spec)
 
     return {"width": width, "height": height, "terrain": terrain, "genesis_specs": genesis_specs}

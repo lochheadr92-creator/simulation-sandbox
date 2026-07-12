@@ -23,6 +23,7 @@ from core.food_interaction import (
     INTERACTION_PROPOSAL_TYPES,
     validate_food_interaction,
 )
+from domains.living_agent_actions import validate_living_action_proposal
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -52,6 +53,7 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         "mutation": p.get("mutation", {}),
         "transfer": p.get("transfer"),
         "interaction": p.get("interaction"),
+        "living_action": p.get("living_action"),
         "requested_time": p["requested_time"],
         "phase": p["phase"],
     }
@@ -207,6 +209,35 @@ def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str
                     fact["learned_event_id"] = event_id
 
 
+def _stamp_living_action_provenance(
+    proposal: dict, mutation: dict, event_id: str,
+) -> None:
+    meta = proposal.get("living_action")
+    if not isinstance(meta, dict):
+        return
+    proposal_ids = list(meta.get("source_proposal_ids") or [])
+    if proposal.get("proposal_id") not in proposal_ids:
+        proposal_ids.append(proposal["proposal_id"])
+    event_ids = list(meta.get("accepted_event_ids") or [])
+    if event_id not in event_ids:
+        event_ids.append(event_id)
+    meta["source_proposal_ids"] = proposal_ids[-16:]
+    meta["accepted_event_ids"] = event_ids[-16:]
+
+    actor_update = (mutation.get("entity_updates") or {}).get(proposal.get("entity_id")) or {}
+    action = actor_update.get("action")
+    if isinstance(action, dict):
+        action["source_proposal_id"] = proposal["proposal_id"]
+        action["accepted_event_id"] = event_id
+        action["source_proposal_ids"] = list(meta["source_proposal_ids"])
+        action["accepted_event_ids"] = list(meta["accepted_event_ids"])
+        action["physical_effects"] = list(meta.get("physical_effects") or [])
+    for new_entity in (mutation.get("new_entities") or {}).values():
+        if new_entity.get("type") == "signal":
+            new_entity["source_event_id"] = event_id
+            new_entity["last_event_id"] = event_id
+
+
 def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int) -> dict:
     return {
         "id": f"rej-{tick}-{proposal['content_hash'][:10]}-{proposal['entity_id']}",
@@ -256,6 +287,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             rejected.append(_reject(proposal, "initial_validation", transfer_err, transfer_err, tick))
             continue
 
+        living_action_err = validate_living_action_proposal(proposal, entities)
+        if living_action_err:
+            rejected.append(_reject(
+                proposal, "initial_validation", living_action_err,
+                living_action_err, tick,
+            ))
+            continue
+
         if not proposal.get("is_exogenous"):
             causal_parents = proposal.get("causal_parent_event_ids") or []
             if not causal_parents:
@@ -288,6 +327,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         mutation["entity_updates"][proposal["entity_id"]]["last_event_id"] = event_id
         _stamp_food_interaction_provenance(proposal, mutation, event_id)
         _stamp_living_agent_provenance(proposal, mutation, event_id)
+        _stamp_living_action_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
         post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
@@ -314,6 +354,8 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             accepted_events[-1]["transfer"] = proposal["transfer"]
         if proposal.get("interaction"):
             accepted_events[-1]["interaction"] = proposal["interaction"]
+        if proposal.get("living_action"):
+            accepted_events[-1]["living_action"] = proposal["living_action"]
         order_index += 1
 
     return accepted_events, rejected, order_index

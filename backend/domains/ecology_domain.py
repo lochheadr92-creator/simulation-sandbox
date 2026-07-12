@@ -32,6 +32,8 @@ class EcologyDomain(DomainEngine):
                 due.append(eid)
             elif e["type"] == "carcass" and tick % CARCASS_DECAY_INTERVAL == 0 and e.get("resource", 0) > 0:
                 due.append(eid)
+            elif e["type"] == "signal" and tick >= int(e.get("expires_tick", tick + 1)):
+                due.append(eid)
         return due
 
     def activate(self, frame):
@@ -45,6 +47,8 @@ class EcologyDomain(DomainEngine):
                 self._regrow(e, eid, frame, proposals, diagnostics)
             elif e["type"] == "carcass":
                 self._decay(e, eid, frame, proposals, diagnostics)
+            elif e["type"] == "signal":
+                self._expire_signal(e, eid, frame, proposals, diagnostics)
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
     def _regrow(self, e, eid, frame, proposals, diagnostics):
@@ -96,3 +100,25 @@ class EcologyDomain(DomainEngine):
             "explanation": explanation,
         })
         diagnostics[eid] = {"candidates": [], "selected_goal": "DECAY", "explanation": explanation}
+
+    def _expire_signal(self, e, eid, frame, proposals, diagnostics):
+        explanation = f"ephemeral {e.get('signal_kind', 'signal')} evidence expired"
+        proposals.append({
+            "proposal_family": "ecology_process",
+            "proposal_type": "expire_signal",
+            "proposer_engine_id": self.engine_id,
+            "proposer_engine_version": self.engine_version,
+            "entity_id": eid,
+            "causal_parent_event_ids": [e["last_event_id"]] if e.get("last_event_id") else [],
+            "is_exogenous": not e.get("last_event_id"),
+            "requested_time": frame.simulation_time,
+            "phase": self.phase,
+            "engine_priority": self.engine_priority,
+            "touched_scope": [eid],
+            "preconditions": [
+                {"entity_id": eid, "field": "expires_tick", "op": "lte", "value": frame.simulation_time},
+            ],
+            "mutation": {"entity_updates": {}, "new_entities": {}, "removed_entities": [eid]},
+            "explanation": explanation,
+        })
+        diagnostics[eid] = {"candidates": [], "selected_goal": "EXPIRE_SIGNAL", "explanation": explanation}
