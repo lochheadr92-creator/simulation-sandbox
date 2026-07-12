@@ -16,6 +16,7 @@ producing a genuine, inspectable rejection with a stable reason code.
 """
 from core.hashing import canonical_hash
 from core.mutations import apply_mutation, snapshot_for_hash
+from core.constants import CRITICAL_THRESHOLD, FOOD_TRANSFER_QUANTITY, FOOD_TRANSFER_SURPLUS
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -43,6 +44,7 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         "touched_scope": sorted(p.get("touched_scope", [])),
         "preconditions": p.get("preconditions", []),
         "mutation": p.get("mutation", {}),
+        "transfer": p.get("transfer"),
         "requested_time": p["requested_time"],
         "phase": p["phase"],
     }
@@ -74,6 +76,65 @@ def evaluate_preconditions(preconditions: list, entities: dict):
         value = entity.get(cond["field"])
         if not OPS[cond["op"]](value, cond["value"]):
             return f"{cond['field']}_{cond['op']}_failed"
+    return None
+
+
+def validate_food_transfer(proposal: dict, entities: dict):
+    """Core-owned validation for the narrow Phase 5B transfer contract."""
+    if proposal.get("proposal_type") != "give_food":
+        return None
+
+    transfer = proposal.get("transfer") or {}
+    giver_id = transfer.get("giver_id")
+    receiver_id = transfer.get("receiver_id")
+    if (transfer.get("contract_version") != "food-transfer-v1"
+            or transfer.get("field") != "food_inventory"
+            or transfer.get("quantity") != FOOD_TRANSFER_QUANTITY):
+        return "food_transfer.invalid_quantity"
+    if giver_id != proposal.get("entity_id") or not giver_id or giver_id == receiver_id:
+        return "food_transfer.invalid_ownership"
+    if giver_id not in proposal.get("touched_scope", []) or receiver_id not in proposal.get("touched_scope", []):
+        return "food_transfer.invalid_scope"
+
+    giver = entities.get(giver_id)
+    receiver = entities.get(receiver_id)
+    if not giver or not receiver:
+        return "food_transfer.participant_missing"
+    if giver.get("type") != "person" or receiver.get("type") != "person":
+        return "food_transfer.invalid_participant"
+    if not giver.get("alive", True) or not receiver.get("alive", True):
+        return "food_transfer.participant_not_living"
+    giver_pos, receiver_pos = giver.get("position"), receiver.get("position")
+    if not giver_pos or not receiver_pos or abs(giver_pos["x"] - receiver_pos["x"]) + abs(giver_pos["y"] - receiver_pos["y"]) != 1:
+        return "food_transfer.not_adjacent"
+    if giver.get("food_inventory", 0) < FOOD_TRANSFER_SURPLUS:
+        return "food_transfer.insufficient_food"
+    if receiver.get("hunger", 0) < CRITICAL_THRESHOLD:
+        return "food_transfer.receiver_not_critical"
+    if receiver.get("food_inventory", 0) != 0 or receiver.get("inventory", 0) != 0:
+        return "food_transfer.receiver_has_carried_food"
+
+    updates = proposal.get("mutation", {}).get("entity_updates", {})
+    giver_update = updates.get(giver_id, {})
+    receiver_update = updates.get(receiver_id, {})
+    if (giver_update.get("food_inventory") != giver["food_inventory"] - FOOD_TRANSFER_QUANTITY
+            or receiver_update.get("food_inventory") != receiver.get("food_inventory", 0) + FOOD_TRANSFER_QUANTITY):
+        return "food_transfer.invalid_mutation"
+
+    required = {
+        (giver_id, "alive", "eq", True),
+        (giver_id, "food_inventory", "gte", FOOD_TRANSFER_SURPLUS),
+        (receiver_id, "alive", "eq", True),
+        (receiver_id, "hunger", "gte", CRITICAL_THRESHOLD),
+        (receiver_id, "food_inventory", "eq", 0),
+        (receiver_id, "inventory", "eq", 0),
+    }
+    seen = {
+        (p.get("entity_id"), p.get("field"), p.get("op"), p.get("value"))
+        for p in proposal.get("preconditions", [])
+    }
+    if not required.issubset(seen):
+        return "food_transfer.invalid_preconditions"
     return None
 
 
@@ -114,6 +175,11 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         scope_err = check_scope_exists(proposal, entities)
         if scope_err:
             rejected.append(_reject(proposal, "initial_validation", "precondition.entity_missing", scope_err, tick))
+            continue
+
+        transfer_err = validate_food_transfer(proposal, entities)
+        if transfer_err:
+            rejected.append(_reject(proposal, "initial_validation", transfer_err, transfer_err, tick))
             continue
 
         if not proposal.get("is_exogenous"):
@@ -168,6 +234,8 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             "proposer_engine_id": proposal["proposer_engine_id"],
             "explanation": proposal.get("explanation", ""),
         })
+        if proposal.get("transfer"):
+            accepted_events[-1]["transfer"] = proposal["transfer"]
         order_index += 1
 
     return accepted_events, rejected, order_index

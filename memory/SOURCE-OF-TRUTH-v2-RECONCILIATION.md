@@ -2,6 +2,8 @@
 
 This document records how Source of Truth v1.2 was reconciled into Source of Truth v2. It is historical documentation only. It does not override the Constitution, Source of Truth v2, accepted architecture decisions, or current project contracts.
 
+**Clarification:** Dice Reactions-specific implementations and inherited specifications for utility, NPC decisions, relationships, information flow, and economics were removed from Simulation Sandbox. This does not prohibit independently designed deterministic decision, social, or resource-allocation systems. Such systems must operate from version-pinned observation frames, submit proposals only, preserve deterministic replay, and leave canonical mutation authority with Core.
+
 ## Retained from v1.2
 
 The following general principles from v1.2 were retained because they independently fit Simulation Sandbox:
@@ -32,27 +34,26 @@ The following concepts from v1.2 were substantially revised:
 |--------------|----------|
 | Pressure | Removed entirely. Not a Simulation Sandbox concept. |
 | Context Gravity | Removed. Not a Simulation Sandbox concept. |
-| Utility AI | Removed. Not a Simulation Sandbox concept. |
-| NPC Decision Engine | Removed. Not a Simulation Sandbox concept. |
-| Relationship Calculus | Removed. Not a Simulation Sandbox concept. |
-| Memory Retrieval System | Removed. Not a Simulation Sandbox concept. |
+| Utility AI | Dice Reactions-specific implementations and inherited specifications were removed. Independently designed deterministic decision systems remain permitted when they use version-pinned observation frames, submit proposals only, preserve replay, and leave mutation authority with Core. |
+| NPC Decision Engine | Dice Reactions-specific implementations and inherited specifications were removed. Independently designed deterministic actor decisions remain permitted under the Core/domain authority boundary. |
+| Relationship Calculus | Dice Reactions-specific implementations were removed. Bounded event-backed social facts and derived social signals may be designed independently under deterministic replay and Core authority. |
+| Memory Retrieval System | Dice Reactions-specific implementations were removed. Bounded observer-owned facts may be retained when versioned, replayable, and unable to replace accepted-event truth. |
 | Scar Theory | Reduced to "causal anchors" and "lineage boundaries" in the compression and administrative records sections. |
 | Living World Doctrine | General principles (causality, persistence, independent motion, event sourcing) retained; narrative-game framing removed. |
-| Settlement Organism Theory | General entity principles (lifecycle, identity, state) retained; settlement-specific simulation removed. |
-| Resource Flow Theory | General entity principles (ownership, persistence, causal anchors) retained; economic simulation removed. |
-| Information Theory | Removed. Not a Simulation Sandbox concept. |
+| Settlement Organism Theory | General entity principles (lifecycle, identity, state) retained; Dice Reactions-specific settlement architecture removed. Future settlement systems require their own deterministic Core-authority contract. |
+| Resource Flow Theory | Dice Reactions-specific resource-flow theory was removed. Independently designed deterministic ownership and resource-allocation systems remain permitted under Core authority. |
+| Information Theory | Dice Reactions-specific information theory was removed. Bounded versioned observation and knowledge systems remain permitted when they do not create canonical truth. |
 
 ## Removed from v1.2
 
 The following were completely removed as they are unrelated to Simulation Sandbox:
 
-- All pressure ecology systems
-- All context gravity mechanics
-- All utility AI and NPC decision engines
-- All relationship calculus and memory retrieval
-- All settlement organism theory specifics
-- All resource flow theory specifics
-- All information theory
+- All Dice Reactions-specific pressure ecology systems
+- All Dice Reactions-specific context gravity mechanics
+- All Dice Reactions-specific utility, NPC decision, relationship, and memory-retrieval implementations
+- All Dice Reactions-specific settlement organism theory specifics
+- All Dice Reactions-specific resource-flow theory specifics
+- All Dice Reactions-specific information-theory implementations
 - All scar theory as a standalone system
 - All LLM decision-making (LLMs may assist with presentation but cannot create truth)
 - All story-engine terminology (narrative, storytelling, story generation)
@@ -67,7 +68,7 @@ The following were completely removed as they are unrelated to Simulation Sandbo
 | v1.2 treated receipts, checkpoints, and projections as event families; v2 treats them as Core administrative records | v2 doctrine prevails |
 | v1.2 allowed external influence to be treated as a simulation event; v2 uses paired model | v2 doctrine prevails |
 | v1.2 had broad "canonical causal records" without clear boundaries; v2 narrows to replay/reconstruction/explanation only | v2 doctrine prevails |
-| v1.2 assumed NPC storytelling systems; v2 has no such assumption | v2 doctrine prevails |
+| v1.2 assumed Dice Reactions NPC storytelling systems | v2 rejects that inherited architecture while permitting independently designed deterministic decision and social systems under version-pinned observation and Core mutation authority |
 | v1.2 had unclear administrative record boundaries; v2 requires deterministic effective boundaries | v2 doctrine prevails |
 
 ## Unresolved Ambiguities

@@ -12,11 +12,12 @@ The detailed fork decision and implementation boundary are recorded in [ADR-001:
 4. 5A4a - Transactional Tick Persistence (implemented)
 5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — implemented
 6. **5A6 - Cognitive Visualisation and Live World Readability** — implemented
-7. 5B - Economy
-8. 5C1 - Canonical World-State Entity
-9. 5C2 - Weather Transitions and Effects
-10. 5D - Combat
-11. 5E - Reproduction and Genetics
+7. **5B - Social Behaviour Foundations** (`5B1` implemented)
+8. 5C - Resource Organisation and Economic Foundations
+9. 5D - Canonical World State and Environment
+10. 5E - Social Conflict
+11. 5F - Pairing, Kinship and Reproduction
+12. 6 - Groups, Settlements and Civilisation (deferred)
 
 No phase may be marked complete from workflow labels such as `testing_agent_v4`. Completion requires reproducible repository commands and recorded results.
 
@@ -30,7 +31,7 @@ No phase may be marked complete from workflow labels such as `testing_agent_v4`.
 - Knowledge: observer-owned facts (`knowledge-v2`) with last-known locations; no full world copy; caps per category.
 - Planning: Needs drive urgency; eligible targets only from knowledge / this-tick detections; exploration is 4-neighbour unknown tiles only.
 - Animals are not globally scanned for hunting; last-known animal positions may go stale without becoming live truth.
-- Economy, weather, combat, and reproduction remain later stages (unchanged goals below).
+- Social behaviour, resource organisation, weather, conflict, and reproduction remain later stages (unchanged goals below).
 
 ## 5A6 — Cognitive Visualisation and Live World Readability
 
@@ -41,7 +42,7 @@ No phase may be marked complete from workflow labels such as `testing_agent_v4`.
 - The selected-person canvas overlay uses a bounded, versioned, observer-specific projection for current perception, retained knowledge, stale last-known entity markers, latest discoveries, and stored route state.
 - Route, target, arrival-mode, planning, action, injury, death, urgent-need, and accepted-change indicators are presentation only. They never create state, recalculate routes, or alter decision results.
 - The normal observer view remains complete when no person is selected; personal fog is never applied automatically.
-- 5B Economy remains the next simulation-mechanic stage.
+- 5B1 Food Ownership and Atomic Transfer is the completed next simulation-mechanic stage; 5B2 Social Observation Facts is now next.
 
 ## 5A1 - Fork Semantics Contract
 
@@ -132,58 +133,346 @@ The response returns the ready child or the existing ready child for the same ca
 
 The complete verification matrix is in ADR-001.
 
-## 5B - Economy: giver-owned food transfer
+## Phase 5B — Social Behaviour Foundations
 
-**Goal:** one deterministic person-to-person transfer, not markets, barter, pricing, currency, or property expansion.
+**Goal:** build minimal deterministic social interaction from bounded personal observation; this is not a complete economy.
 
-- Add a giver-owned `GIVE_FOOD` utility candidate.
-- An adjacent living person with critical hunger and no carried food is eligible to receive one unit of `food_inventory` from a living giver with a defined surplus.
-- Select the recipient by a stable ordering rule after eligibility filtering; proposal arrival order must not decide the recipient.
-- Commit one accepted event with both people in `touched_scope`, preconditions on both parties, and an atomic decrement/increment.
-- Assert exact conservation: giver plus receiver `food_inventory` is unchanged.
-- Defer negotiation, reciprocity, debt, barter, markets, and transfers of generic wood `inventory`.
+**Dependencies:** completed 5A1–5A6 contracts, especially version-pinned perception, knowledge, planning, and Core commit ordering.
 
-## 5C1 - Canonical world-state entity
+**Bounded implementation scope:** proposal-only social actions and bounded observer-owned facts; Core remains the sole canonical mutation authority.
 
-**Goal:** establish a proposal-owned canonical seam for mutable global state before weather exists.
+**Explicit deferrals:** currency, markets, debt, wages, trade routes, large property systems, LLM authority, hidden mutable domain state, and Dice Reactions architecture.
 
-- Add exactly one canonical singleton entity, `world-000`, through genesis accepted events.
-- Version its minimal contract and make replay, hashing, state reconstruction, scenario genesis, and inspection recognize it generically.
-- Do not add weather behavior in 5C1.
-- Immutable terrain/scenario context remains separately versioned and hashed until an explicit doctrine decision changes that boundary.
+**Deterministic acceptance gate:** stable selection, canonical ordering, replay-equivalent state/event traces, bounded projections, and Core-validated rejection behaviour.
 
-## 5C2 - Weather transitions and effects
+### 5B1 — Food Ownership and Atomic Transfer
 
-**Goal:** one deterministic global weather state per tick affecting only existing mechanics.
+**Status:** implemented and focused-verified (`29 passed` across 5B1, 5A5, and kernel determinism suites).
 
-- Add a proposal-only weather domain that mutates `world-000`.
-- Specify a versioned transition table, transition cadence, and named RNG stream before implementation. The same seed, RNG namespace, absolute tick, and state must produce the same transition.
-- Stage effects separately: first transition/replay, then rain-regrowth, then storm-exposure, then storm-travel efficiency.
-- Every effect uses integer rules and one authoritative weather value. Define storm travel as an exact deterministic delay/stall rule; "reduced efficiency" alone is not an acceptance criterion.
-- Defer forecasting, temperature, seasons, and regional weather.
+**Goal:** establish a giver-owned food transfer primitive, not a complete economy.
 
-## 5D - Combat: paired command, person-to-person only
+**Dependencies:** 5A5 bounded perception/knowledge and the Core commit pipeline.
 
-**Goal:** deterministic intervention-triggered conflict without autonomous aggression.
+**Bounded implementation scope:** `GIVE_FOOD` selects one stably ordered adjacent living recipient with critical hunger and no carried food. Core validates both parties and atomically transfers one unit of `food_inventory` while preserving exact pairwise conservation.
 
-- An external attack request first becomes an accepted exogenous command through the normal intervention path.
-- A combat domain consumes that command and proposes the actual person-to-person attack with the command event and attacker state event as causal parents.
-- The attack proposal owns deterministic damage, dual-entity scope, liveness/range preconditions, and any death mutation through the existing commit pipeline.
-- Start with living person attacking living person. Animals, generalized "any living entity," autonomous aggression, retaliation, weapons, groups, and tactics are deferred.
-- Do not claim one shared death implementation until the existing people lifecycle and hunted-animal paths are actually unified or explicitly adapted.
+**Explicit deferrals:** negotiation, requests, offers, refusals, reciprocity, generic `inventory` transfer, barter, markets, currency, debt, and property expansion.
 
-## 5E - Reproduction and genetics: bounded birth
+**Deterministic acceptance gate:** accepted events contain both people in scope and transfer provenance; rejected proposals have stable reasons; success, insufficient supply, invalid ownership, duplicate/replay, rollback, cognitive regression, and kernel determinism tests pass.
 
-**Goal:** one deterministic, inspectable birth path with bounded population growth.
+### 5B2 — Social Observation Facts
 
-- Deterministically select one eligible adjacent healthy adult pair; proposal arrival order cannot select the pair.
-- Require both parents' valid causal events, sufficient resources, a fixed resource cost, and a fixed birth cooldown recorded in canonical state.
-- Commit parent resource/cooldown changes and one child creation atomically in a single accepted event with both parents and child in scope.
-- Derive one or two integer traits from both parents with a versioned named RNG stream and bounded integer variance.
-- Children use existing lifecycle ageing; do not add a second ageing path.
-- Prove same-seed timing/traits, deterministic conflict resolution, valid parent links, and an explicit upper growth bound implied by cost and cooldown.
-- Defer pregnancy simulation, trait tables, mutation systems, population curves, relationships, and animal reproduction.
+**Goal:** extend bounded perception and `known_people` with visible action, visible injury/distress, apparent urgent need, and apparent carried food.
+
+**Dependencies:** 5B1 and 5A5 perception/knowledge caps.
+
+**Bounded implementation scope:** versioned observer-owned facts derived only from current visible frames, with explicit visibility semantics and bounded retention.
+
+**Explicit deferrals:** exact private inventory without an explicit visibility rule, telepathy, global social knowledge, relationships, and interaction protocol state.
+
+**Deterministic acceptance gate:** same frame yields identical facts regardless of entity insertion/proposal arrival order; facts are capped, replayable, and never canonical truth by themselves.
+
+### 5B3 — Request, Offer and Response Protocol
+
+**Goal:** add one bounded food-interaction state machine: pending, accepted, fulfilled, refused, expired, and invalidated.
+
+**Dependencies:** 5B1 transfer primitive and 5B2 visible social facts.
+
+**Bounded implementation scope:** proposal-owned interaction records with deterministic expiry, response authority, causal parents, and duplicate prevention; fulfilment invokes 5B1 rather than mutating inventory directly.
+
+**Explicit deferrals:** open-ended conversation, bargaining, multi-party exchange, persistent trust fields, and generic resource protocols.
+
+**Deterministic acceptance gate:** identical inputs produce one ordered lifecycle, duplicate commands cannot duplicate fulfilment, and expiry/invalidations replay exactly.
+
+### 5B4 — Event-Backed Interaction Memory
+
+**Goal:** retain bounded observer-owned facts referencing accepted interaction events.
+
+**Dependencies:** 5B3 accepted interaction lifecycle and existing knowledge retention rules.
+
+**Bounded implementation scope:** initial fact kinds are helped, refused, requested, offered, and witnessed assistance, each with accepted-event provenance.
+
+**Explicit deferrals:** free-form memories, inferred private motives, unbounded social history, and memory as a replacement for accepted-event truth.
+
+**Deterministic acceptance gate:** facts are bounded and reconstruction-safe; every fact references a valid accepted event or is rejected without state mutation.
+
+### 5B5 — Derived Reciprocity and Trust
+
+**Goal:** derive bounded reciprocity/trust signals from retained interaction facts, confidence, and recency.
+
+**Dependencies:** 5B4 event-backed facts and deterministic time/replay.
+
+**Bounded implementation scope:** a reproducible derived projection may influence sharing, requests, and refusals without becoming a freely mutable universal trust field.
+
+**Explicit deferrals:** global reputation, relationship calculus, factions, romance, and unbounded score accumulation.
+
+**Deterministic acceptance gate:** equal fact histories and ticks produce equal signals; projections are bounded, rebuildable, and cannot mutate canonical state directly.
+
+### 5B6 — Persistent Motive and Replanning Contract
+
+**Goal:** establish the first persistent social motive: maintain a personal food reserve.
+
+**Dependencies:** 5B1 transfer, 5B5 derived signals, and existing multi-tick planning/action state.
+
+**Bounded implementation scope:** deterministic progress, interruption, resumption, abandonment, and completion for one reserve-maintenance motive.
+
+**Explicit deferrals:** broad motive libraries, personality systems, strategic planning, and hidden mutable planner state.
+
+**Deterministic acceptance gate:** identical state/seed/tick yields the same lifecycle and replay trace; interruption and resumption cannot duplicate transfer or create unbounded state.
+
+## Phase 5C — Resource Organisation and Economic Foundations
+
+**Goal:** organise canonical resources after social interaction foundations are complete.
+
+**Dependencies:** 5B1–5B6 and existing Core entity/event/replay contracts.
+
+**Bounded implementation scope:** resource ownership, storage, cooperative work, allocation, and narrowly bounded barter/value stages.
+
+**Explicit deferrals:** currency, markets, debt, wages, trade routes, large property systems, and macroeconomic simulation.
+
+**Deterministic acceptance gate:** each stage proves Core-owned resource mutation, exact accounting/conservation where applicable, bounded state, stable conflict resolution, and replay determinism.
+
+### 5C1 — Canonical Resource Ownership Contract
+
+**Goal:** define canonical ownership and authority for existing resource-bearing entities.
+
+**Dependencies:** 5B1 transfer provenance and Core entity mutation envelopes.
+
+**Bounded implementation scope:** versioned owner references, ownership validation, and migration/default rules for existing resources only.
+
+**Explicit deferrals:** land/property law, inheritance, taxation, and generic economy mechanics.
+
+**Deterministic acceptance gate:** ownership changes require accepted Core events, invalid owners reject deterministically, and replay reconstructs identical owner state.
+
+### 5C2 — Storage and Stockpiles
+
+**Goal:** add bounded canonical storage locations and stockpiles.
+
+**Dependencies:** 5C1 ownership contract.
+
+**Bounded implementation scope:** versioned storage entities with explicit capacity and atomic deposit/withdraw proposals.
+
+**Explicit deferrals:** hauling networks, spoilage systems, warehouses, theft, and settlement logistics.
+
+**Deterministic acceptance gate:** deposits/withdrawals conserve resources, capacity conflicts resolve stably, and storage state replays exactly.
+
+### 5C3 — Production and Cooperative Work Tasks
+
+**Goal:** support one bounded multi-person productive task using existing resources.
+
+**Dependencies:** 5C2 storage and existing multi-tick action contracts.
+
+**Bounded implementation scope:** deterministic task eligibility, participant scope, contribution accounting, and one accepted output path.
+
+**Explicit deferrals:** job markets, specialised professions, production trees, and arbitrary work graphs.
+
+**Deterministic acceptance gate:** participant/order conflicts have stable outcomes, inputs/outputs account exactly, and task replay is identical.
+
+### 5C4 — Resource Allocation Behaviour
+
+**Goal:** let existing deterministic planning choose among bounded resource allocations.
+
+**Dependencies:** 5B6 motives and 5C1–5C3 resource contracts.
+
+**Bounded implementation scope:** proposal-only choices among existing owned resources, storage, and cooperative tasks.
+
+**Explicit deferrals:** central planning, markets, dynamic price discovery, and hidden allocator state.
+
+**Deterministic acceptance gate:** candidate ordering is stable, Core revalidation resolves contention, and no planner mutates resources directly.
+
+### 5C5 — Barter and Subjective Value
+
+**Goal:** explore one bounded bilateral barter/value contract.
+
+**Dependencies:** 5B3 interaction protocol and 5C1–5C4 resource organisation.
+
+**Bounded implementation scope:** explicit offer/accept/atomic exchange of a tightly specified resource set with deterministic subjective evaluation.
+
+**Explicit deferrals:** money, market clearing, credit, debt, wages, trade routes, and general pricing.
+
+**Deterministic acceptance gate:** bilateral exchange is all-or-nothing, duplicate-safe, value inputs are inspectable, and replay produces the same accepted/rejected trace.
+
+## Phase 5D — Canonical World State and Environment
+
+**Goal:** establish a canonical global state seam before environmental behaviour.
+
+**Dependencies:** completed 5A Core/replay contracts; no dependency on unimplemented economic behaviour.
+
+**Bounded implementation scope:** one world-state entity followed by deterministic weather state and staged effects.
+
+**Explicit deferrals:** seasons, forecasting, temperature, regional weather, climate systems, and environmental LLM authority.
+
+**Deterministic acceptance gate:** global state is event-sourced, versioned, replayable, and no effect uses wall-clock or unpinned randomness.
+
+### 5D1 — Canonical World-State Entity
+
+**Goal:** create one canonical singleton `world-000` through accepted genesis events.
+
+**Dependencies:** Core genesis, hashing, reconstruction, and inspection seams.
+
+**Bounded implementation scope:** minimal versioned singleton recognition in scenario genesis, replay, hashing, and projections; no behaviour.
+
+**Explicit deferrals:** weather transitions, global mutable domain state outside the singleton, and terrain ownership changes.
+
+**Deterministic acceptance gate:** genesis/replay/hash/reconstruction recognise exactly one world entity and corrupt/missing projections rebuild or fail closed correctly.
+
+### 5D2 — Deterministic Weather State
+
+**Goal:** add one authoritative global weather transition per defined cadence.
+
+**Dependencies:** 5D1 singleton entity and a versioned Core-issued RNG stream.
+
+**Bounded implementation scope:** explicit integer transition table, cadence, state value, and proposal-only weather domain.
+
+**Explicit deferrals:** weather effects, forecasting, regional cells, seasons, and temperature.
+
+**Deterministic acceptance gate:** same seed, stream, tick, state, and version yield the same transition/event trace under replay.
+
+### 5D3 — Weather Effects and Behavioural Response
+
+**Goal:** apply staged exact weather effects to existing mechanics.
+
+**Dependencies:** 5D2 weather state and affected existing mechanics.
+
+**Bounded implementation scope:** separately gated rain-regrowth, storm-exposure, and exact storm-travel delay/stall rules.
+
+**Explicit deferrals:** vague efficiency modifiers, new weather categories, climate, and weather-driven spawning.
+
+**Deterministic acceptance gate:** each effect has integer semantics, visible causal parents, no duplicate application, and identical replay results.
+
+## Phase 5E — Social Conflict
+
+**Goal:** introduce conflict only after ownership and social consequence seams are explicit.
+
+**Dependencies:** 5B social foundations and 5C ownership/resource contracts.
+
+**Bounded implementation scope:** unauthorised taking, detection/consequences, autonomous conflict motives, and bounded combat execution in separate stages.
+
+**Explicit deferrals:** factions, warfare, tactics, weapons, groups, retaliation trees, and unbounded hostility state.
+
+**Deterministic acceptance gate:** each conflict consequence has an accepted causal chain, stable contention resolution, and replayable canonical mutations.
+
+### 5E1 — Unauthorized Resource Taking
+
+**Goal:** represent one explicit unauthorised resource-taking proposal.
+
+**Dependencies:** 5C1 ownership and 5C2 storage/stockpile semantics where used.
+
+**Bounded implementation scope:** one actor, one owned resource, exact ownership preconditions, and atomic transfer/rejection.
+
+**Explicit deferrals:** stealth, theft skill, property law, violence, and retaliation.
+
+**Deterministic acceptance gate:** ownership violations and stale attempts reject stably; accepted taking preserves exact accounting and replay.
+
+### 5E2 — Detection and Social Consequences
+
+**Goal:** record bounded observation-backed consequences of unauthorised taking.
+
+**Dependencies:** 5B2 social observation facts, 5B4 interaction memory, and 5E1.
+
+**Bounded implementation scope:** visible detection fact plus one deterministic consequence proposal.
+
+**Explicit deferrals:** justice systems, reputation networks, gossip, and global crime state.
+
+**Deterministic acceptance gate:** only eligible observers receive bounded facts; consequence provenance and replay are deterministic.
+
+### 5E3 — Autonomous Conflict Motives
+
+**Goal:** permit one deterministic motive to initiate conflict under explicit conditions.
+
+**Dependencies:** 5B6 persistent motives and 5E1–5E2 causal facts.
+
+**Bounded implementation scope:** one versioned candidate with inspectable threshold and stable target selection.
+
+**Explicit deferrals:** personality, vendettas, group conflict, tactics, and LLM decisions.
+
+**Deterministic acceptance gate:** identical observed facts/state produce identical candidate selection and no motive directly mutates canonical state.
+
+### 5E4 — Combat Execution
+
+**Goal:** execute one deterministic person-to-person conflict action through Core.
+
+**Dependencies:** 5E3 and existing lifecycle/death contracts.
+
+**Bounded implementation scope:** living person pairs, dual scope, liveness/range preconditions, deterministic damage, and explicitly adapted death mutation.
+
+**Explicit deferrals:** animals, weapons, groups, tactics, retaliation, and combat economies.
+
+**Deterministic acceptance gate:** attacks are causally parented, conflict order is stable, and replay matches.
+
+## Phase 5F — Pairing, Kinship and Reproduction
+
+**Goal:** add bounded durable social bonds before any birth path.
+
+**Dependencies:** 5B social facts/memory and lifecycle canonical state.
+
+**Bounded implementation scope:** pairing, shared-resource bond, reproduction, and kinship are isolated stages with explicit state and growth limits.
+
+**Explicit deferrals:** romance simulation, genetics beyond approved scope, population curves, animal reproduction, and household economies beyond the listed bond.
+
+**Deterministic acceptance gate:** every relationship/birth mutation is Core-accepted, pair selection/conflict resolution is stable, and replay proves bounded growth.
+
+### 5F1 — Durable Pairing Foundations
+
+**Goal:** establish one bounded durable pair record between eligible people.
+
+**Dependencies:** 5B4 interaction memory and 5B5 derived signals.
+
+**Bounded implementation scope:** eligibility, mutual acceptance protocol, pair scope, and lifecycle-safe invalidation.
+
+**Explicit deferrals:** romance narratives, multi-partner systems, households, and reproduction.
+
+**Deterministic acceptance gate:** pairing is duplicate-safe, mutual, replayable, and invalidates deterministically on lifecycle changes.
+
+### 5F2 — Household or Shared-Resource Bond
+
+**Goal:** allow one bounded shared-resource relation for an existing pair.
+
+**Dependencies:** 5F1 and 5C ownership/storage contracts.
+
+**Bounded implementation scope:** an explicit shared-resource reference and Core-validated access rules.
+
+**Explicit deferrals:** settlements, inheritance, broad property pooling, and multi-household logistics.
+
+**Deterministic acceptance gate:** access/withdrawals have exact authority, accounting, rejection, and replay behaviour.
+
+### 5F3 — Reproduction
+
+**Goal:** add one deterministic, inspectable birth path with bounded growth.
+
+**Dependencies:** 5F1, 5F2 where resource cost applies, and lifecycle ageing.
+
+**Bounded implementation scope:** one eligible adjacent healthy pair, fixed costs/cooldowns, atomic parent/child event, and bounded integer trait derivation using a versioned stream.
+
+**Explicit deferrals:** pregnancy simulation, trait tables, mutation systems, population curves, and animal reproduction.
+
+**Deterministic acceptance gate:** same seed/timing/traits replay identically; parent links are valid; cost/cooldown imply an explicit growth bound.
+
+### 5F4 — Kinship and Parent-Child Knowledge
+
+**Goal:** add bounded canonical parent links and observer-owned knowledge of visible kinship.
+
+**Dependencies:** 5F3 birth events and 5B2/5B4 fact rules.
+
+**Bounded implementation scope:** parent-child relation provenance and capped visible/learned kin facts.
+
+**Explicit deferrals:** genealogy graphs, inheritance, clans, and unbounded family memory.
+
+**Deterministic acceptance gate:** parent links reconstruct solely from accepted events; knowledge remains bounded and never replaces canonical lineage.
+
+## Phase 6 — Groups, Settlements and Civilisation
+
+**Status:** deferred.
+
+**Goal:** eventually compose verified social, resource, environment, conflict, and kinship foundations into group-scale simulation.
+
+**Dependencies:** completion and explicit acceptance of the relevant Phase 5B–5F contracts.
+
+**Bounded implementation scope:** none in the current roadmap; no stubs are authorised.
+
+**Explicit deferrals:** groups, settlements, civilisation mechanics, institutions, governance, trade networks, and population-scale systems.
+
+**Deterministic acceptance gate:** before implementation, define a versioned canonical group contract, bounded growth/retention model, proposal-only domain boundary, and replay verification matrix.
 
 ## Sequencing rule
 
-5A2 must satisfy its contract before any later Phase 5 mechanic begins. 5C1 must precede 5C2. Every phase receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that phase.
+5A2 must satisfy its contract before later Phase 5 mechanics. Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; 5B2 is the exact recommended next stage. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.

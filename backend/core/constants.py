@@ -50,6 +50,10 @@ CARCASS_DECAY_INTERVAL = 5        # ticks between decay steps (mirrors REGROWTH_
 CARCASS_DECAY_AMOUNT = 8          # meat units lost per decay step
 MEAT_HUNGER_REDUCTION = 500       # hunger removed per meat unit eaten (vs 400 for foraged inventory)
 
+# --- Phase 5B: giver-owned food transfer ---
+FOOD_TRANSFER_QUANTITY = 1        # this phase permits exactly one meat unit per transfer
+FOOD_TRANSFER_SURPLUS = 2         # giver retains one unit after a transfer
+
 
 def time_phase(tick: int) -> str:
     t = tick % DAY_LENGTH_TICKS

@@ -114,6 +114,7 @@ class PeopleDomain(DomainEngine):
             tree_delta = action.pop("_tree_delta", None)
             carcass_delta = action.pop("_carcass_delta", None)
             animal_delta = action.pop("_animal_delta", None)
+            food_transfer = action.pop("_food_transfer", None)
             step_note = result["explanation"]
             explanation = f"{decision_note} -> {step_note}" if decision_note else step_note
             if knowledge_changed and learned:
@@ -130,7 +131,7 @@ class PeopleDomain(DomainEngine):
 
             proposal = self._build_proposal(
                 e, eid, action, plan, paused, knowledge, knowledge_changed, result,
-                tree_delta, carcass_delta, animal_delta, tick, explanation,
+                tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation,
             )
             proposals.append(proposal)
             diagnostics[eid] = {
@@ -160,7 +161,7 @@ class PeopleDomain(DomainEngine):
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
     def _build_proposal(self, e, eid, action, plan, paused, knowledge, knowledge_changed,
-                        result, tree_delta, carcass_delta, animal_delta, tick, explanation):
+                        result, tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation):
         entity_updates = {
             eid: {
                 "position": result["pos"],
@@ -184,7 +185,18 @@ class PeopleDomain(DomainEngine):
         touched_scope = list(result["touched_scope"])
         preconditions = list(result["preconditions"])
         preconditions.append({"entity_id": eid, "field": "alive", "op": "eq", "value": True})
+        # Every people action writes this field.  Revalidation prevents a
+        # later single-person proposal from overwriting an accepted transfer.
+        preconditions.append({"entity_id": eid, "field": "food_inventory", "op": "eq", "value": e.get("food_inventory", 0)})
         new_entities = dict(result["new_entities"])
+
+        if food_transfer:
+            receiver_id = food_transfer["receiver_id"]
+            entity_updates[receiver_id] = {
+                "food_inventory": food_transfer["receiver_food_inventory"] + food_transfer["quantity"],
+            }
+            if receiver_id not in touched_scope:
+                touched_scope.append(receiver_id)
 
         for delta in (tree_delta, carcass_delta):
             if delta:
@@ -200,7 +212,7 @@ class PeopleDomain(DomainEngine):
             if animal_id not in touched_scope:
                 touched_scope.append(animal_id)
 
-        return {
+        proposal = {
             "proposal_family": "people_action",
             "proposal_type": result["event_type"],
             "proposer_engine_id": self.engine_id,
@@ -216,3 +228,9 @@ class PeopleDomain(DomainEngine):
             "mutation": {"entity_updates": entity_updates, "new_entities": new_entities},
             "explanation": explanation,
         }
+        if food_transfer:
+            proposal["transfer"] = {
+                key: food_transfer[key]
+                for key in ("contract_version", "giver_id", "receiver_id", "field", "quantity")
+            }
+        return proposal

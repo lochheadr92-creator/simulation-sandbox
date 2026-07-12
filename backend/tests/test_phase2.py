@@ -125,7 +125,7 @@ class TestUtilityBreakdown:
     """Utility candidate rows must include all documented goals & score fields."""
 
     # HUNT added in Phase 4 (hunt -> injury -> death -> carcass -> meat food chain).
-    EXPECTED_GOALS = {"SEEK_WATER", "SEEK_FOOD", "SLEEP", "BUILD_SHELTER", "GATHER_SURPLUS", "EXPLORE", "WANDER", "HUNT"}
+    EXPECTED_GOALS = {"SEEK_WATER", "SEEK_FOOD", "GIVE_FOOD", "SLEEP", "BUILD_SHELTER", "GATHER_SURPLUS", "EXPLORE", "WANDER", "HUNT"}
 
     def test_candidate_rows_contain_expected_goals_and_fields(self, session, run):
         # find a tick where diagnostics.candidates is non-empty (fresh decision, not mid-action)

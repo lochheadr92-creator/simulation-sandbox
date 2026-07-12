@@ -39,7 +39,8 @@ from core.navigation import (
 from core.constants import (GATHER_TICKS, BUILD_TICKS, SHELTER_COST, GATHER_YIELD,
                              SLEEP_ENERGY_TARGET, CRITICAL_THRESHOLD, HUNT_TICKS, HUNT_DAMAGE,
                              ANIMAL_MAX_HEALTH, CARCASS_MEAT_YIELD, CARCASS_HARVEST_YIELD,
-                             MEAT_HUNGER_REDUCTION)
+                             MEAT_HUNGER_REDUCTION, FOOD_TRANSFER_QUANTITY,
+                             FOOD_TRANSFER_SURPLUS)
 
 TRAVEL_STALL_LIMIT = 25  # deterministic safety net: abandon a travel step that
                           # cannot make progress rather than looping forever.
@@ -51,6 +52,7 @@ PLAN_STEPS = {
     "BUILD_SHELTER": ["TRAVEL_TREE", "GATHER", "TRAVEL_SITE", "BUILD"],
     "GATHER_SURPLUS": ["GATHER"],
     "HUNT": ["TRAVEL_ANIMAL", "HUNT_STRIKE"],   # Phase 4B: minimal survival food-chain extension
+    "GIVE_FOOD": ["GIVE_FOOD"],
     "EXPLORE": ["TRAVEL_FRONTIER"],
     "WANDER": ["WANDER_STEP"],
 }
@@ -101,6 +103,7 @@ def context_from_action(action, pos):
         "food_target_kind": action.get("target_kind", "tree"),
         "animal_target_id": action.get("target_entity_id"),
         "animal_target_pos": action.get("target_pos"),
+        "food_recipient_id": action.get("target_entity_id"),
     }
 
 
@@ -194,6 +197,10 @@ def start_step(step, e, eid, context, terrain, tick, pos):
         return {**base, "type": "hunt_strike", "status": "performing", "target_entity_id": context.get("animal_target_id"),
                 "target_pos": copy_pos(context.get("animal_target_pos")) if context.get("animal_target_pos") else None,
                 "ticks_required": HUNT_TICKS}
+    if step == "GIVE_FOOD":
+        return {**base, "type": "give_food", "status": "performing",
+                "target_entity_id": context.get("food_recipient_id"),
+                "target_pos": dict(pos), "ticks_required": 1}
     return {**base, "type": "wander", "status": "performing"}
 
 
@@ -432,6 +439,35 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
             explanation = "ate from carried inventory"
         else:
             explanation = "no food carried; eat step had nothing to consume"
+        new_action["status"] = "completed"
+        advance_plan = True
+
+    elif atype == "give_food":
+        receiver_id = action.get("target_entity_id")
+        receiver = entities.get(receiver_id) if receiver_id else None
+        # The Core revalidates the full contract.  This domain-side branch only
+        # builds the candidate mutation from the pinned activation frame.
+        if receiver:
+            food_inventory -= FOOD_TRANSFER_QUANTITY
+            touched_scope.append(receiver_id)
+            preconditions.extend([
+                {"entity_id": eid, "field": "food_inventory", "op": "gte", "value": FOOD_TRANSFER_SURPLUS},
+                {"entity_id": receiver_id, "field": "alive", "op": "eq", "value": True},
+                {"entity_id": receiver_id, "field": "hunger", "op": "gte", "value": CRITICAL_THRESHOLD},
+                {"entity_id": receiver_id, "field": "food_inventory", "op": "eq", "value": 0},
+                {"entity_id": receiver_id, "field": "inventory", "op": "eq", "value": 0},
+            ])
+            new_action["_food_transfer"] = {
+                "contract_version": "food-transfer-v1",
+                "giver_id": eid,
+                "receiver_id": receiver_id,
+                "field": "food_inventory",
+                "quantity": FOOD_TRANSFER_QUANTITY,
+                "receiver_food_inventory": receiver.get("food_inventory", 0),
+            }
+            explanation = f"gave {FOOD_TRANSFER_QUANTITY} food to {receiver_id}"
+        else:
+            explanation = "food recipient unavailable; transfer proposal will be rejected"
         new_action["status"] = "completed"
         advance_plan = True
 

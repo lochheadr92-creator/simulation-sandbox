@@ -12,7 +12,10 @@ own `knowledge` (resource memory), never an omniscient global search.
 """
 from core.geometry import manhattan
 from core.navigation import ARRIVAL_ADJACENT, ARRIVAL_EXACT, path_length
-from core.constants import SEEK_THRESHOLD, VISION_RADIUS, GATHER_TICKS, HUNT_TICKS
+from core.constants import (
+    SEEK_THRESHOLD, VISION_RADIUS, GATHER_TICKS, HUNT_TICKS,
+    CRITICAL_THRESHOLD, FOOD_TRANSFER_SURPLUS,
+)
 
 W_SEVERITY = 1.0
 W_PREDICTED = 0.5
@@ -217,6 +220,33 @@ def _resource_availability(resource_amount, carried=False):
     return min(1.0, float(resource_amount) / 40.0)
 
 
+def eligible_food_recipient(giver, pos, entities, perception_delta=None):
+    """Return the stable first adjacent recipient visible to the giver.
+
+    Eligibility deliberately starts from this activation's bounded person
+    sightings.  The live entity view is consulted only to resolve those
+    observed subjects' canonical state; it is never scanned for recipients.
+    """
+    sightings = (perception_delta or {}).get("person_sightings", {})
+    candidates = []
+    for recipient_id in sorted(sightings):
+        recipient = entities.get(recipient_id)
+        if not recipient or recipient.get("type") != "person":
+            continue
+        if not recipient.get("alive", True):
+            continue
+        if manhattan(pos, recipient.get("position", {})) != 1:
+            continue
+        if recipient.get("hunger", 0) < CRITICAL_THRESHOLD:
+            continue
+        # `inventory` remains the legacy carried food source.  It is not
+        # transferable in 5B, but it still makes the recipient ineligible.
+        if recipient.get("food_inventory", 0) != 0 or recipient.get("inventory", 0) != 0:
+            continue
+        candidates.append(recipient_id)
+    return candidates[0] if candidates else None
+
+
 def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
                      entities=None, perception_delta=None):
     """Score plan goals from Needs urgency + personal Knowledge only.
@@ -267,6 +297,22 @@ def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
             "target_pos": food_pos if not has_carried_food else None,
             "target_resource": food_res if not has_carried_food else None,
             "action_time": action_time,
+        },
+    ))
+
+    recipient_id = None
+    if e.get("food_inventory", 0) >= FOOD_TRANSFER_SURPLUS:
+        recipient_id = eligible_food_recipient(e, pos, entities or {}, perception_delta)
+    recipient = (entities or {}).get(recipient_id) if recipient_id else None
+    recipient_hunger = recipient.get("hunger", 0) if recipient else 0
+    candidates.append(_score(
+        "GIVE_FOOD", recipient_hunger, recipient_hunger, 0,
+        1.0 if recipient_id else 0.0, 0, interrupt_for(("give_food",)),
+        extra={
+            "recipient_id": recipient_id,
+            "recipient_hunger": recipient_hunger,
+            "giver_surplus": e.get("food_inventory", 0) >= FOOD_TRANSFER_SURPLUS,
+            "selection_rule": "adjacent_eligible_person_id_ascending",
         },
     ))
 
@@ -337,5 +383,6 @@ def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
         "frontier_target": frontier, "shelter_site": dict(pos),
         "food_target_id": food_id, "food_target_pos": food_pos, "food_target_kind": food_kind,
         "animal_target_id": animal_id, "animal_target_pos": animal_pos,
+        "food_recipient_id": recipient_id,
     }
     return candidates, context
