@@ -14,13 +14,22 @@ animals only. Exploration uses passable unknown 4-neighbours only.
 """
 from domains.base import DomainEngine, DomainOutput
 from domains.perception import merge_knowledge, empty_knowledge, _compat_knowledge
-from domains.living_agent_contracts import compat_living_agent_state
+from domains.living_agent_contracts import compat_living_agent_state, compat_plan
 from domains.living_agent_cognition import (
     derive_internal_pressures,
     merge_meaningful_memories,
     merge_observations_into_knowledge,
     perceive_living,
     refresh_wants,
+)
+from domains.living_agent_reasoning import (
+    build_decision_receipt,
+    candidate_rank,
+    form_structured_plan,
+    record_decision,
+    score_goal_candidates,
+    select_goal,
+    update_plan_progress,
 )
 from domains.people_utility import score_candidates
 from domains.people_planning import (
@@ -103,15 +112,22 @@ class PeopleDomain(DomainEngine):
             living_state = refresh_wants(living_state, eid, tick)
 
             action = dict(e.get("action") or idle_action())
-            plan = dict(e.get("plan") or empty_plan())
+            plan = compat_plan(e.get("plan") or empty_plan(), actor_id=eid, tick=tick)
             paused = e.get("paused")
 
             e_for_score = dict(e)
             e_for_score["id"] = eid
             e_for_score["knowledge"] = knowledge
-            candidates, context = score_candidates(
+            base_candidates, context = score_candidates(
                 e_for_score, knowledge, pos, tick, night, action, terrain,
                 entities=frame.entities, perception_delta=delta,
+            )
+            candidates = score_goal_candidates(
+                base_candidates,
+                actor_id=eid,
+                state=living_state,
+                knowledge=knowledge,
+                tick=tick,
             )
             cand_by_goal = {c["goal"]: c for c in candidates}
 
@@ -123,13 +139,21 @@ class PeopleDomain(DomainEngine):
             candidates_out = []
             selected_goal = plan.get("goal")
             decision_note = ""
+            decision_candidate = None
+            decision_kind = None
 
             if critical_available and active_now and not already_on_critical and action.get("interruptible", True):
                 paused = {"action": {**action, "status": "paused"}, "plan": dict(plan)}
-                plan = form_plan(critical_goal, e, context, tick)
+                decision_candidate = cand_by_goal[critical_goal]
+                plan = form_plan(critical_goal, e_for_score, context, tick, candidate=decision_candidate)
+                plan = form_structured_plan(
+                    plan, actor_id=eid, tick=tick, selected=decision_candidate,
+                    context=context, replan_of=(paused.get("plan") or {}).get("plan_id"),
+                )
                 action = start_step(plan["steps"][0], e, eid, context, terrain, tick, pos)
                 selected_goal = critical_goal
                 candidates_out = candidates
+                decision_kind = "critical_interrupt"
                 decision_note = f"CRITICAL: {critical_goal} interrupts in-progress {paused['action']['type']}"
 
             elif active_now:
@@ -141,13 +165,26 @@ class PeopleDomain(DomainEngine):
                 plan = dict(paused["plan"])
                 paused = None
                 selected_goal = plan.get("goal")
+                decision_candidate = cand_by_goal.get(selected_goal)
+                candidates_out = candidates if decision_candidate else []
+                decision_kind = "resumption" if decision_candidate else None
                 decision_note = f"resumed {action['type']} after prior interruption cleared"
 
             else:
-                best = max(candidates, key=lambda c: c["score"])
-                ranked = sorted(candidates, key=lambda c: (-c["score"], c["goal"]))
+                best = select_goal(candidates)
+                ranked = sorted(candidates, key=candidate_rank)
                 runner = next((c for c in ranked if c["goal"] != best["goal"]), None)
-                plan = form_plan(best["goal"], e, context, tick)
+                decision_candidate = best
+                decision_kind = "replan" if plan.get("status") == "abandoned" else "new_goal"
+                plan = form_plan(
+                    best["goal"], e_for_score, context, tick, candidate=best,
+                    replan_of=plan.get("plan_id") if decision_kind == "replan" else None,
+                )
+                plan = form_structured_plan(
+                    plan, actor_id=eid, tick=tick, selected=best,
+                    context=context,
+                    replan_of=plan.get("replan_of"),
+                )
                 action = start_step(plan["steps"][0], e, eid, context, terrain, tick, pos)
                 selected_goal = best["goal"]
                 candidates_out = candidates
@@ -199,6 +236,7 @@ class PeopleDomain(DomainEngine):
             living_state = refresh_wants(living_state, eid, tick)
 
             if result["advance_plan"]:
+                plan = update_plan_progress(plan, action, tick=tick)
                 plan["step_index"] = plan.get("step_index", 0) + 1
                 if action["status"] != "failed" and plan["step_index"] < len(plan.get("steps", [])):
                     next_step = plan["steps"][plan["step_index"]]
@@ -206,6 +244,19 @@ class PeopleDomain(DomainEngine):
                     action = start_step(next_step, e, eid, context, terrain, tick, result["pos"])
                 else:
                     plan["status"] = "completed" if action["status"] != "failed" else "abandoned"
+
+            if decision_candidate is not None and decision_kind is not None:
+                receipt = build_decision_receipt(
+                    actor_id=eid,
+                    tick=tick,
+                    state=living_state,
+                    knowledge=knowledge,
+                    candidates=candidates_out or candidates,
+                    selected=decision_candidate,
+                    plan=plan,
+                    decision_kind=decision_kind,
+                )
+                living_state = record_decision(living_state, receipt, plan)
 
             proposal = self._build_proposal(
                 e, eid, action, plan, paused, knowledge, knowledge_changed, living_state, result,
@@ -240,6 +291,9 @@ class PeopleDomain(DomainEngine):
                 },
                 "planning": {
                     "selected_goal": selected_goal,
+                    "plan_id": plan.get("plan_id"),
+                    "goal_id": plan.get("goal_id"),
+                    "decision_receipt_id": (living_state.get("current_decision") or {}).get("receipt_id"),
                     "target_from_knowledge": bool(
                         context.get("water_target") or context.get("food_target_id")
                         or context.get("animal_target_id") or context.get("frontier_target")

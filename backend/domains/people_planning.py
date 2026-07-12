@@ -41,6 +41,7 @@ from core.constants import (GATHER_TICKS, BUILD_TICKS, SHELTER_COST, GATHER_YIEL
                              ANIMAL_MAX_HEALTH, CARCASS_MEAT_YIELD, CARCASS_HARVEST_YIELD,
                              MEAT_HUNGER_REDUCTION, FOOD_TRANSFER_QUANTITY,
                              FOOD_TRANSFER_SURPLUS)
+from domains.living_agent_contracts import compat_plan
 
 TRAVEL_STALL_LIMIT = 25  # deterministic safety net: abandon a travel step that
                           # cannot make progress rather than looping forever.
@@ -107,13 +108,27 @@ def context_from_action(action, pos):
     }
 
 
-def form_plan(goal, e, context, tick):
+def form_plan(goal, e, context, tick, candidate=None, replan_of=None):
     steps = list(PLAN_STEPS.get(goal, ["WANDER_STEP"]))
     if goal == "SEEK_FOOD" and e["inventory"] <= 0 and e.get("food_inventory", 0) <= 0 and context.get("food_target_id"):
         steps = ["TRAVEL_FOOD", "GATHER_FOOD", "EAT"]
     if goal == "SLEEP" and context.get("shelter_target_id"):
         steps = ["TRAVEL_SHELTER", "SLEEP"]
-    return {"goal": goal, "steps": steps, "step_index": 0, "status": "active"}
+    actor_id = e.get("id") or e.get("entity_id") or "legacy-person"
+    plan = compat_plan(
+        {
+            "goal": goal,
+            "goal_id": (candidate or {}).get("goal_id"),
+            "steps": steps,
+            "step_index": 0,
+            "status": "active",
+            "created_tick": tick,
+            "replan_of": replan_of,
+        },
+        actor_id=actor_id,
+        tick=tick,
+    )
+    return plan
 
 
 def _bind_route(action, pos, terrain, arrival_mode, invalidation_reason=None):

@@ -190,6 +190,15 @@ def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str
             for link in living.get("causal_links") or []:
                 if link.get("accepted_event_id") is None and int(link.get("tick", -1)) == tick:
                     link["accepted_event_id"] = event_id
+            current_decision = living.get("current_decision")
+            if (isinstance(current_decision, dict)
+                    and current_decision.get("accepted_event_id") is None
+                    and int(current_decision.get("tick", -1)) == tick):
+                current_decision["accepted_event_id"] = event_id
+            for receipt in living.get("decision_history") or []:
+                if (receipt.get("accepted_event_id") is None
+                        and int(receipt.get("tick", -1)) == tick):
+                    receipt["accepted_event_id"] = event_id
         knowledge = update.get("knowledge")
         if isinstance(knowledge, dict):
             for fact in (knowledge.get("facts") or {}).values():
