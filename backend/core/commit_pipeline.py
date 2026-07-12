@@ -17,6 +17,12 @@ producing a genuine, inspectable rejection with a stable reason code.
 from core.hashing import canonical_hash
 from core.mutations import apply_mutation, snapshot_for_hash
 from core.constants import CRITICAL_THRESHOLD, FOOD_TRANSFER_QUANTITY, FOOD_TRANSFER_SURPLUS
+from core.food_interaction import (
+    PROPOSAL_CREATE,
+    PROPOSAL_FULFIL,
+    INTERACTION_PROPOSAL_TYPES,
+    validate_food_interaction,
+)
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -45,6 +51,7 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         "preconditions": p.get("preconditions", []),
         "mutation": p.get("mutation", {}),
         "transfer": p.get("transfer"),
+        "interaction": p.get("interaction"),
         "requested_time": p["requested_time"],
         "phase": p["phase"],
     }
@@ -80,8 +87,12 @@ def evaluate_preconditions(preconditions: list, entities: dict):
 
 
 def validate_food_transfer(proposal: dict, entities: dict):
-    """Core-owned validation for the narrow Phase 5B transfer contract."""
-    if proposal.get("proposal_type") != "give_food":
+    """Core-owned validation for the narrow Phase 5B transfer contract.
+
+    Applies to direct `give_food` (5B1) and `fulfil_food_interaction` (5B3),
+    which reuses the same transfer primitive without a second mutation path.
+    """
+    if proposal.get("proposal_type") not in ("give_food", PROPOSAL_FULFIL):
         return None
 
     transfer = proposal.get("transfer") or {}
@@ -138,6 +149,29 @@ def validate_food_transfer(proposal: dict, entities: dict):
     return None
 
 
+def _stamp_food_interaction_provenance(proposal: dict, mutation: dict, event_id: str) -> None:
+    """Stamp interaction entity event provenance at Core accept time."""
+    if proposal.get("proposal_type") not in INTERACTION_PROPOSAL_TYPES:
+        return
+    meta = proposal.get("interaction") or {}
+    iid = meta.get("interaction_id")
+    if not iid:
+        return
+    ptype = proposal["proposal_type"]
+    if ptype == PROPOSAL_CREATE:
+        new_ents = mutation.setdefault("new_entities", {})
+        if iid in new_ents:
+            new_ents[iid]["last_event_id"] = event_id
+            new_ents[iid]["creation_event_id"] = event_id
+        return
+    updates = mutation.setdefault("entity_updates", {}).setdefault(iid, {})
+    updates["last_event_id"] = event_id
+    if ptype == "respond_food_interaction" and updates.get("status") == "accepted":
+        updates["acceptance_event_id"] = event_id
+    if ptype == PROPOSAL_FULFIL:
+        updates["fulfilment_transfer_event_id"] = event_id
+
+
 def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int) -> dict:
     return {
         "id": f"rej-{tick}-{proposal['content_hash'][:10]}-{proposal['entity_id']}",
@@ -177,6 +211,11 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             rejected.append(_reject(proposal, "initial_validation", "precondition.entity_missing", scope_err, tick))
             continue
 
+        interaction_err = validate_food_interaction(proposal, entities, tick)
+        if interaction_err:
+            rejected.append(_reject(proposal, "initial_validation", interaction_err, interaction_err, tick))
+            continue
+
         transfer_err = validate_food_transfer(proposal, entities)
         if transfer_err:
             rejected.append(_reject(proposal, "initial_validation", transfer_err, transfer_err, tick))
@@ -212,6 +251,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         mutation = proposal["mutation"]
         mutation.setdefault("entity_updates", {}).setdefault(proposal["entity_id"], {})
         mutation["entity_updates"][proposal["entity_id"]]["last_event_id"] = event_id
+        _stamp_food_interaction_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
         post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
@@ -236,6 +276,8 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         })
         if proposal.get("transfer"):
             accepted_events[-1]["transfer"] = proposal["transfer"]
+        if proposal.get("interaction"):
+            accepted_events[-1]["interaction"] = proposal["interaction"]
         order_index += 1
 
     return accepted_events, rejected, order_index

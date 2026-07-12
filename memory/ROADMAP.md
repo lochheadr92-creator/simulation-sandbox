@@ -12,9 +12,9 @@ The detailed fork decision and implementation boundary are recorded in [ADR-001:
 4. 5A4a - Transactional Tick Persistence (implemented)
 5. **5A5 - Cognitive Grounding** (Perception / Knowledge / Planning) — implemented
 6. **5A6 - Cognitive Visualisation and Live World Readability** — implemented
-7. **5B - Social Behaviour Foundations** (`5B1`–`5B2` implemented; **5B3 next active**)
+7. **5B - Social Behaviour Foundations** (`5B1`–`5B3` implemented; **5B4 next active**)
 8. 5C - Resource Organisation and Economic Foundations
-9. 5D - Canonical World State and Environment (controlled parallel workstream if 5B3 is blocked)
+9. 5D - Canonical World State and Environment (controlled parallel workstream if 5B interaction chain is blocked)
 10. 5E - Social Conflict
 11. 5F - Pairing, Kinship and Reproduction
 12. 6 - Groups, Settlements and Civilisation (deferred)
@@ -66,13 +66,13 @@ Clearly distinguish:
 
 Development on dependency-independent work may continue under the parallel-work rule below; formal closure of any dependent phase remains blocked while a prerequisite is `Reopened — Blocking` or `Verification Pending` when that pending check is required.
 
-### Controlled parallel work when 5B3 is blocked
+### Controlled parallel work when the 5B interaction chain is blocked
 
-**Phase 5B3 is the next active phase** on the social interaction chain.
+**Phase 5B4 is the next active phase** on the social interaction chain.
 
-If Phase 5B3 is blocked, dependency-independent Phase 5D work may proceed as the controlled parallel workstream.
+If a required 5B stage is blocked, dependency-independent Phase 5D work may proceed as the controlled parallel workstream.
 
-Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict motives (`5E3`), reproduction (`5F3`), lifecycle-dependent social systems, or other phases whose declared prerequisites are incomplete. From this roadmap, that includes at least `5B4`–`5B6`, Phase `5C` (depends on `5B1`–`5B6`), Phase `5E` (depends on 5B social foundations and 5C ownership/resource contracts), and Phase `5F` (depends on 5B social facts/memory and lifecycle state). Phase 5D depends only on completed 5A Core/replay contracts and is the permitted parallel track.
+Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict motives (`5E3`), reproduction (`5F3`), lifecycle-dependent social systems, or other phases whose declared prerequisites are incomplete. From this roadmap, that includes at least remaining `5B4`–`5B6`, Phase `5C` (depends on `5B1`–`5B6`), Phase `5E` (depends on 5B social foundations and 5C ownership/resource contracts), and Phase `5F` (depends on 5B social facts/memory and lifecycle state). Phase 5D depends only on completed 5A Core/replay contracts and is the permitted parallel track.
 
 ## 5A5 - Cognitive Grounding Vertical Slice
 
@@ -95,7 +95,7 @@ Do not bypass the 5B interaction chain by starting barter (`5C5`), conflict moti
 - The selected-person canvas overlay uses a bounded, versioned, observer-specific projection for current perception, retained knowledge, stale last-known entity markers, latest discoveries, and stored route state.
 - Route, target, arrival-mode, planning, action, injury, death, urgent-need, and accepted-change indicators are presentation only. They never create state, recalculate routes, or alter decision results.
 - The normal observer view remains complete when no person is selected; personal fog is never applied automatically.
-- 5B1 Food Ownership and Atomic Transfer and 5B2 Social Observation Facts are implemented. **Phase 5B3 (Request, Offer and Response Protocol) is the next active phase.**
+- 5B1–5B3 social foundations through the food request/offer protocol are implemented. **Phase 5B4 (Event-Backed Interaction Memory) is the next active phase.**
 
 ## 5A1 - Fork Semantics Contract
 
@@ -230,13 +230,32 @@ The complete verification matrix is in ADR-001.
 
 ### 5B3 — Request, Offer and Response Protocol
 
-**Status:** next active phase (not started).
+**Status:** implementation complete (focused-verified). Not marked fully verified solely because prerequisite 5A2 live transaction-capable Mongo success-path checks remain `Implemented — Verification Pending` under the infrastructure-gated verification policy; 5B3 itself does not add a new Mongo gate.
 
 **Goal:** add one bounded food-interaction state machine: pending, accepted, fulfilled, refused, expired, and invalidated.
 
 **Dependencies:** 5B1 transfer primitive and 5B2 visible social facts (both implemented).
 
 **Bounded implementation scope:** proposal-owned interaction records with deterministic expiry, response authority, causal parents, and duplicate prevention; fulfilment invokes 5B1 rather than mutating inventory directly.
+
+**Implementation evidence (`food-interaction-v1`):**
+- Canonical entity type `food_interaction`; kinds `request_food` / `offer_food`; quantity fixed to one food unit; adjacency range matches 5B1.
+- Lifecycle: `pending` → `accepted`|`refused`|`expired`|`invalidated`; `accepted` → `fulfilled`|`invalidated` only. Terminal states immutable. **Accepted never expires.**
+- Expiry interval: `FOOD_INTERACTION_EXPIRY_TICKS = 3` (`expires_tick = created_tick + 3`); response while `current_tick < expires_tick`; expire when processed at `current_tick >= expires_tick` (pending only).
+- Contention: rejected losing fulfil does not mutate; next protocol-maintenance boundary proposes `accepted → invalidated` with stable reason (typically `food_interaction.lost_supply`). No stranded accepted after maintenance.
+- Fulfilment reuses `food-transfer-v1` / `validate_food_transfer` atomically with the fulfilled-state transition (no second inventory mutation path).
+- Response authority: only designated responder; initiator/unrelated rejected with stable reason codes.
+- Content-derived interaction IDs; Core stamps `creation_event_id`, `acceptance_event_id`, `fulfilment_transfer_event_id`, `last_event_id`.
+
+**Focused verification commands and results:**
+```
+cd backend
+python -m pytest tests/test_phase5b3_food_interaction.py -q
+# 14 passed
+
+python -m pytest tests/test_phase5b3_food_interaction.py tests/test_phase5b_economy.py tests/test_phase5b2_social_observations.py tests/test_phase5a5_cognitive.py tests/test_kernel_determinism.py -q
+# 54 passed
+```
 
 **Explicit deferrals:** open-ended conversation, bargaining, multi-party exchange, persistent trust fields, and generic resource protocols.
 
@@ -536,4 +555,4 @@ The complete verification matrix is in ADR-001.
 
 5A2 must satisfy its contract before later Phase 5 mechanics that depend on fork/lineage semantics. Live 5A2 success-path verification remains infrastructure-gated (transaction-capable Mongo) under the Infrastructure-gated verification policy; fail-closed behaviour on unsupported deployments does not by itself block unrelated work.
 
-Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B2 is implemented**; **5B3 is the next active stage** on the social interaction chain. If 5B3 is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
+Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B3 are implemented**; **5B4 is the next active stage** on the social interaction chain. If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.

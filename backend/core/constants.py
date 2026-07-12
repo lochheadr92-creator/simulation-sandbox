@@ -54,6 +54,14 @@ MEAT_HUNGER_REDUCTION = 500       # hunger removed per meat unit eaten (vs 400 f
 FOOD_TRANSFER_QUANTITY = 1        # this phase permits exactly one meat unit per transfer
 FOOD_TRANSFER_SURPLUS = 2         # giver retains one unit after a transfer
 
+# --- Phase 5B3: food request/offer protocol (food-interaction-v1) ---
+FOOD_INTERACTION_PROTOCOL_VERSION = "food-interaction-v1"
+# Named expiry interval for food-interaction-v1: response allowed while
+# current_tick < expires_tick; expires when processed at current_tick >= expires_tick.
+# expires_tick = created_tick + FOOD_INTERACTION_EXPIRY_TICKS.
+FOOD_INTERACTION_EXPIRY_TICKS = 3
+FOOD_INTERACTION_RANGE = 1        # same adjacency range as 5B1 GIVE_FOOD
+
 
 def time_phase(tick: int) -> str:
     t = tick % DAY_LENGTH_TICKS

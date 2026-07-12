@@ -19,6 +19,10 @@ from domains.people_planning import (
     idle_action, empty_plan, check_critical_interrupt, form_plan, start_step,
     execute_action_tick, context_from_action,
 )
+from domains.food_interaction_proposals import (
+    propose_protocol_steps_for_person,
+    propose_stranded_accepted_invalidations,
+)
 
 
 class PeopleDomain(DomainEngine):
@@ -36,13 +40,14 @@ class PeopleDomain(DomainEngine):
         night = getattr(frame, "night", False)
         terrain = frame.terrain
 
+        tick = frame.simulation_time
+
         # Stable activation order
         for eid in sorted(frame.due_entity_ids):
             e = frame.entities.get(eid)
             if not e or e["type"] != "person" or not e.get("alive", True):
                 continue
 
-            tick = frame.simulation_time
             pos = e["position"]
             rng = frame.rng.stream(f"people.{eid}.decision.{tick}")
 
@@ -134,6 +139,18 @@ class PeopleDomain(DomainEngine):
                 tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation,
             )
             proposals.append(proposal)
+            # Phase 5B3: protocol proposals ride as additional domain proposals.
+            # Action proposal stays first so existing tests reading proposals[0]
+            # remain stable; Core orders by content_hash, not list position.
+            # Evaluate against the pinned frame so protocol decisions do not
+            # observe uncommitted same-tick mutations from this activation.
+            view_entities = dict(frame.entities)
+            if knowledge_changed:
+                # Protocol create uses initiator knowledge; surface this tick's
+                # merged knowledge only for the acting person in a shallow copy.
+                view_entities[eid] = dict(e)
+                view_entities[eid]["knowledge"] = knowledge
+            proposals.extend(propose_protocol_steps_for_person(view_entities, eid, tick))
             diagnostics[eid] = {
                 "candidates": candidates_out,
                 "selected_goal": selected_goal,
@@ -157,6 +174,11 @@ class PeopleDomain(DomainEngine):
                     "explore_neighbour_only": True,
                 },
             }
+
+        # Global stranded-accepted maintenance once per activation on the pinned
+        # observation frame (next boundary after same-tick contention/fulfil).
+        # Duplicate invalidates with per-person steps reject safely as terminal.
+        proposals.extend(propose_stranded_accepted_invalidations(frame.entities, tick))
 
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
