@@ -255,10 +255,31 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", default="living-agents-stage6")
     parser.add_argument("--ticks", type=int, default=320)
+    parser.add_argument("--repeat", type=int, default=1)
     args = parser.parse_args(argv)
-    print(json.dumps(_public_report(
-        run_living_agent_harness(args.seed, ticks=args.ticks),
-    ), sort_keys=True, indent=2))
+    if args.repeat < 1:
+        parser.error("--repeat must be at least 1")
+    baseline = run_living_agent_harness(
+        args.seed, ticks=args.ticks, run_id="living-agent-harness-1",
+    )
+    repeat_matches = True
+    for index in range(2, args.repeat + 1):
+        repeated = run_living_agent_harness(
+            args.seed, ticks=args.ticks, run_id=f"living-agent-harness-{index}",
+        )
+        repeat_matches = repeat_matches and all((
+            baseline["event_hashes"] == repeated["event_hashes"],
+            baseline["frame_hashes"] == repeated["frame_hashes"],
+            baseline["final_state_hash"] == repeated["final_state_hash"],
+            baseline["entities"] == repeated["entities"],
+            baseline["summary"] == repeated["summary"],
+        ))
+    report = _public_report(baseline)
+    report["repeat_count"] = args.repeat
+    report["repeat_matches"] = repeat_matches
+    print(json.dumps(report, sort_keys=True, indent=2))
+    if not repeat_matches:
+        return 1
     return 0
 
 

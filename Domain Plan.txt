@@ -1136,4 +1136,9 @@ The Capability Roadmap defines dependency order.
 
 The technical roadmap in memory/ROADMAP.md defines currently authorised implementation work.
 
+Delivered capability status (2026-07-13): Capability Stage 6 - Living Agents
+is implemented and verified through the canonical proposal/accepted-event loop,
+bounded 320-tick repeat validation, and read-only inspection. Capability Stage
+7 and all player embodiment stages remain separately gated and unauthorised.
+
 Player embodiment occurs only after living agents, groups, culture, economy, institutions, ecology, demography, historical burn-in, and historical legibility are sufficiently integrated.

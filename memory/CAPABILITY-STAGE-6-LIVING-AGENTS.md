@@ -2,9 +2,10 @@
 
 ## Status
 
-Approved integrated capability stage. This document defines the executable
-Stage 6 schema, authority, compatibility, and bounded-growth contract. It does
-not mark Stage 6 complete; completion requires the 6A–6E closed-loop gates.
+**Implemented and verified (2026-07-13).** This document defines the executable
+Stage 6 schema, authority, compatibility, and bounded-growth contract. The
+6A–6E closed-loop gates are implemented on
+`capability/stage-6-living-agents`; Stage 7 remains out of scope.
 
 ## Authority and data flow
 
@@ -82,6 +83,9 @@ spawn-rate, target-population, or population-balancing mechanics in Stage 6.
 - Engine/schema version changes require explicit run compatibility checks.
 - Recorded-event replay continues to apply stored mutations without consulting
   projections or current UI code.
+- Stage 6 writes new runs as engine `0.5.0`, schema `0.4.0`. Older runs are
+  recorded-replay-only in this executable and fail clearly if stepped or used
+  for current-engine shadow re-simulation.
 
 ## Package gates
 
@@ -92,4 +96,32 @@ spawn-rate, target-population, or population-balancing mechanics in Stage 6.
 5. 6D: causally available social information changes relationships/commitments.
 6. 6E: a 320-tick integrated scenario closes the loop and replays identically.
 
-Stage 6 is not complete until every gate passes together.
+## Verification evidence
+
+- Integrated scenario: `living_settlement` with 8 people, food/water, storage,
+  tools, shelters, weather, kin/non-kin relationships, incomplete information,
+  an animal threat, and deterministic contention.
+- Focused Stage 6 backend suite: 44 tests passed before the projection/version
+  slice; the final suite also covers bounded living-agent projection and
+  fail-closed run compatibility.
+- Frontend: 38 tests passed and the production build compiled successfully.
+- Final collectable backend regression: 187 tests passed. Four Docker-path live
+  API modules were uncollectable on Windows (`/app/frontend/.env` absent), and
+  two shared-event-loop Mongo modules remain environment-gated; the broader
+  mixed run recorded 195 passes and 13 Motor/transaction failures.
+- Browser smoke: a persisted `living_settlement` run reached tick 3 and exposed
+  the bounded human-readable and expandable diagnostic projections with no
+  browser console warnings or errors.
+- Long run: two independent 320-tick runs for seed `stage6-acceptance` matched
+  event hashes, frame hashes, final state, summaries, and entity state.
+- Per-run long-run result: 4,323 accepted events, 1,463 deterministic
+  rejections, 8 depleted resource units, and all four weather states.
+- Observed caps: 120 knowledge facts, 32 memories, 32 causal links, 12
+  commitments, 12 decision receipts, and 8 relationship records per person.
+- Performance limit: the two-run 640-tick acceptance command took 1,075.8s on
+  the local validation environment because every accepted event hashes the full
+  canonical snapshot. State stayed bounded; runtime optimisation is follow-up
+  work, not hidden verification debt.
+
+Stage 6 is complete because every package gate passes together. This status
+does not authorise Stage 7 or player embodiment.

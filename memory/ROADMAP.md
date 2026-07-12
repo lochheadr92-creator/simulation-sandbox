@@ -766,6 +766,16 @@ Within the revised sequence, 5B1 is a transfer primitive rather than complete ec
 
 Domain catalogue alignment and unassigned cognition prohibitions: [DOMAIN_MAPPING.md](DOMAIN_MAPPING.md).
 
+## Capability milestone status (separate namespace)
+
+Capability Stage 6 — Living Agents is **implemented and verified** as of
+2026-07-13. Its 6A–6E packages, bounded integrated scenario, read-only
+projection/UI, replay-safe accepted-event chain, and two-run 320-tick
+determinism gate are complete. This does not renumber or implicitly complete
+technical Phase 5 work, and it does not authorise Capability Stage 7.
+
+Detailed evidence and limits: [CAPABILITY-STAGE-6-LIVING-AGENTS.md](CAPABILITY-STAGE-6-LIVING-AGENTS.md).
+
 ## Roadmap scope and authority
 
 This file is the **technical execution roadmap**.

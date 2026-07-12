@@ -188,7 +188,9 @@ These remain **prohibited from implicit implementation** until the roadmap assig
 
 ---
 
-*Document type: alignment only. Last aligned to Phase 5B5 implementation-complete status; next active social phase **5B6**.*
+*Document type: alignment only. Last aligned to Phase 5B5 technical status and
+Capability Stage 6 implementation-complete status; next technical social phase
+remains **5B6** unless separately reprioritised.*
 
 ## Capability roadmap alignment
 
@@ -215,5 +217,15 @@ Current major mapping:
 | 13 - Historical Legibility | Compression, biographies, timelines, significance, causal drill-down and world explanation |
 | 14 - Player Embodiment | Player entry as an actor governed by the same world rules |
 | 15 - Player Presentation | Controls, dialogue, maps, journals, narrative projection and accessible explanation |
+
+### Implemented capability milestone
+
+Capability Stage 6 is implemented and verified as one closed loop. Primary
+runtime seams are `backend/domains/living_agent_{cognition,reasoning,actions,social}.py`,
+`backend/domains/living_settlement_domain.py`, and
+`backend/scenarios/living_settlement.py`. Core remains the sole mutation
+authority through `backend/core/commit_pipeline.py`; the API and frontend use
+the read-only `living-agent-projection-v1` surface. Stages 7–15 remain planned,
+not implicitly authorised by this mapping.
 
 Player implementation must not be scheduled ahead of the social, cultural, economic, institutional, ecological, demographic, and historical foundations it depends on.

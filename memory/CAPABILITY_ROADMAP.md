@@ -63,6 +63,11 @@ They are not substitutes for the capabilities below.
 
 # Capability Stage 6 - Living Agents
 
+**Status: Implemented and verified (2026-07-13).** The versioned contracts,
+6A–6D packages, bounded `living_settlement` scenario, read-only inspector, and
+two-run 320-tick deterministic acceptance gate are complete. See
+[`CAPABILITY-STAGE-6-LIVING-AGENTS.md`](CAPABILITY-STAGE-6-LIVING-AGENTS.md).
+
 ## Goal
 
 Create agents that perceive, remember, want, reason, plan, act, interact, experience consequences, and change future behaviour through one deterministic and inspectable loop.
@@ -233,6 +238,11 @@ Pressure
 -> future decision
 
 Stage 6 must not be marked complete if any link remains disconnected.
+
+The implemented loop is connected through canonical entity state, proposal
+validation, accepted mutations/events, bounded perception/knowledge/memory,
+relationship and commitment consequences, future decisions, API projection,
+and frontend inspection. Rejected proposals do not mutate canonical truth.
 
 # Capability Stage 7 - Households, Groups, and Collective Behaviour
 
@@ -578,8 +588,9 @@ Do not mark an entire capability stage complete because one mechanic within it e
 
 # Immediate next capability
 
-After the current technical Phase 5 foundation is sufficiently stable, the next major capability is:
+With Capability Stage 6 verified, the next dependency-ordered capability is:
 
-**Capability Stage 6 - Living Agents**
+**Capability Stage 7 - Households, Groups, and Collective Behaviour**
 
-Implementation should cover 6A through 6E as one integrated milestone, using checkpoint commits and a final closed-loop acceptance gate.
+Stage 7 is not authorised by Stage 6 completion alone. It requires its own
+bounded contract, implementation request, checkpoint plan, and acceptance gate.
