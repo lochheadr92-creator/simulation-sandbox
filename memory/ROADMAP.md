@@ -29,10 +29,107 @@ No phase may be marked complete from workflow labels such as `testing_agent_v4`.
 
 Status labels used in this roadmap:
 
-- **implementation complete** — code and focused tests land; does not by itself close the phase
-- **Implemented — Verification Pending** — implementation complete, but one or more acceptance criteria remain unexercised solely due to missing infrastructure (see policy below)
-- **fully verified** — all deterministic acceptance gates for the phase have passed with recorded results
-- **Reopened — Blocking** — a previously implemented or completed phase later failed an acceptance gate
+- **implemented** / **implementation complete** — code and focused tests land; does not by itself close the phase or claim a product-facing slice
+- **focused-verified** — focused contract tests for the phase (and declared regressions) passed with recorded commands/results
+- **visible slice operational** — an integrated observable causal loop works end-to-end under hard gates (trigger → decision → accept/reject → state consequence → explainable outcome → replay-equivalent reconstruction → bounded retained state)
+- **hardening deferred** — soft-gate work is recorded and postponed to a planned checkpoint; must not be reported as complete
+- **infrastructure verification pending** / **Implemented — Verification Pending** — implementation complete, but one or more acceptance criteria remain unexercised solely due to missing infrastructure (see policy below)
+- **fully verified** — all deterministic acceptance gates for the phase have passed with recorded results, including hard gates; a visually working slice is **not** fully verified without hard gates
+- **reopened and blocking** / **Reopened — Blocking** — a previously implemented or completed phase later failed an acceptance gate
+
+A phase with internal tests but no integrated observable behaviour must not be presented as a complete product-facing slice.
+
+### Delivery model — visible vertical slices with hardening checkpoints
+
+#### 1. Vertical-slice delivery
+
+Closely related phases may be delivered as **one sequential work package** when:
+
+- they form one coherent observable causal loop;
+- the later phase directly depends on the earlier phase;
+- they touch the same event, state, replay, or projection seams;
+- combining them reduces duplicated repository analysis and integration work;
+- each phase retains its own contract, status, tests, and rollback boundary;
+- a **hard internal gate** separates the phases (later work does not begin until the earlier gate passes).
+
+Combining work packages must **not** merge phase identities or bypass dependencies.
+
+#### 2. Visible completion target
+
+Where practical, a work package should end with:
+
+- an observable trigger;
+- a deterministic decision;
+- an accepted or rejected proposal;
+- a canonical state consequence;
+- a visible explanation of what happened and why;
+- replay-equivalent reconstruction;
+- bounded retained state.
+
+Internal contracts, tests, and documentation support the visible loop. They do not replace it.
+
+#### 3. Hard gates
+
+The following remain **blocking**. A failed hard gate blocks continuation:
+
+- accepted events remain simulation truth;
+- Core retains exclusive mutation authority;
+- domains remain proposal-only;
+- resource accounting and conservation are exact where applicable;
+- duplicate processing cannot duplicate outcomes;
+- replay and reconstruction remain deterministic;
+- ordering and conflict resolution remain stable;
+- persistent state remains bounded;
+- transactional operations fail closed when required infrastructure is unavailable;
+- LLMs cannot create canonical truth.
+
+#### 4. Soft gates
+
+The following may be deferred to a planned hardening checkpoint when they do **not** threaten canonical correctness:
+
+- exhaustive malformed-input matrices;
+- broad unrelated regression sweeps after every narrow change;
+- complete frontend polish before the causal loop exists;
+- full documentation expansion before implementation;
+- optional diagnostics and projections;
+- repeated testing of unchanged infrastructure contracts;
+- special-case compatibility work already covered by a general reconstruction contract;
+- formal closure of every tightly coupled micro-phase before adjacent implementation begins.
+
+Deferred work must be recorded honestly and must **not** be reported as complete.
+
+#### 5. Hardening checkpoints
+
+After each visible vertical slice:
+
+- run focused contract tests;
+- run directly affected regressions;
+- verify replay and reconstruction;
+- verify bounded growth and idempotency;
+- perform a controlled simulation smoke;
+- update roadmap and mapping status;
+- record deferred non-blocking hardening work.
+
+Broad full-suite validation should occur at planned checkpoints rather than automatically after every small internal change, unless shared Core authority is affected.
+
+#### 6. Current social vertical slice (5B1–5B5)
+
+The **first social vertical slice** includes:
+
+- food ownership and atomic transfer (**5B1**);
+- social observation (**5B2**);
+- request, offer, response, refusal, expiry, invalidation, and fulfilment (**5B3**);
+- event-backed interaction memory (**5B4**);
+- derived reciprocity and trust (**5B5**);
+- kernel-side influence of prior interaction history on later social choice (ranking / auto-accept caution), with inspectable derived scores in diagnostics where activated.
+
+**Package note:** **5B4** and **5B5** were delivered as one sequential work package. Their phase identities, contracts, tests, and rollback boundaries remain **separate**. A hard internal gate required 5B4 focused tests to pass before 5B5 began.
+
+**5B6** remains **separate** and **unimplemented**. Persistent motives, interruption, resumption, abandonment, and completion cross into the multi-tick planning/action lifecycle and are not part of this slice. **5B6 remains the next active phase** unless this roadmap explicitly defines a broader visible slice around it.
+
+**Product-facing visible explanation:** a completed sandbox/UI explanation of how prior interaction history affects later social choice is **not** implemented. No frontend or dedicated API surface currently exposes interaction-memory facts or reciprocity-trust projections for observer explanation. Treat that explanation loop as the **next product-facing integration requirement** and as **hardening deferred** for the social slice — not as complete. Kernel determinism, focused verification, and diagnostics remain the present verification boundary.
+
+**Status summary for the social slice:** 5B1–5B5 are **implemented** and **focused-verified**; the integrated causal loop is **visible slice operational** at the kernel/test-harness level; product-facing explanation UI is **hardening deferred**; full formal closure remains blocked on hard gates including **5A2 infrastructure verification pending**.
 
 ### Infrastructure-gated verification policy
 
@@ -668,3 +765,21 @@ python -m pytest tests/test_phase5b4_interaction_memory.py tests/test_phase5b5_r
 Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B5 are implemented**; **5B6 is the next active stage** on the social interaction chain. If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
 
 Domain catalogue alignment and unassigned cognition prohibitions: [DOMAIN_MAPPING.md](DOMAIN_MAPPING.md).
+
+## Roadmap scope and authority
+
+This file is the **technical execution roadmap**.
+
+It governs implementation work such as architecture, persistence, transactions, deterministic ordering, replay, forks, projections, validation, and authority boundaries.
+
+It is not the long-range simulation capability sequence.
+
+See:
+
+- [`CAPABILITY_ROADMAP.md`](CAPABILITY_ROADMAP.md) for the ordered progression from Living Agents through culture, economy, institutions, history, and eventual player embodiment.
+- [`DOMAIN_MAPPING.md`](DOMAIN_MAPPING.md) for mapping between domain areas, capability stages, technical phases, and implementation status.
+- [`../Domain Plan.txt`](../Domain%20Plan.txt) for the broad domain catalogue and long-range vision.
+
+Technical phase numbers and capability stage numbers are separate namespaces.
+
+Completion of Technical Phase 5 does not imply readiness for historical burn-in or player implementation.

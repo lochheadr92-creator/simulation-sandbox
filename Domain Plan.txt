@@ -3,6 +3,8 @@ Domain Plan
 Cross-references (alignment; not execution authority):
 - Execution roadmap: memory/ROADMAP.md
 - Domain-to-phase mapping: memory/DOMAIN_MAPPING.md
+- Delivery policy (vertical slices / hard gates / hardening checkpoints):
+  memory/ROADMAP.md section "Delivery model — visible vertical slices with hardening checkpoints"
 
 This Domain Plan is the long-range capability vision and domain catalogue.
 It does not authorise implementation. Implementation requires an explicit
@@ -1121,3 +1123,17 @@ many consequences
 bounded history
 layered resolution
 deterministic replay
+
+CAPABILITY ORDER REFERENCE
+
+The ordered implementation progression for these domains is defined in:
+
+memory/CAPABILITY_ROADMAP.md
+
+The Domain Plan defines the breadth of the intended simulation.
+
+The Capability Roadmap defines dependency order.
+
+The technical roadmap in memory/ROADMAP.md defines currently authorised implementation work.
+
+Player embodiment occurs only after living agents, groups, culture, economy, institutions, ecology, demography, historical burn-in, and historical legibility are sufficiently integrated.
