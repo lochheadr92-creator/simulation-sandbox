@@ -10,6 +10,7 @@ from pymongo.errors import DuplicateKeyError, OperationFailure
 
 from core import db as core_db
 from core import replay_service, retention_service, run_service
+from core.storage import frame_transaction as frame_tx
 from core.commit_pipeline import run_commit_frame
 from core.constants import HASH_POLICY_VERSION
 from core.forking import (
@@ -38,14 +39,20 @@ def _matches(document, query):
         actual = document.get(key)
         if isinstance(expected, dict):
             for operator, value in expected.items():
-                if operator == "$lte" and not actual <= value:
+                if operator == "$lte" and not (actual is not None and actual <= value):
                     return False
-                if operator == "$gte" and not actual >= value:
+                if operator == "$gte" and not (actual is not None and actual >= value):
                     return False
-                if operator == "$lt" and not actual < value:
+                if operator == "$lt" and not (actual is not None and actual < value):
                     return False
                 if operator == "$in" and actual not in value:
                     return False
+                if operator == "$ne" and actual == value:
+                    return False
+                if operator == "$exists":
+                    present = key in document
+                    if bool(value) != present:
+                        return False
         elif actual != expected:
             return False
     return True
@@ -97,16 +104,25 @@ class FakeCollection:
                 code=20,
             )
 
-    async def find_one(self, query, projection=None, session=None):
+    async def find_one(self, query, projection=None, session=None, sort=None):
         self._check_transaction(session)
         if (session is not None and self.name == "kernel_runs"
                 and self.database.capture_event is not None
+                and not self.database.capture_event.is_set()
                 and query.get("id") == self.database.capture_run_id):
+            # Fire once so an interleaved step_run (also session-scoped) does not
+            # re-enter the capture wait and deadlock with the test harness.
             self.database.capture_event.set()
             await self.database.release_event.wait()
-        for document in self._read_documents(session):
-            if _matches(document, query):
-                return _project(document, projection)
+        matches = [
+            document for document in self._read_documents(session)
+            if _matches(document, query)
+        ]
+        if sort:
+            for key, order in reversed(sort):
+                matches.sort(key=lambda doc: doc.get(key), reverse=order == -1)
+        if matches:
+            return _project(matches[0], projection)
         return None
 
     def find(self, query, projection=None, session=None):
@@ -154,7 +170,7 @@ class FakeCollection:
         self.documents.append(candidate)
         return SimpleNamespace(inserted_id=candidate.get("id"))
 
-    async def insert_many(self, documents, session=None):
+    async def insert_many(self, documents, session=None, ordered=True):
         inserted = []
         for document in documents:
             result = await self.insert_one(document, session=session)
@@ -187,6 +203,8 @@ class FakeCollection:
         if inserted:
             target.update(copy.deepcopy(update.get("$setOnInsert", {})))
         target.update(copy.deepcopy(update.get("$set", {})))
+        for field, amount in update.get("$inc", {}).items():
+            target[field] = target.get(field, 0) + amount
         for field, operation in update.get("$push", {}).items():
             target.setdefault(field, []).extend(copy.deepcopy(operation.get("$each", [])))
         return SimpleNamespace(matched_count=0 if inserted else 1)
@@ -205,16 +223,22 @@ class FakeCollection:
         self.documents[:] = [doc for doc in self.documents if not _matches(doc, query)]
         return SimpleNamespace(deleted_count=before - len(self.documents))
 
+    async def count_documents(self, query, session=None):
+        return sum(1 for document in self.documents if _matches(document, query))
+
     async def create_index(self, *args, **kwargs):
         self.indexes.append((copy.deepcopy(args), copy.deepcopy(kwargs)))
         return kwargs.get("name", "index")
+
+    async def drop_index(self, name):
+        return None
 
 
 class FakeDatabase:
     COLLECTIONS = (
         "kernel_runs", "accepted_events", "rejected_proposals", "entities",
         "commit_frames", "activation_diagnostics", "external_influences",
-        "lineage_records",
+        "lineage_records", "recovery_records", "entities_rebuild_tmp",
     )
 
     def __init__(self):
@@ -248,7 +272,8 @@ class FakeTransaction:
         self.session = session
 
     async def __aenter__(self):
-        await self.session.client.lock.acquire()
+        # Snapshot-isolation without a global exclusive lock so a mid-transaction
+        # capture wait (parent-progress concurrency test) can interleave a step.
         self.session.snapshot = self.session.client.database.snapshot()
         return self
 
@@ -256,7 +281,6 @@ class FakeTransaction:
         if exc_type is not None:
             self.session.client.database.restore(self.session.snapshot)
         self.session.snapshot = None
-        self.session.client.lock.release()
         return False
 
 
@@ -292,6 +316,9 @@ def storage(monkeypatch):
     monkeypatch.setattr(run_service, "client", fake_client)
     monkeypatch.setattr(replay_service, "db", database)
     monkeypatch.setattr(retention_service, "db", database)
+    # Phase 5A4a adapter holds its own module-level db/client references.
+    monkeypatch.setattr(frame_tx, "db", database)
+    monkeypatch.setattr(frame_tx, "client", fake_client)
     return database
 
 
