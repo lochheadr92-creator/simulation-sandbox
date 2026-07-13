@@ -243,19 +243,46 @@ async def load_entities(run_id: str) -> dict:
 
 async def save_entities_delta(run_id: str, entities: dict, touched_ids: set,
                               session=None):
-    for entity_id in touched_ids:
+    """Persist touched entity projections using batched writes when possible.
+
+    Prefer bulk_write for multi-entity deltas to avoid N replace_one round trips.
+    Falls back to per-id writes only if the collection lacks bulk_write (tests).
+    """
+    from pymongo import DeleteOne, ReplaceOne
+    from core.storage.frame_transaction import BULK_WRITE_CHUNK_SIZE, _chunks
+
+    replacements = []
+    removals = []
+    for entity_id in sorted(touched_ids):
         if entity_id in entities:
             doc = dict(entities[entity_id])
             doc["id"] = entity_id
             doc["run_id"] = run_id
-            await db.entities.replace_one(
-                {"run_id": run_id, "id": entity_id}, doc, upsert=True,
-                session=session,
-            )
+            replacements.append(doc)
         else:
-            await db.entities.delete_one(
-                {"run_id": run_id, "id": entity_id}, session=session,
-            )
+            removals.append(entity_id)
+
+    if hasattr(db.entities, "bulk_write"):
+        ops = []
+        for doc in replacements:
+            ops.append(ReplaceOne(
+                {"run_id": run_id, "id": doc["id"]}, doc, upsert=True,
+            ))
+        for entity_id in removals:
+            ops.append(DeleteOne({"run_id": run_id, "id": entity_id}))
+        for chunk in _chunks(ops, BULK_WRITE_CHUNK_SIZE):
+            if chunk:
+                await db.entities.bulk_write(chunk, session=session, ordered=True)
+        return
+
+    for doc in replacements:
+        await db.entities.replace_one(
+            {"run_id": run_id, "id": doc["id"]}, doc, upsert=True, session=session,
+        )
+    for entity_id in removals:
+        await db.entities.delete_one(
+            {"run_id": run_id, "id": entity_id}, session=session,
+        )
 
 
 async def _valid_causal_parent_ids(run_id: str, entities: dict, run: dict) -> set:
@@ -436,16 +463,42 @@ async def step_run(run_id: str, n_ticks: int = 1):
             raise TransactionUnavailable(str(exc)) from exc
 
         # Post-transaction: non-critical diagnostics (failure does not roll back truth)
-        for entity_id, diagnostics_for_entity in diagnostics.items():
-            try:
-                await db.activation_diagnostics.replace_one(
+        try:
+            from pymongo import ReplaceOne
+            from core.storage.frame_transaction import BULK_WRITE_CHUNK_SIZE, _chunks
+
+            diag_ops = []
+            for entity_id in sorted(diagnostics):
+                diagnostics_for_entity = diagnostics[entity_id]
+                diag_ops.append(ReplaceOne(
                     {"run_id": run_id, "entity_id": entity_id},
-                    {"run_id": run_id, "entity_id": entity_id, "tick": next_tick,
-                     "diagnostics": diagnostics_for_entity},
+                    {
+                        "run_id": run_id,
+                        "entity_id": entity_id,
+                        "tick": next_tick,
+                        "diagnostics": diagnostics_for_entity,
+                    },
                     upsert=True,
-                )
-            except Exception:
-                pass  # diagnostic write failures are non-fatal
+                ))
+            if diag_ops and hasattr(db, "activation_diagnostics"):
+                coll = db.activation_diagnostics
+                if hasattr(coll, "bulk_write"):
+                    for chunk in _chunks(diag_ops, BULK_WRITE_CHUNK_SIZE):
+                        await coll.bulk_write(chunk, ordered=True)
+                else:
+                    for entity_id in sorted(diagnostics):
+                        await coll.replace_one(
+                            {"run_id": run_id, "entity_id": entity_id},
+                            {
+                                "run_id": run_id,
+                                "entity_id": entity_id,
+                                "tick": next_tick,
+                                "diagnostics": diagnostics[entity_id],
+                            },
+                            upsert=True,
+                        )
+        except Exception:
+            pass  # diagnostic write failures are non-fatal
 
         run["current_tick"] = next_tick
         run["last_state_hash"] = ending_hash

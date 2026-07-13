@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from bson import BSON
+from pymongo import DeleteOne, ReplaceOne
 from pymongo.errors import (
     ConnectionFailure,
     DuplicateKeyError,
@@ -60,6 +61,11 @@ MAX_CHANGED_ENTITIES_PER_FRAME = 5000
 MAX_ACCEPTED_EVENTS_PER_FRAME = 2000
 MAX_REJECTIONS_PER_FRAME = 5000
 MAX_CANONICAL_WRITES_PER_FRAME = 12000
+
+# Safe batching within a single Mongo multi-document transaction.
+# Chunk sizes limit command payload / op count without splitting the TX boundary.
+BULK_WRITE_CHUNK_SIZE = 250
+INSERT_MANY_CHUNK_SIZE = 250
 
 TX_MAX_ATTEMPTS = 10
 TX_DEADLINE_SECONDS = 15.0
@@ -467,38 +473,119 @@ async def resolve_commit_status(frame: PrecomputedFrame) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Atomic commit
+# Atomic commit — batched writes (same TX boundary)
 # ---------------------------------------------------------------------------
-async def _write_frame_body(session, frame: PrecomputedFrame) -> None:
-    _maybe_inject("before_events")
-    if frame.accepted_events:
-        await db.accepted_events.insert_many(
-            [copy.deepcopy(e) for e in frame.accepted_events],
+def _chunks(items: list, size: int):
+    """Yield successive slices of ``items`` with fixed size (last may be shorter)."""
+    if size < 1:
+        raise ValueError("chunk size must be >= 1")
+    for index in range(0, len(items), size):
+        yield items[index:index + size]
+
+
+async def _insert_many_chunked(collection, documents: list, *, session, ordered: bool = True) -> int:
+    """Insert documents in payload-safe chunks inside one transaction.
+
+    Returns the number of insert_many round trips performed (for diagnostics/tests).
+    """
+    if not documents:
+        return 0
+    trips = 0
+    for chunk in _chunks(documents, INSERT_MANY_CHUNK_SIZE):
+        await collection.insert_many(
+            [copy.deepcopy(document) for document in chunk],
             session=session,
-            ordered=True,
+            ordered=ordered,
         )
+        trips += 1
+    return trips
+
+
+async def _bulk_replace_entities(run_id: str, entity_docs: list, *, session) -> int:
+    """Upsert entity projections via ordered bulk_write chunks.
+
+    Preserves per-document upsert semantics of replace_one loops while collapsing
+    N round trips into ceil(N / BULK_WRITE_CHUNK_SIZE). Still one TX.
+    Returns bulk_write round-trip count.
+    """
+    if not entity_docs:
+        return 0
+    trips = 0
+    # Stable order: sort by entity id so bulk op order is deterministic.
+    ordered_docs = sorted(entity_docs, key=lambda doc: doc["id"])
+    for chunk in _chunks(ordered_docs, BULK_WRITE_CHUNK_SIZE):
+        operations = [
+            ReplaceOne(
+                {"run_id": run_id, "id": doc["id"]},
+                copy.deepcopy(doc),
+                upsert=True,
+            )
+            for doc in chunk
+        ]
+        await db.entities.bulk_write(operations, session=session, ordered=True)
+        trips += 1
+    return trips
+
+
+async def _bulk_delete_entities(run_id: str, entity_ids: list, *, session) -> int:
+    """Delete removed entity projections in id-sorted chunks via bulk DeleteOne.
+
+    Using DeleteOne ops (not a single delete_many filter) keeps per-id intent
+    explicit and matches prior delete_one semantics under ordered bulk_write.
+    Returns bulk_write round-trip count.
+    """
+    if not entity_ids:
+        return 0
+    trips = 0
+    ordered_ids = sorted(set(entity_ids))
+    for chunk in _chunks(ordered_ids, BULK_WRITE_CHUNK_SIZE):
+        operations = [
+            DeleteOne({"run_id": run_id, "id": entity_id})
+            for entity_id in chunk
+        ]
+        await db.entities.bulk_write(operations, session=session, ordered=True)
+        trips += 1
+    return trips
+
+
+async def _write_frame_body(session, frame: PrecomputedFrame) -> dict:
+    """Persist frame body inside an open transaction.
+
+    Returns a small non-authoritative write-stats dict (not stored on the frame).
+    """
+    stats = {
+        "event_insert_trips": 0,
+        "rejection_insert_trips": 0,
+        "entity_replace_trips": 0,
+        "entity_delete_trips": 0,
+        "entity_docs": len(frame.entity_docs),
+        "removed_entities": len(frame.removed_entity_ids),
+        "accepted_events": len(frame.accepted_events),
+        "rejected_proposals": len(frame.rejected_proposals),
+    }
+    _maybe_inject("before_events")
+    stats["event_insert_trips"] = await _insert_many_chunked(
+        db.accepted_events,
+        frame.accepted_events,
+        session=session,
+        ordered=True,
+    )
     _maybe_inject("after_events")
 
-    if frame.rejected_proposals:
-        await db.rejected_proposals.insert_many(
-            [copy.deepcopy(r) for r in frame.rejected_proposals],
-            session=session,
-            ordered=True,
-        )
+    stats["rejection_insert_trips"] = await _insert_many_chunked(
+        db.rejected_proposals,
+        frame.rejected_proposals,
+        session=session,
+        ordered=True,
+    )
     _maybe_inject("after_rejections")
 
-    for doc in frame.entity_docs:
-        await db.entities.replace_one(
-            {"run_id": frame.run_id, "id": doc["id"]},
-            copy.deepcopy(doc),
-            upsert=True,
-            session=session,
-        )
-    for eid in frame.removed_entity_ids:
-        await db.entities.delete_one(
-            {"run_id": frame.run_id, "id": eid},
-            session=session,
-        )
+    stats["entity_replace_trips"] = await _bulk_replace_entities(
+        frame.run_id, frame.entity_docs, session=session,
+    )
+    stats["entity_delete_trips"] = await _bulk_delete_entities(
+        frame.run_id, frame.removed_entity_ids, session=session,
+    )
     _maybe_inject("after_entities")
 
     await db.commit_frames.insert_one(copy.deepcopy(frame.commit_frame), session=session)
@@ -530,6 +617,7 @@ async def _write_frame_body(session, frame: PrecomputedFrame) -> None:
             f"CAS lost for run {frame.run_id} at revision {frame.expected_head_revision}"
         )
     _maybe_inject("after_cas")
+    return stats
 
 
 async def _semantic_head_matches(run: dict, frame: PrecomputedFrame) -> bool:

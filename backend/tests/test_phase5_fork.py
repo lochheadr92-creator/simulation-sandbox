@@ -223,6 +223,25 @@ class FakeCollection:
         self.documents[:] = [doc for doc in self.documents if not _matches(doc, query)]
         return SimpleNamespace(deleted_count=before - len(self.documents))
 
+    async def bulk_write(self, operations, session=None, ordered=True):
+        """Minimal bulk_write support for ReplaceOne/DeleteOne used by frame TX batching."""
+        from pymongo import DeleteOne, ReplaceOne
+
+        matched = 0
+        for operation in operations:
+            if isinstance(operation, ReplaceOne):
+                result = await self.replace_one(
+                    operation._filter, operation._doc,
+                    upsert=operation._upsert, session=session,
+                )
+                matched += result.matched_count
+            elif isinstance(operation, DeleteOne):
+                result = await self.delete_one(operation._filter, session=session)
+                matched += result.deleted_count
+            else:
+                raise TypeError(f"unsupported bulk op: {type(operation)!r}")
+        return SimpleNamespace(matched_count=matched)
+
     async def count_documents(self, query, session=None):
         return sum(1 for document in self.documents if _matches(document, query))
 
