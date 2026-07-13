@@ -25,6 +25,7 @@ from core.storage.frame_transaction import (
     commit_frame_atomically,
     head_revision_of,
 )
+from domains.association_contracts import ASSOCIATION_REGISTRY_ID
 
 
 def _rebind_motor_to_running_loop():
@@ -113,3 +114,43 @@ async def test_stale_precomputed_frame_cas_conflict():
     )
     with pytest.raises(ConcurrentModification):
         await commit_frame_atomically(stale)
+
+
+@async_test
+async def test_concurrent_stage7a_steps_do_not_duplicate_groups_or_head():
+    db = core_db.db
+    await core_db.ensure_indexes()
+    clear_test_failure_injection()
+    run = await create_run(
+        f"stage7a-conc-{uuid.uuid4().hex[:8]}", "emergent_groups",
+    )
+    await step_run(run["id"], 6)
+    before = await get_run(run["id"])
+    revision_before = head_revision_of(before)
+    registry_before = await db.entities.find_one(
+        {"run_id": run["id"], "id": ASSOCIATION_REGISTRY_ID}, {"_id": 0},
+    )
+    assert registry_before is not None
+
+    async def attempt():
+        try:
+            return ("ok", await step_run(run["id"], 1))
+        except ConcurrentModification:
+            return ("cas", None)
+
+    results = await asyncio.gather(attempt(), attempt())
+    assert any(status == "ok" for status, _value in results)
+    after = await get_run(run["id"])
+    assert after["current_tick"] == before["current_tick"] + 1
+    assert head_revision_of(after) == revision_before + 1
+    assert await db.commit_frames.count_documents({
+        "run_id": run["id"], "tick": after["current_tick"],
+    }) == 1
+
+    registry = await db.entities.find_one(
+        {"run_id": run["id"], "id": ASSOCIATION_REGISTRY_ID}, {"_id": 0},
+    )
+    assert registry is not None
+    candidate_ids = list((registry.get("group_candidates") or {}).keys())
+    assert len(candidate_ids) == len(set(candidate_ids))
+    assert int(registry["revision"]) == int(registry_before["revision"]) + 1

@@ -25,6 +25,10 @@ from core.food_interaction import (
 )
 from domains.living_agent_actions import validate_living_action_proposal
 from domains.living_agent_social import validate_social_action_proposal
+from domains.association_contracts import (
+    stamp_association_provenance,
+    validate_association_proposal,
+)
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -59,6 +63,8 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         "requested_time": p["requested_time"],
         "phase": p["phase"],
     }
+    if p.get("association_update") is not None:
+        core_fields["association_update"] = p["association_update"]
     h = canonical_hash(core_fields)
     p = dict(p)
     p["content_hash"] = h
@@ -336,6 +342,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             ))
             continue
 
+        association_err = validate_association_proposal(proposal, entities)
+        if association_err:
+            rejected.append(_reject(
+                proposal, "initial_validation", association_err,
+                association_err, tick,
+            ))
+            continue
+
         if not proposal.get("is_exogenous"):
             causal_parents = proposal.get("causal_parent_event_ids") or []
             if not causal_parents:
@@ -370,6 +384,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         _stamp_food_interaction_provenance(proposal, mutation, event_id)
         _stamp_living_agent_provenance(proposal, mutation, event_id)
         _stamp_living_action_provenance(proposal, mutation, event_id)
+        stamp_association_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
         post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
@@ -406,6 +421,8 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
                     commitment["created_event_id"] = event_id
                 commitment["last_event_id"] = event_id
             accepted_events[-1]["social_action"] = social_action
+        if proposal.get("association_update"):
+            accepted_events[-1]["association_update"] = proposal["association_update"]
         order_index += 1
 
     return accepted_events, rejected, order_index

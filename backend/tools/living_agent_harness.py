@@ -12,9 +12,10 @@ import json
 from collections import Counter, defaultdict
 
 from core.constants import ENGINE_VERSION, SCHEMA_VERSION
-from core.hashing import canonical_hash
+from core.hashing import canonical_hash, canonical_json
 from core.kernel import build_genesis, run_tick
 from core.mutations import snapshot_for_hash
+from domains.association_contracts import ASSOCIATION_REGISTRY_ID
 from core.rng import DeterministicRNG
 from scenarios import get_scenario
 
@@ -40,8 +41,9 @@ def run_living_agent_harness(
     run_id: str = "living-agent-harness",
     reverse_entity_order: bool = False,
     capture_events: bool = False,
+    scenario_id: str = "living_settlement",
 ) -> dict:
-    """Run the canonical Stage 6 scenario and return trace evidence.
+    """Run a living-agent scenario and return deterministic trace evidence.
 
     ``run_id`` is intentionally excluded from canonical trace hashes so two
     independent runs with the same seed can be compared directly.
@@ -49,7 +51,7 @@ def run_living_agent_harness(
     if ticks < 0:
         raise ValueError("ticks must be non-negative")
 
-    scenario = get_scenario("living_settlement")
+    scenario = get_scenario(scenario_id)
     lineage_key = _lineage_key(seed)
     world, entities, genesis, genesis_rejected, order_index = build_genesis(
         seed, scenario, lineage_key,
@@ -82,6 +84,10 @@ def run_living_agent_harness(
         "commitments": 0,
         "decision_history": 0,
         "causal_links": 0,
+        "association_records": 0,
+        "group_candidates": 0,
+        "dissolved_groups": 0,
+        "association_registry_bytes": 0,
     }
 
     rng = DeterministicRNG(seed)
@@ -147,6 +153,24 @@ def run_living_agent_harness(
             for key, count in counts.items():
                 max_state_counts[key] = max(max_state_counts[key], count)
 
+        association_registry = entities.get(ASSOCIATION_REGISTRY_ID) or {}
+        max_state_counts["association_records"] = max(
+            max_state_counts["association_records"],
+            len(association_registry.get("association_records") or {}),
+        )
+        max_state_counts["group_candidates"] = max(
+            max_state_counts["group_candidates"],
+            len(association_registry.get("group_candidates") or {}),
+        )
+        max_state_counts["dissolved_groups"] = max(
+            max_state_counts["dissolved_groups"],
+            len(association_registry.get("dissolved_history") or []),
+        )
+        max_state_counts["association_registry_bytes"] = max(
+            max_state_counts["association_registry_bytes"],
+            len(canonical_json(association_registry).encode("utf-8")) if association_registry else 0,
+        )
+
     final_people = {
         entity_id: entity for entity_id, entity in sorted(entities.items())
         if entity.get("type") == "person"
@@ -155,6 +179,8 @@ def run_living_agent_harness(
         len((person.get("living_agent") or {}).get("relationships") or {})
         for person in final_people.values()
     )
+    final_association_registry = entities.get(ASSOCIATION_REGISTRY_ID) or {}
+    final_groups = final_association_registry.get("group_candidates") or {}
     final_commitments = Counter(
         commitment.get("status", "unknown")
         for person in final_people.values()
@@ -207,6 +233,7 @@ def run_living_agent_harness(
 
     return {
         "seed": seed,
+        "scenario_id": scenario_id,
         "ticks": ticks,
         "lineage_key": lineage_key,
         "initial_entities": initial_entities,
@@ -229,6 +256,19 @@ def run_living_agent_harness(
             "plan_failure_reasons": _counter_dict(plan_failure_reasons),
             "weather_conditions": weather_conditions,
             "final_relationship_count": final_relationships,
+            "final_association_record_count": len(
+                final_association_registry.get("association_records") or {}
+            ),
+            "final_group_candidate_count": len(final_groups),
+            "final_recognised_group_count": sum(
+                1 for candidate in final_groups.values()
+                if candidate.get("recognition_state") == "recognised"
+            ),
+            "final_weakening_group_count": sum(
+                1 for candidate in final_groups.values()
+                if candidate.get("recognition_state") == "weakening"
+            ),
+            "association_summary_hash": canonical_hash(final_association_registry),
             "commitment_statuses": _counter_dict(final_commitments),
             "knowledge_provenance": _counter_dict(knowledge_provenance),
             "reported_claim_count": len(reported_claims),
@@ -245,6 +285,7 @@ def run_living_agent_harness(
 def _public_report(result: dict) -> dict:
     return {
         "seed": result["seed"],
+        "scenario_id": result["scenario_id"],
         "ticks": result["ticks"],
         "final_state_hash": result["final_state_hash"],
         **result["summary"],
@@ -254,6 +295,7 @@ def _public_report(result: dict) -> dict:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--seed", default="living-agents-stage6")
+    parser.add_argument("--scenario", default="living_settlement")
     parser.add_argument("--ticks", type=int, default=320)
     parser.add_argument("--repeat", type=int, default=1)
     args = parser.parse_args(argv)
@@ -261,11 +303,13 @@ def main(argv=None) -> int:
         parser.error("--repeat must be at least 1")
     baseline = run_living_agent_harness(
         args.seed, ticks=args.ticks, run_id="living-agent-harness-1",
+        scenario_id=args.scenario,
     )
     repeat_matches = True
     for index in range(2, args.repeat + 1):
         repeated = run_living_agent_harness(
             args.seed, ticks=args.ticks, run_id=f"living-agent-harness-{index}",
+            scenario_id=args.scenario,
         )
         repeat_matches = repeat_matches and all((
             baseline["event_hashes"] == repeated["event_hashes"],

@@ -6,3 +6,4 @@ from scenarios.registry import get_scenario, list_scenarios  # noqa: F401
 from scenarios import wilderness_survival  # noqa: F401
 from scenarios import desert_oasis  # noqa: F401
 from scenarios import living_settlement  # noqa: F401
+from scenarios import emergent_groups  # noqa: F401

@@ -274,6 +274,39 @@ Implement:
 
 Groups must arise from canonical relationships and events rather than appearing as unsupported labels.
 
+## Stage 7A — Emergent Association and Group Recognition
+
+Status: **Implemented and acceptance-verified.**
+
+Stage 7A adds a proposal-only association domain, one bounded canonical
+association registry, content-derived pair/group identities, weighted accepted-
+event evidence, deterministic candidate creation and recognition, complete-link
+membership growth, member removal, weakening, expiry, dissolution, Core
+validation/provenance stamping, generic persistence/replay, and a read-only
+diagnostic API projection.
+
+The Stage 6 `living_settlement` activation remains unchanged. Stage 7A uses the
+explicit `emergent_groups` scenario so new accepted association events do not
+rewrite the validated Stage 6 deterministic trace.
+
+Verified gate: 22 focused tests passed; 3 live concurrency tests passed; the
+broad backend set passed 231 tests with only the four known Docker-path API
+modules excluded; two independent 320-tick traces and one final confirmation
+matched canonical state hash
+`4016f097c3bab6ff1fd9590c5e46731144dff1f6e5c868910c5a0da3bb4ec4e2`
+and association summary hash
+`01af6144c2fdaac92fe4b451cb12ffffaae7976fdf29d6f78f16581132185701`.
+Maximum canonical association state was 28 records, 9 candidates, 0 retained
+dissolutions, and 128,981 registry bytes.
+
+## Stage 7B boundary — Planned, not authorised
+
+Stage 7B may introduce a separately versioned shared-group state and narrowly
+bounded collective proposal contract. It must not begin by treating recognition
+as consent or authority. Shared inventory, collective goals/actions, leadership,
+obedience, culture, settlement governance, warfare, politics, and player control
+remain absent until separately contracted and accepted.
+
 # Capability Stage 8 - Culture, Norms, Beliefs, and Knowledge Transmission
 
 ## Goal
@@ -588,9 +621,9 @@ Do not mark an entire capability stage complete because one mechanic within it e
 
 # Immediate next capability
 
-With Capability Stage 6 verified, the next dependency-ordered capability is:
+With Capability Stage 7A verified, the next dependency-ordered capability is:
 
-**Capability Stage 7 - Households, Groups, and Collective Behaviour**
+**Capability Stage 7B - Bounded Shared Group State and Collective Proposals**
 
-Stage 7 is not authorised by Stage 6 completion alone. It requires its own
+Stage 7B is not authorised by Stage 7A completion alone. It requires its own
 bounded contract, implementation request, checkpoint plan, and acceptance gate.

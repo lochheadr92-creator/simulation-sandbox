@@ -23,6 +23,8 @@ from domains.base import DomainOutput
 from domains.lifecycle_domain import lifecycle_diag_key
 from api.cognitive_projection import build_cognitive_projection
 from api.living_agent_projection import build_living_agent_projection
+from api.association_projection import build_association_projection
+from domains.association_contracts import ASSOCIATION_REGISTRY_ID
 from scenarios import list_scenarios, get_scenario
 
 router = APIRouter()
@@ -338,6 +340,32 @@ async def api_get_living_agent_projection(run_id: str, entity_id: str):
     )
     return build_living_agent_projection(
         entity, run["current_tick"],
+        diagnostics=diag.get("diagnostics") if diag else None,
+    )
+
+
+@router.get("/runs/{run_id}/associations")
+async def api_get_association_projection(run_id: str):
+    """Return bounded read-only group recognition and causal explanations."""
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    registry = await db.entities.find_one(
+        {"run_id": run_id, "id": ASSOCIATION_REGISTRY_ID},
+        {"_id": 0, "run_id": 0},
+    )
+    if not registry:
+        raise HTTPException(404, "association registry not found")
+    people = await db.entities.find(
+        {"run_id": run_id, "type": "person", "alive": {"$ne": False}},
+        {"_id": 0, "id": 1},
+    ).to_list(5000)
+    diag = await db.activation_diagnostics.find_one(
+        {"run_id": run_id, "entity_id": ASSOCIATION_REGISTRY_ID}, {"_id": 0},
+    )
+    return build_association_projection(
+        registry,
+        people=[person["id"] for person in people],
         diagnostics=diag.get("diagnostics") if diag else None,
     )
 
