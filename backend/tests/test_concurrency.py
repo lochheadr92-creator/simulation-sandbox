@@ -26,6 +26,7 @@ from core.storage.frame_transaction import (
     head_revision_of,
 )
 from domains.association_contracts import ASSOCIATION_REGISTRY_ID
+from domains.group_state_contracts import GROUP_STATE_REGISTRY_ID
 
 
 def _rebind_motor_to_running_loop():
@@ -154,3 +155,53 @@ async def test_concurrent_stage7a_steps_do_not_duplicate_groups_or_head():
     candidate_ids = list((registry.get("group_candidates") or {}).keys())
     assert len(candidate_ids) == len(set(candidate_ids))
     assert int(registry["revision"]) == int(registry_before["revision"]) + 1
+
+
+@async_test
+async def test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head():
+    db = core_db.db
+    await core_db.ensure_indexes()
+    clear_test_failure_injection()
+    run = await create_run(
+        f"stage7b-conc-{uuid.uuid4().hex[:8]}", "collective_groups",
+    )
+    await step_run(run["id"], 12)
+    before = await get_run(run["id"])
+    revision_before = head_revision_of(before)
+    registry_before = await db.entities.find_one(
+        {"run_id": run["id"], "id": GROUP_STATE_REGISTRY_ID}, {"_id": 0},
+    )
+    assert registry_before is not None
+    assert registry_before.get("groups")
+
+    async def attempt():
+        try:
+            return ("ok", await step_run(run["id"], 1))
+        except ConcurrentModification:
+            return ("cas", None)
+
+    results = await asyncio.gather(attempt(), attempt())
+    assert any(status == "ok" for status, _value in results)
+    after = await get_run(run["id"])
+    assert after["current_tick"] == before["current_tick"] + 1
+    assert head_revision_of(after) == revision_before + 1
+    assert await db.commit_frames.count_documents({
+        "run_id": run["id"], "tick": after["current_tick"],
+    }) == 1
+
+    registry = await db.entities.find_one(
+        {"run_id": run["id"], "id": GROUP_STATE_REGISTRY_ID}, {"_id": 0},
+    )
+    assert registry is not None
+    fact_ids = [
+        fact_id
+        for group in (registry.get("groups") or {}).values()
+        for fact_id in (group.get("facts") or {})
+    ]
+    assert len(fact_ids) == len(set(fact_ids))
+    assert int(registry["revision"]) == int(registry_before["revision"]) + 1
+    assert await db.accepted_events.count_documents({
+        "run_id": run["id"],
+        "simulation_time": after["current_tick"],
+        "event_type": "update_group_shared_state",
+    }) <= 1

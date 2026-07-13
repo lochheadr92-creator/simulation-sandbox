@@ -299,13 +299,49 @@ and association summary hash
 Maximum canonical association state was 28 records, 9 candidates, 0 retained
 dissolutions, and 128,981 registry bytes.
 
-## Stage 7B boundary — Planned, not authorised
+## Stage 7B - Bounded Shared Group State and Collective Proposal Contract
 
-Stage 7B may introduce a separately versioned shared-group state and narrowly
-bounded collective proposal contract. It must not begin by treating recognition
-as consent or authority. Shared inventory, collective goals/actions, leadership,
-obedience, culture, settlement governance, warfare, politics, and player control
-remain absent until separately contracted and accepted.
+Status: **Implemented and locally acceptance-verified.**
+
+Stage 7B adds a separately versioned `group-shared-state-registry-v1`, a
+proposal-only `group_state` domain, a narrow `collective-group-proposal-v1`
+contract, Core validation/provenance stamping, generic persistence/replay
+integration, a read-only diagnostic API projection, and an explicit
+`collective_groups` scenario.
+
+The only implemented shared fact categories are `shared_shelter` and
+`shared_storage`. A collective proposal requires a currently recognised Stage
+7A group, two explicit current group members, fresh accepted Stage 7A evidence,
+an accepted association-registry causal parent, deterministic proposal identity,
+and revision preconditions for both association and group-state registries.
+
+Recognition alone does not create shared state or authorise collective action.
+Membership does not imply consent. Stage 7B proposals may mutate only
+`group-shared-state-000`; they cannot mutate person state, move resources,
+spend inventory, create group goals, install leadership, command members, or
+bypass existing individual validators.
+
+The Stage 6 `living_settlement` and Stage 7A `emergent_groups` activations
+remain unchanged. Stage 7B uses the explicit `collective_groups` scenario so
+new accepted group-state events do not rewrite validated Stage 6 or 7A traces.
+
+Verified gate: 24 focused Stage 7B tests passed; Stage 7A + Stage 7B focused
+tests passed 46; affected Stage 6/7 tests passed 69; live Mongo concurrency
+tests passed 4; the broad backend set passed 256 tests with only the four known
+Docker-path API modules excluded; two independent 320-tick `collective_groups`
+traces matched canonical state hash
+`86a7dc7fa994d95d6c8c7016ddc127bf7f9d6f7d7b34eb610769a8dcb05482df`,
+association summary hash
+`e286f69d8e3baa60289c014681c9c60f2279b6a1f3c72ff413aaf623e6d7a550`,
+and group-state summary hash
+`aab2c7565d74d0747f28c544e75701afc54661b706cf1c6a8f9072b27d603fae`.
+
+## Stage 7C boundary - Planned, not authorised
+
+Stage 7C should not begin by treating shared facts as autonomous group agency.
+Leadership, voting, governance, obedience, shared inventory, collective goals,
+warfare, diplomacy, culture, religion, politics, and player control remain
+absent until separately contracted and accepted.
 
 # Capability Stage 8 - Culture, Norms, Beliefs, and Knowledge Transmission
 
@@ -621,9 +657,12 @@ Do not mark an entire capability stage complete because one mechanic within it e
 
 # Immediate next capability
 
-With Capability Stage 7A verified, the next dependency-ordered capability is:
+With Capability Stage 7B verified, the next dependency-ordered capability is:
 
-**Capability Stage 7B - Bounded Shared Group State and Collective Proposals**
+**Capability Stage 7C - Narrow Shared-Fact Consumer Contract**
 
-Stage 7B is not authorised by Stage 7A completion alone. It requires its own
+Stage 7C is not authorised by Stage 7B completion alone. It requires its own
 bounded contract, implementation request, checkpoint plan, and acceptance gate.
+It should not begin with autonomous group cognition, leadership, governance,
+obedience, shared inventory, collective goals, culture, warfare, diplomacy,
+politics, religion, or player control.

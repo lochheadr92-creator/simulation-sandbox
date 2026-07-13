@@ -24,7 +24,9 @@ from domains.lifecycle_domain import lifecycle_diag_key
 from api.cognitive_projection import build_cognitive_projection
 from api.living_agent_projection import build_living_agent_projection
 from api.association_projection import build_association_projection
+from api.group_state_projection import build_group_state_projection
 from domains.association_contracts import ASSOCIATION_REGISTRY_ID
+from domains.group_state_contracts import GROUP_STATE_REGISTRY_ID
 from scenarios import list_scenarios, get_scenario
 
 router = APIRouter()
@@ -366,6 +368,27 @@ async def api_get_association_projection(run_id: str):
     return build_association_projection(
         registry,
         people=[person["id"] for person in people],
+        diagnostics=diag.get("diagnostics") if diag else None,
+    )
+
+
+@router.get("/runs/{run_id}/group-state")
+async def api_get_group_state_projection(run_id: str):
+    """Return bounded read-only shared-group state and support provenance."""
+    run = await get_run(run_id)
+    if not run:
+        raise HTTPException(404, "run not found")
+    registry = await db.entities.find_one(
+        {"run_id": run_id, "id": GROUP_STATE_REGISTRY_ID},
+        {"_id": 0, "run_id": 0},
+    )
+    if not registry:
+        raise HTTPException(404, "group state registry not found")
+    diag = await db.activation_diagnostics.find_one(
+        {"run_id": run_id, "entity_id": GROUP_STATE_REGISTRY_ID}, {"_id": 0},
+    )
+    return build_group_state_projection(
+        registry,
         diagnostics=diag.get("diagnostics") if diag else None,
     )
 

@@ -13,6 +13,7 @@ from domains.lifecycle_domain import LifecycleDomain
 from domains.weather_domain import WeatherDomain
 from domains.living_settlement_domain import LivingSettlementDomain
 from domains.association_domain import AssociationDomain
+from domains.group_state_domain import GroupStateDomain
 
 DOMAIN_REGISTRY = {
     "ecology": EcologyDomain(),
@@ -22,4 +23,5 @@ DOMAIN_REGISTRY = {
     "weather": WeatherDomain(),
     "living_settlement": LivingSettlementDomain(),
     "association": AssociationDomain(),
+    "group_state": GroupStateDomain(),
 }

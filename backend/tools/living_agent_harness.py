@@ -18,6 +18,7 @@ from core.mutations import snapshot_for_hash
 from domains.association_contracts import ASSOCIATION_REGISTRY_ID
 from core.rng import DeterministicRNG
 from scenarios import get_scenario
+from domains.group_state_contracts import GROUP_STATE_REGISTRY_ID
 
 
 def _lineage_key(seed: str) -> str:
@@ -88,6 +89,10 @@ def run_living_agent_harness(
         "group_candidates": 0,
         "dissolved_groups": 0,
         "association_registry_bytes": 0,
+        "shared_group_states": 0,
+        "shared_group_facts": 0,
+        "group_state_processed_proposals": 0,
+        "group_state_registry_bytes": 0,
     }
 
     rng = DeterministicRNG(seed)
@@ -170,6 +175,26 @@ def run_living_agent_harness(
             max_state_counts["association_registry_bytes"],
             len(canonical_json(association_registry).encode("utf-8")) if association_registry else 0,
         )
+        group_state_registry = entities.get(GROUP_STATE_REGISTRY_ID) or {}
+        group_states = group_state_registry.get("groups") or {}
+        group_facts = sum(
+            len(group.get("facts") or {})
+            for group in group_states.values()
+        )
+        max_state_counts["shared_group_states"] = max(
+            max_state_counts["shared_group_states"], len(group_states),
+        )
+        max_state_counts["shared_group_facts"] = max(
+            max_state_counts["shared_group_facts"], group_facts,
+        )
+        max_state_counts["group_state_processed_proposals"] = max(
+            max_state_counts["group_state_processed_proposals"],
+            len(group_state_registry.get("processed_proposal_keys") or []),
+        )
+        max_state_counts["group_state_registry_bytes"] = max(
+            max_state_counts["group_state_registry_bytes"],
+            len(canonical_json(group_state_registry).encode("utf-8")) if group_state_registry else 0,
+        )
 
     final_people = {
         entity_id: entity for entity_id, entity in sorted(entities.items())
@@ -180,7 +205,13 @@ def run_living_agent_harness(
         for person in final_people.values()
     )
     final_association_registry = entities.get(ASSOCIATION_REGISTRY_ID) or {}
+    final_group_state_registry = entities.get(GROUP_STATE_REGISTRY_ID) or {}
     final_groups = final_association_registry.get("group_candidates") or {}
+    final_shared_groups = final_group_state_registry.get("groups") or {}
+    final_shared_facts = sum(
+        len(group.get("facts") or {})
+        for group in final_shared_groups.values()
+    )
     final_commitments = Counter(
         commitment.get("status", "unknown")
         for person in final_people.values()
@@ -269,6 +300,9 @@ def run_living_agent_harness(
                 if candidate.get("recognition_state") == "weakening"
             ),
             "association_summary_hash": canonical_hash(final_association_registry),
+            "final_shared_group_state_count": len(final_shared_groups),
+            "final_shared_group_fact_count": final_shared_facts,
+            "group_state_summary_hash": canonical_hash(final_group_state_registry),
             "commitment_statuses": _counter_dict(final_commitments),
             "knowledge_provenance": _counter_dict(knowledge_provenance),
             "reported_claim_count": len(reported_claims),
