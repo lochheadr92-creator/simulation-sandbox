@@ -49,6 +49,9 @@ from core.storage.frame_transaction import (
 )
 from tests.helpers.synthetic_transfer import overlapping_transfer_batch, progressive_commit
 
+# Requires a live MongoDB replica set (transactional frame persistence).
+pytestmark = pytest.mark.integration
+
 
 # Shared loop so Motor is not bound to a closed asyncio.run() loop.
 _LOOP = None

@@ -28,6 +28,9 @@ from core.storage.frame_transaction import (
 from domains.association_contracts import ASSOCIATION_REGISTRY_ID
 from domains.group_state_contracts import GROUP_STATE_REGISTRY_ID
 
+# Requires a live MongoDB replica set (real transactions, real CAS races).
+pytestmark = pytest.mark.integration
+
 
 def _rebind_motor_to_running_loop():
     """Motor clients bind to the creating loop; rebind after asyncio.run resets."""

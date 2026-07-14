@@ -4,23 +4,33 @@ Ageing/Health/Death Foundations (B). Covers every item in the Phase 4
 Verification checklist.
 """
 import inspect
-import os
 import random
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL")
-if not BASE_URL:
-    with open("/app/frontend/.env") as f:
-        for line in f:
-            if line.startswith("REACT_APP_BACKEND_URL"):
-                BASE_URL = line.strip().split("=", 1)[1]
-BASE_URL = BASE_URL.rstrip("/")
-API = f"{BASE_URL}/api"
+from tests.helpers.env import SKIP_REASON, resolve_backend_base_url
+
+# NOTE: no module-level pytestmark here - the doctrine/purity classes
+# (TestReplayDoctrineNotBypassedByHistory, TestNoHiddenLifecycleState,
+# TestDeliberateResourceContention) need no server; HTTP classes are marked
+# `integration` individually.
+
+# Resolved lazily by the _backend_api fixture - never at module import time.
+BASE_URL = None
+API = None
 
 
 @pytest.fixture(scope="module")
-def session():
+def _backend_api():
+    global BASE_URL, API
+    base = resolve_backend_base_url()
+    if not base:
+        pytest.skip(SKIP_REASON)
+    BASE_URL, API = base, f"{base}/api"
+
+
+@pytest.fixture(scope="module")
+def session(_backend_api):
     s = requests.Session()
     s.headers.update({"Content-Type": "application/json"})
     return s
@@ -44,6 +54,7 @@ def get_state(session, run_id):
     return resp.json()
 
 
+@pytest.mark.integration
 class TestSaveLoadContinue:
     def test_load_existing_run_preserves_state_hash(self, session):
         run = create_run(session, "TEST_phase4_saveload_1")
@@ -75,6 +86,7 @@ class TestSaveLoadContinue:
         assert run["id"] in ids
 
 
+@pytest.mark.integration
 class TestTimelineAndMilestones:
     def test_timeline_rebuilds_identically(self, session):
         run = create_run(session, "TEST_phase4_timeline_1")
@@ -110,6 +122,7 @@ class TestTimelineAndMilestones:
         assert all(t["entity_id"] == eid or eid in t["touched_scope"] for t in filtered)
 
 
+@pytest.mark.integration
 class TestCausalLinksAndProvenance:
     def test_causal_links_survive_save_load(self, session):
         run = create_run(session, "TEST_phase4_causal_1")
@@ -146,6 +159,7 @@ class TestCausalLinksAndProvenance:
         assert isinstance(data["events"], list)
 
 
+@pytest.mark.integration
 class TestDeathDoctrine:
     def test_dead_entities_cannot_act(self, session):
         """Kill a person via intervention, step forward, confirm their action
@@ -286,6 +300,7 @@ class TestDeathDoctrine:
         assert alive_after == person_count_before - 1      # exactly one fewer ALIVE person, never replenished
 
 
+@pytest.mark.integration
 class TestHuntingFoodChain:
     def test_animal_death_from_starvation_goes_through_proposals(self, session):
         """Confirms the PRE-EXISTING animal death path (unchanged in Phase 4)

@@ -6,24 +6,33 @@ pass deterministic verification, and no scenario-specific logic leaked
 into the Core.
 """
 import inspect
-import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL")
-if not BASE_URL:
-    with open("/app/frontend/.env") as f:
-        for line in f:
-            if line.startswith("REACT_APP_BACKEND_URL"):
-                BASE_URL = line.strip().split("=", 1)[1]
-BASE_URL = BASE_URL.rstrip("/")
-API = f"{BASE_URL}/api"
+from tests.helpers.env import SKIP_REASON, resolve_backend_base_url
+
+# NOTE: no module-level pytestmark here - TestCoreDomainAgnosticism is pure
+# static analysis and must run with no server; HTTP classes are marked
+# `integration` individually.
+
+# Resolved lazily by the _backend_api fixture - never at module import time.
+BASE_URL = None
+API = None
 
 SCENARIO_IDS = ["basic_survival", "desert_oasis"]
 
 
 @pytest.fixture(scope="module")
-def session():
+def _backend_api():
+    global BASE_URL, API
+    base = resolve_backend_base_url()
+    if not base:
+        pytest.skip(SKIP_REASON)
+    BASE_URL, API = base, f"{base}/api"
+
+
+@pytest.fixture(scope="module")
+def session(_backend_api):
     s = requests.Session()
     s.headers.update({"Content-Type": "application/json"})
     return s
@@ -47,6 +56,7 @@ def get_state(session, run_id):
     return resp.json()
 
 
+@pytest.mark.integration
 class TestScenarioRegistry:
     def test_both_scenarios_listed(self, session):
         resp = session.get(f"{API}/scenarios")
@@ -65,6 +75,7 @@ class TestScenarioRegistry:
         assert "animal" in scenarios["basic_survival"]["enabled_domains"]
 
 
+@pytest.mark.integration
 class TestBothScenariosRunOnSameCore:
     @pytest.mark.parametrize("scenario_id", SCENARIO_IDS)
     def test_create_and_step_no_crash(self, session, scenario_id):
@@ -96,6 +107,7 @@ class TestBothScenariosRunOnSameCore:
         assert "sand" not in flat
 
 
+@pytest.mark.integration
 class TestReplayAndDeterminismBothScenarios:
     @pytest.mark.parametrize("scenario_id", SCENARIO_IDS)
     def test_replay_verify_pass(self, session, scenario_id):

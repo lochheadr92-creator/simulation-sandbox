@@ -3,22 +3,29 @@ Phase 2 backend tests: multi-stage actions, behavior planning, knowledge
 (resource memory / vision-radius perception), exploration, utility scoring,
 critical interruption/resume, resource contention, and determinism.
 """
-import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL")
-if not BASE_URL:
-    with open("/app/frontend/.env") as f:
-        for line in f:
-            if line.startswith("REACT_APP_BACKEND_URL"):
-                BASE_URL = line.strip().split("=", 1)[1]
-BASE_URL = BASE_URL.rstrip("/")
-API = f"{BASE_URL}/api"
+from tests.helpers.env import SKIP_REASON, resolve_backend_base_url
+
+pytestmark = pytest.mark.integration
+
+# Resolved lazily by the _backend_api fixture - never at module import time.
+BASE_URL = None
+API = None
 
 
 @pytest.fixture(scope="module")
-def session():
+def _backend_api():
+    global BASE_URL, API
+    base = resolve_backend_base_url()
+    if not base:
+        pytest.skip(SKIP_REASON)
+    BASE_URL, API = base, f"{base}/api"
+
+
+@pytest.fixture(scope="module")
+def session(_backend_api):
     s = requests.Session()
     s.headers.update({"Content-Type": "application/json"})
     return s
