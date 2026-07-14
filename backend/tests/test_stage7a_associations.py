@@ -15,6 +15,8 @@ from domains.association_contracts import (
     MEMBER_REMOVAL_GRACE_TICKS,
     RECOGNISED_DISSOLUTION_TICKS,
     advance_association_registry,
+    association_capacity_diagnostics,
+    association_current_truth_summary,
     association_pair_id,
     build_association_proposal,
     derive_association_evidence,
@@ -367,6 +369,52 @@ def test_canonical_state_and_proposal_payload_remain_within_explicit_caps():
     proposal = build_association_proposal(entities, 122, observations=[])
     assert proposal["association_update"]["payload_bytes"] <= LIMITS.proposal_bytes
     assert validate_association_proposal(proposal, entities) is None
+
+
+def test_compact_evidence_preserves_current_truth_provenance_and_exact_accounting():
+    people = ["person-a", "person-b"]
+    observations = [
+        _evidence(people, "caregiving", tick, f"compact-{tick}")
+        for tick in range(1, 6)
+    ]
+    registry, _ = advance_association_registry(None, observations, people, 5)
+    record = next(iter(registry["association_records"].values()))
+
+    assert len(record["recent_evidence"]) == 5
+    assert set(record["recent_evidence"][-1]) == {
+        "evidence_id", "category", "tick", "source_event_ids", "condition_ids",
+    }
+    assert len(record["categories"]["caregiving"]["source_event_ids"]) \
+        == LIMITS.category_provenance_refs
+    assert record["causal_event_ids"]
+
+    composition = association_capacity_diagnostics(registry)
+    assert composition["total_serialized_bytes"] == sum(
+        value for key, value in composition.items() if key != "total_serialized_bytes"
+    )
+    assert composition["current_truth_bytes"] > 0
+    assert composition["historical_support_evidence_bytes"] > 0
+    assert composition["provenance_reference_bytes"] > 0
+
+
+def test_legacy_full_evidence_normalises_without_changing_current_truth():
+    people = ["person-a", "person-b"]
+    full_evidence = _evidence(people, "caregiving", 1, "legacy-full")
+    registry, _ = advance_association_registry(None, [full_evidence], people, 1)
+    record = next(iter(registry["association_records"].values()))
+    record["recent_evidence"] = [copy.deepcopy(full_evidence)]
+    before = association_current_truth_summary(registry)
+
+    normalised, _ = advance_association_registry(registry, [], people, 1)
+    normalised_record = next(iter(normalised["association_records"].values()))
+    assert association_current_truth_summary(normalised) == before
+    assert normalised_record["recent_evidence"] == [{
+        "evidence_id": full_evidence["evidence_id"],
+        "category": full_evidence["category"],
+        "tick": full_evidence["tick"],
+        "source_event_ids": full_evidence["source_event_ids"],
+        "condition_ids": full_evidence["condition_ids"],
+    }]
 
 
 def test_overlapping_clusters_remain_separate_and_deterministic():

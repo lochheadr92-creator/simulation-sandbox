@@ -10,7 +10,7 @@ import copy
 from dataclasses import dataclass
 from itertools import combinations
 
-from core.hashing import canonical_hash, canonical_json
+from core.hashing import canonical_byte_composition, canonical_hash, canonical_json
 
 
 ASSOCIATION_REGISTRY_ID = "association-registry-000"
@@ -72,6 +72,7 @@ class AssociationLimits:
     records_per_person: int = 8
     evidence_categories: int = len(EVIDENCE_WEIGHTS)
     detailed_evidence_per_record: int = 8
+    category_provenance_refs: int = 2
     provenance_refs: int = 16
     candidates: int = 24
     members_per_candidate: int = 8
@@ -79,6 +80,7 @@ class AssociationLimits:
     processed_evidence_ids: int = 96
     evidence_items_per_proposal: int = 64
     causal_parents_per_proposal: int = 32
+    payload_target_bytes: int = 96 * 1024
     proposal_bytes: int = 128 * 1024
 
 
@@ -185,6 +187,17 @@ def empty_association_registry(tick: int = 0) -> dict:
 
 def _bounded_event_ids(values) -> list[str]:
     return sorted(set(str(value) for value in (values or []) if value))[-LIMITS.provenance_refs:]
+
+
+def _compact_evidence_detail(evidence: dict) -> dict:
+    """Keep the non-derivable evidence fields needed by Stage 7B validation."""
+    return {
+        "evidence_id": evidence["evidence_id"],
+        "category": evidence["category"],
+        "tick": int(evidence["tick"]),
+        "source_event_ids": list(evidence.get("source_event_ids") or []),
+        "condition_ids": list(evidence.get("condition_ids") or []),
+    }
 
 
 def _position_distance(left: dict | None, right: dict | None) -> int | None:
@@ -447,16 +460,22 @@ def _prune_records(records: dict) -> dict:
 
 def _fit_registry_payload(registry: dict) -> None:
     """Deterministically compact detail while preserving bounded summaries."""
-    target_bytes = LIMITS.proposal_bytes - 2048
     records = registry.get("association_records") or {}
-    for detail_limit in range(LIMITS.detailed_evidence_per_record - 1, -1, -1):
-        if len(canonical_json(registry).encode("utf-8")) <= target_bytes:
+    for detail_limit in range(LIMITS.detailed_evidence_per_record - 1, 0, -1):
+        if len(canonical_json(registry).encode("utf-8")) <= LIMITS.payload_target_bytes:
+            return
+        for record in records.values():
+            record["recent_evidence"] = list(record.get("recent_evidence") or [])[-detail_limit:]
+    if len(canonical_json(registry).encode("utf-8")) <= LIMITS.proposal_bytes:
+        return
+    for detail_limit in (0,):
+        if len(canonical_json(registry).encode("utf-8")) <= LIMITS.proposal_bytes:
             return
         for record in records.values():
             record["recent_evidence"] = list(record.get("recent_evidence") or [])[-detail_limit:] \
                 if detail_limit else []
     for processed_limit in (64, 32, 16):
-        if len(canonical_json(registry).encode("utf-8")) <= target_bytes:
+        if len(canonical_json(registry).encode("utf-8")) <= LIMITS.proposal_bytes:
             return
         registry["processed_evidence_ids"] = list(
             registry.get("processed_evidence_ids") or []
@@ -469,6 +488,14 @@ def _apply_evidence(registry: dict, observations: list[dict], tick: int) -> None
     processed_set = set(processed)
 
     for record in records.values():
+        record["recent_evidence"] = [
+            _compact_evidence_detail(evidence)
+            for evidence in (record.get("recent_evidence") or [])
+        ]
+        for summary in (record.get("categories") or {}).values():
+            summary["source_event_ids"] = _bounded_event_ids(
+                summary.get("source_event_ids") or []
+            )[-LIMITS.category_provenance_refs:]
         elapsed = max(0, int(tick) - int(record.get("last_updated_tick", tick)))
         record["strength"] = max(0, int(record.get("strength", 0)) - elapsed)
         for category, summary in (record.get("categories") or {}).items():
@@ -504,7 +531,7 @@ def _apply_evidence(registry: dict, observations: list[dict], tick: int) -> None
         summary["last_tick"] = int(evidence["tick"])
         summary["source_event_ids"] = _bounded_event_ids(
             list(summary.get("source_event_ids") or []) + evidence["source_event_ids"]
-        )
+        )[-LIMITS.category_provenance_refs:]
         categories[category] = summary
         record["categories"] = {
             key: categories[key]
@@ -521,7 +548,7 @@ def _apply_evidence(registry: dict, observations: list[dict], tick: int) -> None
                 int(evidence["tick"]),
             )
         record["last_updated_tick"] = int(tick)
-        detail = copy.deepcopy(evidence)
+        detail = _compact_evidence_detail(evidence)
         recent = list(record.get("recent_evidence") or [])
         recent.append(detail)
         record["recent_evidence"] = recent[-LIMITS.detailed_evidence_per_record:]
@@ -931,7 +958,7 @@ def validate_association_proposal(proposal: dict, entities: dict) -> str | None:
             return "association.invalid_category"
         for category, summary in (record.get("categories") or {}).items():
             if (not isinstance(summary, dict)
-                    or len(summary.get("source_event_ids") or []) > LIMITS.provenance_refs
+                    or len(summary.get("source_event_ids") or []) > LIMITS.category_provenance_refs
                     or int(summary.get("score", -1)) < 0
                     or int(summary.get("score", -1)) > CATEGORY_SCORE_MAX):
                 return "association.invalid_category"
@@ -942,7 +969,7 @@ def validate_association_proposal(proposal: dict, entities: dict) -> str | None:
                 return "association.invalid_evidence"
             try:
                 expected = make_association_evidence(
-                    evidence.get("person_ids") or [],
+                    record.get("person_ids") or [],
                     evidence.get("category"),
                     int(evidence.get("tick", 0)),
                     evidence.get("source_event_ids") or [],
@@ -950,7 +977,7 @@ def validate_association_proposal(proposal: dict, entities: dict) -> str | None:
                 )
             except (TypeError, ValueError):
                 return "association.invalid_evidence"
-            if expected != evidence or evidence.get("pair_id") != pair_id:
+            if evidence not in (expected, _compact_evidence_detail(expected)):
                 return "association.invalid_evidence"
         if len(record.get("causal_event_ids") or []) > LIMITS.provenance_refs:
             return "association.provenance_limit"
@@ -1073,11 +1100,91 @@ def association_diagnostics(registry: dict, tick: int) -> dict:
         "caps": {
             "records": LIMITS.records,
             "records_per_person": LIMITS.records_per_person,
+            "detailed_evidence_per_record": LIMITS.detailed_evidence_per_record,
+            "category_provenance_refs": LIMITS.category_provenance_refs,
+            "provenance_refs": LIMITS.provenance_refs,
             "candidates": LIMITS.candidates,
             "members_per_candidate": LIMITS.members_per_candidate,
             "dissolved_history": LIMITS.dissolved_history,
+            "processed_evidence_ids": LIMITS.processed_evidence_ids,
             "evidence_items_per_proposal": LIMITS.evidence_items_per_proposal,
             "causal_parents_per_proposal": LIMITS.causal_parents_per_proposal,
+            "payload_target_bytes": LIMITS.payload_target_bytes,
             "proposal_bytes": LIMITS.proposal_bytes,
         },
     }
+
+
+def association_capacity_diagnostics(registry: dict) -> dict:
+    """Return an exact, non-canonical semantic partition of registry bytes."""
+    provenance_fields = {
+        "accepted_event_id", "causal_event_ids", "creation_event_id",
+        "decisive_event_ids", "dissolution_cause_event_ids",
+        "dissolution_event_id", "formation_event_id", "formation_event_ids",
+        "last_event_id", "last_transition_event_id", "membership_evidence",
+        "recognition_event_id", "source_event_ids",
+    }
+    history_fields = {
+        "dissolved_history", "formation_evidence_summary", "recent_evidence",
+        "support_ticks",
+    }
+
+    def classify(path: tuple, _value, _is_key: bool) -> str | None:
+        fields = {part for part in path if isinstance(part, str)}
+        if "processed_evidence_ids" in fields:
+            return "processed_evidence_id_bytes"
+        if fields & provenance_fields:
+            return "provenance_reference_bytes"
+        if fields & history_fields:
+            return "historical_support_evidence_bytes"
+        if fields & {"association_records", "group_candidates"}:
+            return "current_truth_bytes"
+        return None
+
+    composition = {
+        "current_truth_bytes": 0,
+        "historical_support_evidence_bytes": 0,
+        "processed_evidence_id_bytes": 0,
+        "retained_proposal_summary_bytes": 0,
+        "provenance_reference_bytes": 0,
+        "other_structural_overhead_bytes": 0,
+    }
+    composition.update(canonical_byte_composition(registry, classify))
+    return {
+        "total_serialized_bytes": len(canonical_json(registry).encode("utf-8")),
+        **composition,
+    }
+
+
+def association_current_truth_summary(registry: dict) -> dict:
+    """Build a read-only diagnostic summary; it is not canonical authority."""
+    records = {}
+    for pair_id, record in sorted((registry.get("association_records") or {}).items()):
+        records[pair_id] = {
+            "person_ids": list(record.get("person_ids") or []),
+            "strength": int(record.get("strength", 0)),
+            "first_supported_tick": record.get("first_supported_tick"),
+            "last_support_tick": record.get("last_support_tick"),
+            "categories": {
+                category: {
+                    key: summary.get(key)
+                    for key in ("score", "support_count", "first_tick", "last_tick")
+                }
+                for category, summary in sorted((record.get("categories") or {}).items())
+            },
+        }
+    candidates = {}
+    for candidate_id, candidate in sorted((registry.get("group_candidates") or {}).items()):
+        candidates[candidate_id] = {
+            "group_type": candidate.get("group_type"),
+            "recognition_state": candidate.get("recognition_state"),
+            "member_ids": list(candidate.get("member_ids") or []),
+            "strength": int(candidate.get("strength", 0)),
+            "confidence": int(candidate.get("confidence", 0)),
+            "category_scores": copy.deepcopy(candidate.get("category_scores") or {}),
+            "first_supported_tick": candidate.get("first_supported_tick"),
+            "most_recent_support_tick": candidate.get("most_recent_support_tick"),
+            "recognised_tick": candidate.get("recognised_tick"),
+            "weakening_since_tick": candidate.get("weakening_since_tick"),
+        }
+    return {"association_records": records, "group_candidates": candidates}

@@ -21,8 +21,11 @@ from domains.group_state_contracts import (
     build_group_state_proposal,
     collective_proposal_key,
     derive_group_support_evidence,
+    group_state_capacity_diagnostics,
+    group_state_current_truth_summary,
     make_group_support_evidence,
     shared_group_fact_id,
+    stamp_group_state_provenance,
 )
 from scenarios import get_scenario
 from tools.living_agent_harness import run_living_agent_harness
@@ -162,6 +165,51 @@ def _run_reject(entities: dict, proposal: dict, tick: int = 4):
     assert rejected
     assert entities == before
     return rejected[0]["reason_code"]
+
+
+def _capacity_pressure_fixture() -> tuple[dict, list[dict]]:
+    association = {
+        "schema_version": "association-registry-v1",
+        "revision": 1,
+        "group_candidates": {},
+    }
+    supports = []
+    for group_index in range(7):
+        group_id = f"group-capacity-{group_index:02d}"
+        association["group_candidates"][group_id] = {
+            "schema_version": "group-candidate-v1",
+            "candidate_id": group_id,
+            "group_type": "household_like",
+            "recognition_state": "recognised",
+            "ever_recognised": True,
+            "member_ids": ["person-a", "person-b"],
+            "recognised_tick": 1,
+            "recognition_event_id": f"evt-recognised-{group_index}",
+        }
+        for category, target_prefix in (
+            ("shared_shelter", "shelter"),
+            ("shared_storage", "storage"),
+        ):
+            target_id = f"{target_prefix}-capacity-{group_index:02d}"
+            for support_index in range(12):
+                supports.append(make_group_support_evidence(
+                    group_id=group_id,
+                    category=category,
+                    target_id=target_id,
+                    participant_ids=["person-a", "person-b"],
+                    tick=support_index + 1,
+                    support_event_ids=[
+                        f"evt-a-{group_index}-{category}-{support_index}",
+                        f"evt-b-{group_index}-{category}-{support_index}",
+                    ],
+                    support_evidence_ids=[
+                        f"assoc-evidence-{group_index}-{category}-{support_index}",
+                    ],
+                    association_record_ids=[f"association-{group_index}"],
+                    association_registry_revision=1,
+                    association_event_id="evt-association",
+                ))
+    return association, supports
 
 
 def _support_from_association(entities: dict, group_id: str | None = None,
@@ -439,6 +487,95 @@ def test_caps_and_deterministic_compaction_hold():
     assert len(canonical_json(first).encode("utf-8")) <= LIMITS.proposal_bytes
 
 
+def test_capacity_compaction_preserves_truth_evidence_duplicates_and_order():
+    association, supports = _capacity_pressure_fixture()
+    first, _ = advance_group_state_registry(None, supports, association, 50)
+    second, _ = advance_group_state_registry(None, list(reversed(supports)), association, 50)
+    assert first == second
+
+    facts = [
+        fact
+        for group in first["groups"].values()
+        for fact in group["facts"].values()
+    ]
+    assert len(facts) == 14
+    assert all(fact["support_count"] == 12 for fact in facts)
+    assert all(len(fact["support_history"]) >= LIMITS.minimum_support_history_per_fact for fact in facts)
+    assert all(fact["support_event_ids"] and fact["support_evidence_ids"] for fact in facts)
+    assert all(
+        len(group["latest_collective_proposals"])
+        >= LIMITS.minimum_collective_proposals_retained
+        for group in first["groups"].values()
+    )
+    assert sum(
+        len(group["latest_collective_proposals"])
+        for group in first["groups"].values()
+    ) < 7 * LIMITS.collective_proposals_retained
+    assert len(first["processed_proposal_keys"]) == LIMITS.processed_proposal_keys
+    assert len(canonical_json(first).encode("utf-8")) <= LIMITS.payload_target_bytes
+
+    composition = group_state_capacity_diagnostics(first)
+    assert composition["total_serialized_bytes"] == sum(
+        value for key, value in composition.items() if key != "total_serialized_bytes"
+    )
+    assert composition["retained_proposal_summary_bytes"] \
+        < composition["historical_support_evidence_bytes"]
+
+    support_by_key = {support["proposal_key"]: support for support in supports}
+    duplicate = support_by_key[first["processed_proposal_keys"][-1]]
+    current_truth = group_state_current_truth_summary(first)
+    duplicate_result, transitions = advance_group_state_registry(
+        first, [duplicate], association, 51,
+    )
+    assert not transitions
+    assert group_state_current_truth_summary(duplicate_result) == current_truth
+
+
+def test_compacted_registry_replays_and_resumes_with_stamped_provenance():
+    association, supports = _capacity_pressure_fixture()
+    midpoint = len(supports) // 2
+    first, _ = advance_group_state_registry(None, supports[:midpoint], association, 50)
+    first_mutation = {
+        "new_entities": {GROUP_STATE_REGISTRY_ID: first},
+        "entity_updates": {},
+    }
+    stamp_group_state_provenance({
+        "requested_time": 50,
+        "group_state_update": {
+            "proposal_keys": [support["proposal_key"] for support in supports[:midpoint]],
+        },
+    }, first_mutation, "evt-capacity-first")
+
+    final, _ = advance_group_state_registry(first, supports[midpoint:], association, 51)
+    final_mutation = {
+        "new_entities": {},
+        "entity_updates": {GROUP_STATE_REGISTRY_ID: final},
+    }
+    stamp_group_state_provenance({
+        "requested_time": 51,
+        "group_state_update": {
+            "proposal_keys": [support["proposal_key"] for support in supports[midpoint:]],
+        },
+    }, final_mutation, "evt-capacity-final")
+
+    replayed = {}
+    apply_mutation(replayed, copy.deepcopy(first_mutation))
+    resumed = copy.deepcopy(replayed)
+    apply_mutation(replayed, copy.deepcopy(final_mutation))
+    apply_mutation(resumed, copy.deepcopy(final_mutation))
+    expected = {GROUP_STATE_REGISTRY_ID: final}
+    assert replayed == expected
+    assert resumed == expected
+    assert canonical_hash(replayed) == canonical_hash(resumed)
+    provenance_ids = {
+        fact["last_event_id"]
+        for group in final["groups"].values()
+        for fact in group["facts"].values()
+    }
+    assert provenance_ids <= {"evt-capacity-first", "evt-capacity-final"}
+    assert "evt-capacity-final" in provenance_ids
+
+
 def test_proposal_payload_ceiling_is_enforced():
     entities, _events, _order = _recognised_entities()
     proposal = build_group_state_proposal(entities, 4)
@@ -456,7 +593,10 @@ def test_stage7a_association_behaviour_remains_unchanged():
     stage7b = get_scenario("collective_groups")
     assert "group_state" not in stage6.enabled_domains
     assert "group_state" not in stage7a.enabled_domains
-    assert stage7b.enabled_domains == [*stage7a.enabled_domains, "group_state"]
+    assert stage7b.enabled_domains == [
+        *stage7a.enabled_domains, "group_state", "group_collective",
+    ]
+    assert "group_collective" not in stage7a.enabled_domains
     result = run_living_agent_harness(
         "stage7a-unchanged-under-7b-tests", ticks=8, scenario_id="emergent_groups",
     )
@@ -499,6 +639,7 @@ def test_integrated_stage7b_kernel_creates_bounded_replayable_group_state():
     second = run_living_agent_harness(
         "stage7b-focused-integration", ticks=12, run_id="stage7b-repeat",
         scenario_id="collective_groups",
+        resume_at_tick=6,
     )
     summary = first["summary"]
     assert summary["accepted_by_type"]["update_group_shared_state"] > 0
@@ -511,6 +652,13 @@ def test_integrated_stage7b_kernel_creates_bounded_replayable_group_state():
     assert first["frame_hashes"] == second["frame_hashes"]
     assert first["final_state_hash"] == second["final_state_hash"]
     assert summary["group_state_summary_hash"] == second["summary"]["group_state_summary_hash"]
+    assert summary["replay_matches_final_entities"] is True
+    assert second["summary"]["replay_matches_final_entities"] is True
+    for capacity in summary["capacity"].values():
+        composition = capacity["peak_composition"]
+        assert composition["total_serialized_bytes"] == sum(
+            value for key, value in composition.items() if key != "total_serialized_bytes"
+        )
 
 
 def test_recognised_group_dissolution_boundary_for_future_stage():

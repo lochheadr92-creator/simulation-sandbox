@@ -33,6 +33,10 @@ from domains.group_state_contracts import (
     stamp_group_state_provenance,
     validate_group_state_proposal,
 )
+from domains.group_collective_contracts import (
+    stamp_collective_action_provenance,
+    validate_group_collective_proposal,
+)
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -71,6 +75,8 @@ def normalize_proposal(p: dict, seq: int) -> dict:
         core_fields["association_update"] = p["association_update"]
     if p.get("group_state_update") is not None:
         core_fields["group_state_update"] = p["group_state_update"]
+    if p.get("collective_action") is not None:
+        core_fields["collective_action"] = p["collective_action"]
     h = canonical_hash(core_fields)
     p = dict(p)
     p["content_hash"] = h
@@ -364,6 +370,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             ))
             continue
 
+        collective_err = validate_group_collective_proposal(proposal, entities)
+        if collective_err:
+            rejected.append(_reject(
+                proposal, "initial_validation", collective_err,
+                collective_err, tick,
+            ))
+            continue
+
         if not proposal.get("is_exogenous"):
             causal_parents = proposal.get("causal_parent_event_ids") or []
             if not causal_parents:
@@ -400,6 +414,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         _stamp_living_action_provenance(proposal, mutation, event_id)
         stamp_association_provenance(proposal, mutation, event_id)
         stamp_group_state_provenance(proposal, mutation, event_id)
+        stamp_collective_action_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
         post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
@@ -440,6 +455,8 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             accepted_events[-1]["association_update"] = proposal["association_update"]
         if proposal.get("group_state_update"):
             accepted_events[-1]["group_state_update"] = proposal["group_state_update"]
+        if proposal.get("collective_action"):
+            accepted_events[-1]["collective_action"] = proposal["collective_action"]
         order_index += 1
 
     return accepted_events, rejected, order_index

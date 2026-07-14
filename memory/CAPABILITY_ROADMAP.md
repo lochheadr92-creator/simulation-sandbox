@@ -336,12 +336,57 @@ association summary hash
 and group-state summary hash
 `aab2c7565d74d0747f28c544e75701afc54661b706cf1c6a8f9072b27d603fae`.
 
-## Stage 7C boundary - Planned, not authorised
+## Stage 7B.1 - Shared Group-State and Association Capacity Hardening
 
-Stage 7C should not begin by treating shared facts as autonomous group agency.
-Leadership, voting, governance, obedience, shared inventory, collective goals,
-warfare, diplomacy, culture, religion, politics, and player control remain
-absent until separately contracted and accepted.
+Status: **Implemented and acceptance-verified.**
+
+Stage 7B.1 preserves the Stage 7A/7B authority and scenario boundaries while
+removing replay-redundant canonical bookkeeping. Association recent-evidence
+rows use a backward-compatible compact representation and category summaries
+retain two specific event references plus the existing aggregate provenance.
+Group-state compaction removes duplicated group-level proposal summaries before
+fact-local support history and preserves the existing processed-key window.
+
+The 128 KiB association and 64 KiB group-state hard caps are unchanged.
+Operational targets are 96 KiB and 48 KiB respectively. Exact read-only byte
+composition, peak tick/headroom, retained-history counts, capacity rejection
+reasons, replay equality, resume-boundary equality, and post-320 current-truth
+changes are reported by the living-agent harness.
+
+Acceptance requires two matching 1,000-tick `collective_groups` runs, replay
+and resume equality, no payload-cap rejection caused by historical state, green
+Stage 6/7 regressions, and at least 20% peak headroom in both registries.
+
+Verified gate: focused Stage 7A/7B tests passed 50; Stage 6C through 7B passed
+73; live Mongo concurrency passed 4; and the broad backend gate passed 260
+tests with the same four Docker-path exclusions and one existing warning. Two
+1,000-tick traces with seed `stage7b1-capacity`, including a tick-320 restart
+boundary, matched exactly. Association peaked at 95,628 / 131,072 bytes
+(27.042% headroom) at tick 540; group state peaked at 49,374 / 65,536 bytes
+(24.661% headroom) at tick 37. No payload-cap rejection occurred, and useful
+association truth changed on 401 post-320 ticks. Final state hash:
+`31f27b2c15be45d76946b898c0d0dcd791edfe49ce52b49758a0b2517b686d89`.
+
+## Stage 7C - Group Behaviour and Collective Action
+
+Status: **Implemented (focused-verified kernel baseline).** See
+[`CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md`](CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md).
+
+Stage 7C adds a proposal-only `group_collective` domain and the narrow
+`coordinated_storage_deposit` action (`group-collective-action-v1`). Recognised
+Stage 7A membership plus Stage 7B `shared_storage` facts supply context only.
+Eligible living members adjacent to the shared storage deposit carried
+resources under a deterministic initiator (first eligible member id). Core
+validates, revalidates, and alone mutates person inventories and storage
+contents.
+
+The group is not a super-agent: no private group planner, no leadership,
+no obedience, no automatic inclusion of all members. The
+`collective_groups` scenario enables `group_collective` after `group_state`.
+
+Focused gate: 15 Stage 7C tests passed; Stage 7A + 7B + 7C focused suite passed
+65. Leadership, voting, governance, warfare, diplomacy, culture, religion,
+politics, and Stage 8 institutions remain out of scope.
 
 # Capability Stage 8 - Culture, Norms, Beliefs, and Knowledge Transmission
 

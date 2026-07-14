@@ -8,6 +8,8 @@ responsible for only passing canonical fields into these functions.
 """
 import hashlib
 import json
+from collections import Counter
+from collections.abc import Callable
 
 
 def canonical_json(obj) -> str:
@@ -16,6 +18,51 @@ def canonical_json(obj) -> str:
 
 def canonical_hash(obj) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
+
+
+def canonical_byte_composition(
+    obj,
+    classify_path: Callable[[tuple, object, bool], str | None],
+    *,
+    structural_category: str = "other_structural_overhead_bytes",
+) -> dict[str, int]:
+    """Partition canonical JSON bytes into deterministic diagnostic buckets.
+
+    ``classify_path`` receives ``(path, value, is_key)``. Container punctuation
+    is structural; keys and scalar values are attributed by the callback. This
+    is read-only accounting, not a canonical-state projection or hash input.
+    """
+    counts: Counter[str] = Counter()
+
+    def add(category: str | None, token: str) -> None:
+        counts[category or structural_category] += len(token.encode("utf-8"))
+
+    def walk(value, path: tuple) -> None:
+        if isinstance(value, dict):
+            add(structural_category, "{")
+            for index, key in enumerate(sorted(value)):
+                if index:
+                    add(structural_category, ",")
+                child_path = (*path, key)
+                add(classify_path(child_path, value[key], True), canonical_json(key) + ":")
+                walk(value[key], child_path)
+            add(structural_category, "}")
+            return
+        if isinstance(value, (list, tuple)):
+            add(structural_category, "[")
+            for index, item in enumerate(value):
+                if index:
+                    add(structural_category, ",")
+                walk(item, (*path, index))
+            add(structural_category, "]")
+            return
+        add(classify_path(path, value, False), canonical_json(value))
+
+    walk(obj, ())
+    total = len(canonical_json(obj).encode("utf-8"))
+    if sum(counts.values()) != total:
+        raise ValueError("canonical byte composition did not cover the serialized payload")
+    return {key: int(counts[key]) for key in sorted(counts)}
 
 
 def canonical_entity_list(entities: dict) -> list:

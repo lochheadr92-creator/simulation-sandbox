@@ -47,9 +47,14 @@ Proximity contributes only enough to maintain a supported association; normal
 per-tick decay cancels proximity-only accumulation. It cannot independently
 form a household or recognised group.
 
-Detailed evidence is capped. Older detail collapses into integer category
-scores, support counts, first/last support ticks, and bounded decisive accepted
-event references. Accepted events remain the durable causal spine.
+Detailed evidence is capped. Canonical recent-detail rows retain only the
+non-derivable evidence identity, category, tick, source events, and condition
+ids; pair identity, participants, contribution, and polarity are reconstructed
+from the enclosing record and fixed category contract. Older detail collapses
+into integer category scores, support counts, first/last support ticks, two
+category-specific accepted-event references, and sixteen aggregate pair
+references. Accepted events remain the durable causal spine. Legacy full
+detail rows are accepted and deterministically normalised on the next update.
 
 ## Candidate and recognition lifecycle
 
@@ -74,13 +79,15 @@ event references. Accepted events remain the durable causal spine.
 - association records: 48 globally, 8 per person;
 - evidence categories: 10 fixed positive categories plus 2 weakening kinds;
 - detailed evidence: 8 items per pair;
+- category-specific accepted-event references: 2;
 - accepted-event references: 16 per pair/candidate;
 - candidates/recognised groups: 24;
 - members per candidate: 8;
 - dissolved/expired summaries: 8;
 - processed evidence identities: 96; and
 - evidence items / causal parents per proposal: 64 / 32; and
-- association proposal canonical JSON: 128 KiB.
+- association proposal canonical JSON: 128 KiB hard cap, with a 96 KiB
+  operational compaction target.
 
 Deterministic ranking prunes weakest/oldest pair records first while enforcing
 the per-person cap. Detailed dissolved history is intentionally compact because

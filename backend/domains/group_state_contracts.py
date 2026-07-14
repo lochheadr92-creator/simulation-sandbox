@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 from dataclasses import dataclass
 
-from core.hashing import canonical_hash, canonical_json
+from core.hashing import canonical_byte_composition, canonical_hash, canonical_json
 from domains.association_contracts import (
     ASSOCIATION_REGISTRY_ID,
     ASSOCIATION_REGISTRY_VERSION,
@@ -38,12 +38,15 @@ class GroupStateLimits:
     groups: int = 16
     facts_per_group: int = 8
     support_history_per_fact: int = 8
+    minimum_support_history_per_fact: int = 1
     participants_per_support: int = 8
     provenance_refs: int = 16
     collective_proposals_retained: int = 12
+    minimum_collective_proposals_retained: int = 1
     processed_proposal_keys: int = 96
     support_items_per_proposal: int = 16
     causal_parents_per_proposal: int = 32
+    payload_target_bytes: int = 48 * 1024
     proposal_bytes: int = 64 * 1024
 
 
@@ -199,7 +202,9 @@ def derive_group_support_evidence(entities: dict, tick: int) -> list[dict]:
                 category = evidence.get("category")
                 if category not in ALLOWED_SHARED_FACT_CATEGORIES:
                     continue
-                participant_ids = sorted(evidence.get("person_ids") or [])
+                participant_ids = sorted(
+                    evidence.get("person_ids") or record.get("person_ids") or []
+                )
                 if len(participant_ids) != 2 or not set(participant_ids).issubset(members):
                     continue
                 if int(tick) - int(evidence.get("tick", -999999)) > SUPPORT_FRESHNESS_TICKS:
@@ -305,16 +310,33 @@ def _compact_registry(registry: dict) -> None:
         registry.get("processed_proposal_keys") or []
     )[-LIMITS.processed_proposal_keys:]
 
-    target_bytes = LIMITS.proposal_bytes - 2048
-    for history_limit in range(LIMITS.support_history_per_fact - 1, -1, -1):
-        if len(canonical_json(registry).encode("utf-8")) <= target_bytes:
+    for proposal_limit in range(
+        LIMITS.collective_proposals_retained - 1,
+        LIMITS.minimum_collective_proposals_retained - 1,
+        -1,
+    ):
+        if len(canonical_json(registry).encode("utf-8")) <= LIMITS.payload_target_bytes:
+            return
+        for group in (registry.get("groups") or {}).values():
+            group["latest_collective_proposals"] = list(
+                group.get("latest_collective_proposals") or []
+            )[-proposal_limit:]
+    for history_limit in range(
+        LIMITS.support_history_per_fact - 1,
+        LIMITS.minimum_support_history_per_fact - 1,
+        -1,
+    ):
+        if len(canonical_json(registry).encode("utf-8")) <= LIMITS.payload_target_bytes:
             return
         for group in (registry.get("groups") or {}).values():
             for fact in (group.get("facts") or {}).values():
-                fact["support_history"] = list(fact.get("support_history") or [])[-history_limit:] \
-                    if history_limit else []
+                fact["support_history"] = list(
+                    fact.get("support_history") or []
+                )[-history_limit:]
+    if len(canonical_json(registry).encode("utf-8")) <= LIMITS.proposal_bytes:
+        return
     for processed_limit in (64, 32, 16):
-        if len(canonical_json(registry).encode("utf-8")) <= target_bytes:
+        if len(canonical_json(registry).encode("utf-8")) <= LIMITS.proposal_bytes:
             return
         registry["processed_proposal_keys"] = list(
             registry.get("processed_proposal_keys") or []
@@ -627,7 +649,7 @@ def _validate_support_item(support: dict, proposal: dict, entities: dict, tick: 
             continue
         if (
             evidence.get("category") == category
-            and sorted(evidence.get("person_ids") or []) == participant_ids
+            and sorted(evidence.get("person_ids") or record.get("person_ids") or []) == participant_ids
             and target_id in (evidence.get("condition_ids") or [])
             and set(support_events).issubset(set(evidence.get("source_event_ids") or []))
         ):
@@ -803,10 +825,77 @@ def group_state_diagnostics(registry: dict, tick: int) -> dict:
             "groups": LIMITS.groups,
             "facts_per_group": LIMITS.facts_per_group,
             "support_history_per_fact": LIMITS.support_history_per_fact,
+            "minimum_support_history_per_fact": LIMITS.minimum_support_history_per_fact,
             "participants_per_support": LIMITS.participants_per_support,
+            "provenance_refs": LIMITS.provenance_refs,
+            "collective_proposals_retained": LIMITS.collective_proposals_retained,
             "processed_proposal_keys": LIMITS.processed_proposal_keys,
+            "minimum_collective_proposals_retained": LIMITS.minimum_collective_proposals_retained,
             "support_items_per_proposal": LIMITS.support_items_per_proposal,
             "causal_parents_per_proposal": LIMITS.causal_parents_per_proposal,
+            "payload_target_bytes": LIMITS.payload_target_bytes,
             "proposal_bytes": LIMITS.proposal_bytes,
         },
     }
+
+
+def group_state_capacity_diagnostics(registry: dict) -> dict:
+    """Return an exact, non-canonical semantic partition of registry bytes."""
+    provenance_fields = {
+        "accepted_event_id", "created_event_id", "creation_event_id",
+        "last_event_id", "recognition_event_id", "support_event_ids",
+        "support_evidence_ids",
+    }
+
+    def classify(path: tuple, _value, _is_key: bool) -> str | None:
+        fields = {part for part in path if isinstance(part, str)}
+        if "processed_proposal_keys" in fields:
+            return "processed_proposal_key_bytes"
+        if fields & provenance_fields:
+            return "provenance_reference_bytes"
+        if "latest_collective_proposals" in fields:
+            return "retained_proposal_summary_bytes"
+        if "support_history" in fields:
+            return "historical_support_evidence_bytes"
+        if fields & {"groups", "facts"}:
+            return "current_truth_bytes"
+        return None
+
+    composition = {
+        "current_truth_bytes": 0,
+        "historical_support_evidence_bytes": 0,
+        "processed_proposal_key_bytes": 0,
+        "retained_proposal_summary_bytes": 0,
+        "provenance_reference_bytes": 0,
+        "other_structural_overhead_bytes": 0,
+    }
+    composition.update(canonical_byte_composition(registry, classify))
+    return {
+        "total_serialized_bytes": len(canonical_json(registry).encode("utf-8")),
+        **composition,
+    }
+
+
+def group_state_current_truth_summary(registry: dict) -> dict:
+    """Build a read-only diagnostic summary; it is not canonical authority."""
+    groups = {}
+    for group_id, group in sorted((registry.get("groups") or {}).items()):
+        facts = {}
+        for fact_id, fact in sorted((group.get("facts") or {}).items()):
+            facts[fact_id] = {
+                "category": fact.get("category"),
+                "target_id": fact.get("target_id"),
+                "participant_ids": list(fact.get("participant_ids") or []),
+                "support_count": int(fact.get("support_count", 0)),
+                "created_tick": fact.get("created_tick"),
+                "last_supported_tick": fact.get("last_supported_tick"),
+                "revision": int(fact.get("revision", 0)),
+            }
+        groups[group_id] = {
+            "group_type": group.get("group_type"),
+            "member_ids": list(group.get("member_ids") or []),
+            "recognised_tick": group.get("recognised_tick"),
+            "revision": int(group.get("revision", 0)),
+            "facts": facts,
+        }
+    return {"groups": groups}
