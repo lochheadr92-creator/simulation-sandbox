@@ -125,7 +125,7 @@ The **first social vertical slice** includes:
 
 **Package note:** **5B4** and **5B5** were delivered as one sequential work package. Their phase identities, contracts, tests, and rollback boundaries remain **separate**. A hard internal gate required 5B4 focused tests to pass before 5B5 began.
 
-**5B6** remains **separate** and **unimplemented**. Persistent motives, interruption, resumption, abandonment, and completion cross into the multi-tick planning/action lifecycle and are not part of this slice. **5B6 remains the next active phase** unless this roadmap explicitly defines a broader visible slice around it.
+**5B6** remains **separate** and **unimplemented**. Persistent motives, interruption, resumption, abandonment, and completion cross into the multi-tick planning/action lifecycle and are not part of this slice. **5B6 remains the next unimplemented *technical-phase* item** on this social chain, but it is no longer the project's singular frontier: the capability track has since delivered the integrated Stage 6 living-agent loop and Stage 7A–7C group behaviour (committed `ca2419e0`). See *Capability milestone status → Frontier reconciliation* below.
 
 **Product-facing visible explanation:** a completed sandbox/UI explanation of how prior interaction history affects later social choice is **not** implemented. No frontend or dedicated API surface currently exposes interaction-memory facts or reciprocity-trust projections for observer explanation. Treat that explanation loop as the **next product-facing integration requirement** and as **hardening deferred** for the social slice — not as complete. Kernel determinism, focused verification, and diagnostics remain the present verification boundary.
 
@@ -171,7 +171,7 @@ Development on dependency-independent work may continue under the parallel-work 
 
 ### Controlled parallel work when the 5B interaction chain is blocked
 
-**Phase 5B6 is the next active phase** on the social interaction chain.
+**Phase 5B6 is the next unimplemented technical-phase item** on the social interaction chain. (The integrated social/group loop itself was delivered through Capability Stage 6–7C; see *Capability milestone status → Frontier reconciliation*. 5B6 persistent-motive/replanning work remains genuinely open as a technical phase.)
 
 If a required 5B stage is blocked, dependency-independent Phase 5D work may proceed as the controlled parallel workstream.
 
@@ -253,7 +253,7 @@ Do **not** invent numerical limits for completed phases unless an existing imple
 - The selected-person canvas overlay uses a bounded, versioned, observer-specific projection for current perception, retained knowledge, stale last-known entity markers, latest discoveries, and stored route state.
 - Route, target, arrival-mode, planning, action, injury, death, urgent-need, and accepted-change indicators are presentation only. They never create state, recalculate routes, or alter decision results.
 - The normal observer view remains complete when no person is selected; personal fog is never applied automatically.
-- 5B1–5B5 social foundations through interaction memory and derived reciprocity are implemented. **Phase 5B6 (Persistent Motive and Replanning) is the next active phase.**
+- 5B1–5B5 social foundations through interaction memory and derived reciprocity are implemented. **Phase 5B6 (Persistent Motive and Replanning) is the next unimplemented technical-phase item**; the integrated social/group loop itself was delivered through Capability Stage 6–7C (see *Capability milestone status*).
 
 ## 5A1 - Fork Semantics Contract
 
@@ -762,7 +762,7 @@ python -m pytest tests/test_phase5b4_interaction_memory.py tests/test_phase5b5_r
 
 5A2 must satisfy its contract before later Phase 5 mechanics that depend on fork/lineage semantics. Live 5A2 success-path verification remains infrastructure-gated (transaction-capable Mongo) under the Infrastructure-gated verification policy; fail-closed behaviour on unsupported deployments does not by itself block unrelated work.
 
-Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B5 are implemented**; **5B6 is the next active stage** on the social interaction chain. If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
+Within the revised sequence, 5B1 is a transfer primitive rather than complete economy work; **5B1–5B5 are implemented**; **5B6 is the next unimplemented technical-phase item** on the social interaction chain (the integrated social/group loop shipped via Capability Stage 6–7C; see *Capability milestone status*). If a required 5B stage is blocked, Phase 5D is the only controlled parallel workstream authorised by this roadmap. Every stage receives focused unit tests, API/integration tests where relevant, replay verification, determinism verification, and a final diff review limited to that stage.
 
 Domain catalogue alignment and unassigned cognition prohibitions: [DOMAIN_MAPPING.md](DOMAIN_MAPPING.md).
 
@@ -772,24 +772,10 @@ Capability Stage 6 — Living Agents is **implemented and verified** as of
 2026-07-13. Its 6A–6E packages, bounded integrated scenario, read-only
 projection/UI, replay-safe accepted-event chain, and two-run 320-tick
 determinism gate are complete. This does not renumber or implicitly complete
-technical Phase 5 work, and it does not authorise Capability Stage 7.
+technical Phase 5 work.
 
-Detailed evidence and limits: [CAPABILITY-STAGE-6-LIVING-AGENTS.md](CAPABILITY-STAGE-6-LIVING-AGENTS.md).
-
-## Roadmap scope and authority
-
-This file is the **technical execution roadmap**.
-
-It governs implementation work such as architecture, persistence, transactions, deterministic ordering, replay, forks, projections, validation, and authority boundaries.
-
-It is not the long-range simulation capability sequence.
-
-See:
-
-- [`CAPABILITY_ROADMAP.md`](CAPABILITY_ROADMAP.md) for the ordered progression from Living Agents through culture, economy, institutions, history, and eventual player embodiment.
-- [`DOMAIN_MAPPING.md`](DOMAIN_MAPPING.md) for mapping between domain areas, capability stages, technical phases, and implementation status.
-- [`../Domain Plan.txt`](../Domain%20Plan.txt) for the broad domain catalogue and long-range vision.
-
-Technical phase numbers and capability stage numbers are separate namespaces.
-
-Completion of Technical Phase 5 does not imply readiness for historical burn-in or player implementation.
+Capability Stages **7A (emergent groups)**, **7B (shared group state)**,
+**7B.1 (capacity hardening)**, and **7C (group collective action)** are now
+**implemented and committed** (`ca2419e0`, 2026-07-14). 7A/7B/7B.1 are
+acceptance-verified; **7C is Implemented — verification pending** (focused-only:
+15 / 65 tests)

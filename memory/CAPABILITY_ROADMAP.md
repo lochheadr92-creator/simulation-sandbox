@@ -14,6 +14,13 @@ The three planning documents have different responsibilities:
 
 Technical phase numbers and capability stage numbers are not interchangeable.
 
+> **Authority note (2026-07-14):** This document is authoritative for **capability
+> sequencing and stage status**. `ROADMAP.md` is authoritative for **Core,
+> persistence, replay, transaction, and technical-phase** mechanics. Where the
+> two disagree on group-scale capability status, this document prevails; where
+> they disagree on Core/persistence mechanics, `ROADMAP.md` prevails. See
+> `DOMAIN_MAPPING.md` for the Capability-Stage ↔ Technical-Phase bridge.
+
 Completing Technical Phase 5 does not mean the project is ready for player implementation.
 
 ## Core dependency chain
@@ -369,8 +376,17 @@ association truth changed on 401 post-320 ticks. Final state hash:
 
 ## Stage 7C - Group Behaviour and Collective Action
 
-Status: **Implemented (focused-verified kernel baseline).** See
+Status: **Implemented — verification pending** (focused-verified kernel
+baseline; committed `ca2419e0`, 2026-07-14). See
 [`CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md`](CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md).
+
+Open gates before "fully verified" (per Global completion rules):
+`group_collective` persistence + replay survival; integrated 6→7A→7B→7C
+regression; read-only frontend-projection safety; explicit performance limits
+under integrated load; and — the substantive one — **organic long-run
+`shared_storage` reachability**, since the collective-deposit loop is currently
+proven only in the hand-built `collective_groups` scenario and the Stage 7B
+facts it consumes are not reliably produced by natural runs.
 
 Stage 7C adds a proposal-only `group_collective` domain and the narrow
 `coordinated_storage_deposit` action (`group-collective-action-v1`). Recognised
@@ -682,32 +698,4 @@ A capability stage may only be marked complete when:
 1. Its canonical state is explicit and versioned.
 2. Its behaviour is deterministic.
 3. Its actions use the proposal and commit authority spine.
-4. Its outcomes survive persistence and replay.
-5. Rejected proposals cannot mutate truth.
-6. Its cause-and-effect chain is inspectable.
-7. Its frontend projection cannot mutate truth.
-8. Its performance limits are explicit.
-9. Its integrated tests pass.
-10. Its documentation matches the implementation.
-
-Partial implementation should be recorded as:
-
-- Planned
-- In progress
-- Implemented - verification pending
-- Blocked
-- Deferred
-
-Do not mark an entire capability stage complete because one mechanic within it exists.
-
-# Immediate next capability
-
-With Capability Stage 7B verified, the next dependency-ordered capability is:
-
-**Capability Stage 7C - Narrow Shared-Fact Consumer Contract**
-
-Stage 7C is not authorised by Stage 7B completion alone. It requires its own
-bounded contract, implementation request, checkpoint plan, and acceptance gate.
-It should not begin with autonomous group cognition, leadership, governance,
-obedience, shared inventory, collective goals, culture, warfare, diplomacy,
-politics, religion, or player control.
+4. Its
