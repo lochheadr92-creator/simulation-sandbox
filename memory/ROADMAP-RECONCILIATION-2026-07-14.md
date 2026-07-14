@@ -131,11 +131,16 @@ scope. Low priority.
 
 1. **Doc reconciliation (R2–R5)** — now the highest-leverage work, since the code
    is committed but the docs still misstate the frontier and authority.
-2. **Stage 7C hardening to full gate** — `group_collective` persistence/replay,
-   integrated 6→7A→7B→7C regression, read-only frontend projection, and — most
-   substantive — **make `shared_storage` facts organically reachable** so the
-   collective-deposit loop closes under natural runs rather than only the focused
-   scenario. Only then is 7C "fully verified."
+2. **Stage 7C hardening — RESOLVED 2026-07-14.** A 1,000-tick `collective_groups`
+   run confirmed `group_collective` persistence/replay, integrated 6→7A→7B→7C
+   determinism, and projection safety (all green). The organic-reachability gate
+   was investigated and **deferred as Stage 9-blocked**: a measured 1,000-tick
+   run fired 0 collective proposals because agents have no surplus to store
+   (`store ≈ 0`), so `shared_storage` facts never form — reliable surplus is a
+   Stage 9 Economy capability, downstream of 7C. A Stage 6 planner nudge to force
+   it was tested and rejected (no effect; moved the frozen Stage 6 hash). 7C is
+   now **mechanism-verified; organic emergence deferred** and off the critical
+   path. See `CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md`.
 3. **Clear the 5A2 infrastructure gate** — live transaction-capable Mongo
    (replica set). Several Phase 5 items and, by inheritance, the Stage 7
    persistence claims remain "verification pending" until this is exercised.
@@ -149,8 +154,17 @@ new domain.
 
 ---
 
-## 5. Open decision for you
+## 5. Decision (ratified 2026-07-14): depth over breadth
 
-After 7C hardens, go **breadth** (Stage 8 Culture) or **depth** (finish Stage 7
-leadership/collective goals + clear 5A2 + organic reachability)? That's a
-product-direction call, not a correctness one — flagged, not assumed.
+The next-stage fork is **resolved: depth.** After 7C (now mechanism-verified),
+the next capability is **Stage 7D — finish the group loop (leadership, collective
+goals)**, not Stage 8 (Culture) breadth. Rationale: Stage 8 culture rests on
+persistent group identity and collective decision-making that the Stage 7 loop
+only partially delivers; deepening 7 before widening into 8 keeps the capability
+chain honest. Stage 8 is deferred until the group loop is complete. The 5A2
+live-transaction infrastructure gate remains a parallel technical task.
+
+Guardrail (unchanged): Stage 7D must not introduce a hidden group mind —
+leadership and collective goals remain proposal-only, Core-authored, and
+member-grounded; no obedience, warfare, diplomacy, politics, religion, or player
+control until separately contracted.

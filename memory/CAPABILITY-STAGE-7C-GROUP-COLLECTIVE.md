@@ -87,3 +87,72 @@ Covered: eligibility, initiator/order, end-to-end deposit, exclusions, stale
 membership, death, conflict, shuffled arrival, replay, no partial mutation on
 reject, busy exclusion, domain activation, duplicate key, participant cap,
 resume reconstruction.
+
+## Known limitation — organic reachability (measured 2026-07-14)
+
+The focused gate proves 7C in the seeded `collective_groups` scenario, which
+hand-places two members adjacent to `storage-camp` with pre-loaded carried
+surplus. An **unseeded** organic run (emergent_groups world, natural positions,
+no injected surplus; 40-tick harness probe, seed `stage7b1-capacity`) measured:
+
+| Link | Result | Starved? |
+|---|---|---|
+| 7A group recognition | 4 recognised groups | no — forms naturally |
+| 7B shared facts (any category) | 7 facts | no — forms naturally |
+| 7C coordinated deposit | 0 accepted, 0 `group_collective.*` rejections | **yes — never proposes** |
+| storage actions, all agents | store 1, retrieve 2, access 0 | very rare |
+
+**Diagnosis (VERIFIED signal; LIKELY at full horizon).** Recognition and
+generic fact-formation are healthy. The starving link is the *input* to 7C:
+`shared_storage`-category **7A evidence**, which requires two recognised-group
+members to act (`store`/`retrieve`/`access`) on the *same* shared/public storage
+within the evidence window. Organically this rarely happens because:
+
+- The `STORE_SURPLUS`→`store`-to-shared-storage candidate
+  (`living_settlement_domain.build_settlement_candidates`) is gated on carrying
+  `food >= 3` and scores 1350, so survival goals (~2600) routinely outrank it;
+- retrieve/take candidates target `storage-private`, not shared storage, so they
+  do not generate `shared_storage` evidence;
+- `SUPPORT_FRESHNESS_TICKS = 4` (Stage 7B) is a tight window for two members'
+  independent stores to coincide.
+
+**Tested and rejected fix.** Relaxing the `STORE_SURPLUS` precondition
+(`food >= 3` → `>= 2`) and raising its score (1350 → 1650) was applied and
+measured. Focused suite stayed 65/65, but a 40-tick unseeded probe showed **no
+change** in store frequency (still 1). The change was reverted — it moves the
+frozen Stage 6 `living_settlement` hash for zero organic gain.
+
+**1,000-tick seeded evidence (2026-07-14, default seed `living-agents-stage6`).**
+A full `collective_groups --ticks 1000 --repeat 2` run:
+
+- `stage7c.accepted_count = 0` **and** `rejected_count = 0` — 7C never even
+  proposes over 1,000 ticks. The domain has no candidate to evaluate.
+- `store = 0`, `retrieve = 1` across all agents — storage actions are effectively
+  absent, so no `shared_storage`-category 7A evidence can form.
+- `final_shared_group_fact_count = 9` — shared facts do form, but (store ≈ 0)
+  these are `shared_shelter`, not the `shared_storage` category 7C consumes.
+- `repeat_matches = true`, `replay_matches_final_entities = true` with
+  `group_collective_domain_enabled = true`; association peak headroom 25.1%,
+  group-state 24.7% (both above the 20% target).
+
+**Reasoned conclusion — deferral, not defect.** The 7C *mechanism* is proven
+(15 focused tests) and the 1,000-tick run independently satisfies 7C's
+persistence/replay, integrated 6→7A→7B→7C determinism, and projection-safety
+gates. The only unmet gate — organic reachability — is blocked at its first
+link: agents in a survival-pressured camp have no surplus to store, so shared
+*storage* use (as opposed to shared *shelter*) essentially never happens.
+Reliable surplus is a **Stage 9 (Economy)** capability, downstream of Stage 7C
+in the capability chain. Forcing organic 7C reachability now — by tuning the
+Stage 6 planner — would build a higher capability on an absent lower one, the
+exact anti-pattern the roadmap forbids.
+
+**Decision:** organic reachability is **deferred, dependency-blocked on Stage 9
+surplus economy**. The seeded `collective_groups` scenario remains 7C's
+legitimate mechanism-acceptance proof. 7C is therefore *mechanism-verified;
+organic emergence deferred*, and is removed from the critical path for the
+Stage 8-vs-depth decision.
+
+(Note: this run used the harness default seed `living-agents-stage6`, not the
+`stage7b1-capacity` seed behind the recorded 7B.1 hashes, so its
+`final_state_hash 0a5a0189…` is not comparable to `31f27b2c…`; re-record with
+the documented seed if a canonical 7C organic-gate hash is wanted.)

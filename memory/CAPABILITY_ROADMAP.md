@@ -376,17 +376,23 @@ association truth changed on 401 post-320 ticks. Final state hash:
 
 ## Stage 7C - Group Behaviour and Collective Action
 
-Status: **Implemented — verification pending** (focused-verified kernel
-baseline; committed `ca2419e0`, 2026-07-14). See
+Status: **Mechanism-verified; organic emergence deferred (Stage 9-blocked)**
+(committed `ca2419e0`, 2026-07-14). See
 [`CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md`](CAPABILITY-STAGE-7C-GROUP-COLLECTIVE.md).
 
-Open gates before "fully verified" (per Global completion rules):
-`group_collective` persistence + replay survival; integrated 6→7A→7B→7C
-regression; read-only frontend-projection safety; explicit performance limits
-under integrated load; and — the substantive one — **organic long-run
-`shared_storage` reachability**, since the collective-deposit loop is currently
-proven only in the hand-built `collective_groups` scenario and the Stage 7B
-facts it consumes are not reliably produced by natural runs.
+Gates **met** (15 focused tests + a 1,000-tick `collective_groups` run,
+2026-07-14): `group_collective` persistence + replay survival, integrated
+6→7A→7B→7C determinism (`repeat_matches`/`replay` true with the domain live),
+read-only projection safety, and capacity headroom above target.
+
+Gate **deferred, not open**: organic long-run reachability. A 1,000-tick seeded
+run produced 0 collective proposals because storage actions are effectively
+absent (agents have no surplus to store), so the `shared_storage` fact 7C
+consumes never forms — only `shared_shelter` does. Reliable surplus is a
+**Stage 9 (Economy)** capability, downstream of 7C; forcing it via Stage 6
+planner tuning was tested and rejected. Organic emergence is therefore
+dependency-blocked on Stage 9, and the seeded scenario stands as 7C's mechanism
+proof. This removes 7C from the critical path for the next-stage decision.
 
 Stage 7C adds a proposal-only `group_collective` domain and the narrow
 `coordinated_storage_deposit` action (`group-collective-action-v1`). Recognised
@@ -698,4 +704,46 @@ A capability stage may only be marked complete when:
 1. Its canonical state is explicit and versioned.
 2. Its behaviour is deterministic.
 3. Its actions use the proposal and commit authority spine.
-4. Its
+4. Its outcomes survive persistence and replay.
+5. Rejected proposals cannot mutate truth.
+6. Its cause-and-effect chain is inspectable.
+7. Its frontend projection cannot mutate truth.
+8. Its performance limits are explicit.
+9. Its integrated tests pass.
+10. Its documentation matches the implementation.
+
+Partial implementation should be recorded as:
+
+- Planned
+- In progress
+- Implemented - verification pending
+- Blocked
+- Deferred
+
+Do not mark an entire capability stage complete because one mechanic within it exists.
+
+# Frontier and immediate next capability
+
+**Frontier (2026-07-14):** Stages 6, 7A, 7B, 7B.1, and 7C are implemented and
+committed (`ca2419e0`). Stage 7C is **mechanism-verified**; its only unmet gate,
+organic emergence, is **deferred as Stage 9-blocked** (see the Stage 7C section)
+and is off the critical path.
+
+**Next authorised work** is the next-stage decision (below). In parallel, the
+technical **5A2** live-transaction infrastructure gate (transaction-capable
+Mongo) remains unexercised and should be cleared, because the Stage 7
+persistence claims inherit it.
+
+The next-stage direction is **decided (2026-07-14): depth.** The next capability
+is **Stage 7D — finish the group loop (leadership, collective goals)**, not
+Stage 8 (Culture). Rationale: Stage 8 culture rests on persistent group identity
+and collective decision-making the Stage 7 loop only partially delivers;
+deepening 7 before widening into 8 keeps the capability chain honest. **Stage 8
+is deferred** until the group loop is complete; **Stage 9 (Economy)** stays on
+the critical path for *organic* group behaviour (7C's organic emergence waits on
+surplus); the **5A2** live-transaction gate is a parallel technical task.
+
+Guardrail: Stage 7D must not create a hidden group mind — leadership and
+collective goals remain proposal-only, Core-authored, and member-grounded. No
+autonomous group cognition, obedience, warfare, diplomacy, politics, religion,
+or player control until separately contracted and accepted.

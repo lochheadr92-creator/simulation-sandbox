@@ -778,4 +778,48 @@ Capability Stages **7A (emergent groups)**, **7B (shared group state)**,
 **7B.1 (capacity hardening)**, and **7C (group collective action)** are now
 **implemented and committed** (`ca2419e0`, 2026-07-14). 7A/7B/7B.1 are
 acceptance-verified; **7C is Implemented — verification pending** (focused-only:
-15 / 65 tests)
+15 / 65 tests), with open gates listed in
+[`CAPABILITY_ROADMAP.md`](CAPABILITY_ROADMAP.md).
+
+### Frontier reconciliation
+
+The earlier statement that Stage 6 "does not authorise Capability Stage 7" is
+**superseded**: Stage 7A–7C were subsequently contracted, implemented, and
+committed. The capability track (Stage 6–7C) — not technical Phase 5B6 — carried
+the integrated social and group behaviour loop. Technical **Phase 5B6**
+(persistent motive / replanning) and the **Phase 6** settlement/civilisation
+*scale* work remain genuinely open, and the **5A2** live-transaction
+infrastructure gate remains unexercised; none of these are closed by Stage 7
+completion. Authority split: **CAPABILITY_ROADMAP.md** is authoritative for
+capability sequencing; **this file** is authoritative for Core/persistence/
+replay/transaction mechanics and technical-phase status.
+
+**Current frontier:** Stage 7C committed and **mechanism-verified** (15 focused
+tests + a 1,000-tick `collective_groups` run: persistence/replay, integrated
+6→7C determinism, projection safety all green). Its one unmet gate — organic
+emergence — is **deferred as Stage 9-blocked** (agents have no surplus to store,
+so `shared_storage` facts never form; reliable surplus is a Stage 9 Economy
+capability). Next-stage direction decided (2026-07-14): **depth** — Stage 7D (group
+leadership, collective goals), not Stage 8 breadth. Stage 8 deferred until the
+group loop is complete; clearing the 5A2 live-transaction gate is a parallel
+technical task. See CAPABILITY_ROADMAP.md.
+
+Detailed evidence and limits: [CAPABILITY-STAGE-6-LIVING-AGENTS.md](CAPABILITY-STAGE-6-LIVING-AGENTS.md).
+
+## Roadmap scope and authority
+
+This file is the **technical execution roadmap**.
+
+It governs implementation work such as architecture, persistence, transactions, deterministic ordering, replay, forks, projections, validation, and authority boundaries.
+
+It is not the long-range simulation capability sequence.
+
+See:
+
+- [`CAPABILITY_ROADMAP.md`](CAPABILITY_ROADMAP.md) for the ordered progression from Living Agents through culture, economy, institutions, history, and eventual player embodiment.
+- [`DOMAIN_MAPPING.md`](DOMAIN_MAPPING.md) for mapping between domain areas, capability stages, technical phases, and implementation status.
+- [`../Domain Plan.txt`](../Domain%20Plan.txt) for the broad domain catalogue and long-range vision.
+
+Technical phase numbers and capability stage numbers are separate namespaces.
+
+Completion of Technical Phase 5 does not imply readiness for historical burn-in or player implementation.
