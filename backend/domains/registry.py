@@ -15,6 +15,7 @@ from domains.living_settlement_domain import LivingSettlementDomain
 from domains.association_domain import AssociationDomain
 from domains.group_state_domain import GroupStateDomain
 from domains.group_collective_domain import GroupCollectiveDomain
+from domains.group_goal_domain import GroupGoalDomain
 
 DOMAIN_REGISTRY = {
     "ecology": EcologyDomain(),
@@ -26,4 +27,5 @@ DOMAIN_REGISTRY = {
     "association": AssociationDomain(),
     "group_state": GroupStateDomain(),
     "group_collective": GroupCollectiveDomain(),
+    "group_goal": GroupGoalDomain(),
 }
