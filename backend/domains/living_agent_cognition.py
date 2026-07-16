@@ -437,7 +437,19 @@ def derive_internal_pressures(
         "pain": (_bounded(injury_severity * 4 // 5), "canonical:injury"),
         "injury_severity": (injury_severity, "canonical:injury"),
         "safety": (_bounded(visible_dangers * 280 + feared_relations * 90 + (1000 - entity.get("health", 1000)) // 2), "perceived:danger"),
-        "comfort": (_bounded(exposure // 2 + (1000 - entity.get("energy", 1000)) // 3), "derived:exposure_and_fatigue"),
+        # Stage 6 Liveness Pass: use the natural exposure->comfort coupling
+        # (full exposure, was an arbitrary exposure//2 halving) so sustained
+        # exposure (night + storm) carries comfort urgency across the 150
+        # want-activation gate for the shelterless camp members simultaneously,
+        # making improve_shelter an active want for >=2 members. The full
+        # coupling does NOT overshoot in the sustained camp: once the companion
+        # food fix keeps agents alive, well-fed members self-shelter (the 350
+        # night term zeroes out under a functional shelter), so only members
+        # whose shared shelter has worn below usability stay exposed -- the peak
+        # sits well under the starving all-shelterless baseline while still
+        # clearing 150 with margin. Determinism-visible; re-baselines the
+        # living_settlement hash intentionally. See STAGE-6-LIVENESS-PASS.md.
+        "comfort": (_bounded(exposure + (1000 - entity.get("energy", 1000)) // 3), "derived:exposure_and_fatigue"),
         "social_contact": (_bounded(700 - min(visible_people, 3) * 240), "perceived:nearby_people"),
         "belonging": (_bounded(650 - positive_relations * 160), "owned:relationships"),
         "curiosity": (_bounded(720 - min(known_tiles, 200) * 3), "owned:knowledge_extent"),

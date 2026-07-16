@@ -50,6 +50,17 @@ CARCASS_DECAY_INTERVAL = 5        # ticks between decay steps (mirrors REGROWTH_
 CARCASS_DECAY_AMOUNT = 8          # meat units lost per decay step
 MEAT_HUNGER_REDUCTION = 500       # hunger removed per meat unit eaten (vs 400 for foraged inventory)
 
+# --- Stage 6 Liveness Pass: passive shelter/structure wear ---
+# A small, deterministic, weather-driven condition decrement for shelter and
+# structure entities, floored at 0. Repair already RAISES condition, so this
+# creates a real wear/repair loop and lets shared-shelter condition fall below
+# the Stage 7D upkeep threshold organically. Tuned from the collective_groups
+# measurement probe (see STAGE-6-LIVENESS-PASS.md).
+STRUCTURE_WEAR_INTERVAL = 5           # ticks between wear steps (mirrors CARCASS_DECAY_INTERVAL)
+STRUCTURE_WEAR_BASE = 4               # base condition lost per wear step (gentle: repairs keep pace)
+STRUCTURE_WEAR_WEATHER_DIVISOR = 60   # extra wear = weather exposure // this (storms wear more)
+STRUCTURE_WEAR_MIN_CONDITION = 0      # condition floor (never below this)
+
 # --- Phase 5B: giver-owned food transfer ---
 FOOD_TRANSFER_QUANTITY = 1        # this phase permits exactly one meat unit per transfer
 FOOD_TRANSFER_SURPLUS = 2         # giver retains one unit after a transfer

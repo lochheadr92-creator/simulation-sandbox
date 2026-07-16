@@ -16,7 +16,12 @@ durable consequence needs causal parents" rule):
 from domains.base import DomainEngine, DomainOutput
 from core.constants import (
     REGROWTH_AMOUNT, REGROWTH_INTERVAL, CARCASS_DECAY_INTERVAL, CARCASS_DECAY_AMOUNT,
+    STRUCTURE_WEAR_INTERVAL, STRUCTURE_WEAR_BASE, STRUCTURE_WEAR_WEATHER_DIVISOR,
+    STRUCTURE_WEAR_MIN_CONDITION,
 )
+
+WEATHER_ENTITY_ID = "weather-000"
+_STRUCTURE_WEAR_TYPES = ("shelter", "structure")
 
 
 class EcologyDomain(DomainEngine):
@@ -34,6 +39,10 @@ class EcologyDomain(DomainEngine):
                 due.append(eid)
             elif e["type"] == "signal" and tick >= int(e.get("expires_tick", tick + 1)):
                 due.append(eid)
+            elif (e["type"] in _STRUCTURE_WEAR_TYPES
+                    and tick % STRUCTURE_WEAR_INTERVAL == 0
+                    and int(e.get("condition", 0) or 0) > STRUCTURE_WEAR_MIN_CONDITION):
+                due.append(eid)
         return due
 
     def activate(self, frame):
@@ -49,7 +58,49 @@ class EcologyDomain(DomainEngine):
                 self._decay(e, eid, frame, proposals, diagnostics)
             elif e["type"] == "signal":
                 self._expire_signal(e, eid, frame, proposals, diagnostics)
+            elif e["type"] in _STRUCTURE_WEAR_TYPES:
+                self._wear(e, eid, frame, proposals, diagnostics)
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
+
+    def _wear(self, e, eid, frame, proposals, diagnostics):
+        """Passive, weather-driven shelter/structure condition decrement (floored).
+
+        Environment-phase and source-driven (no causal parent), mirroring carcass
+        decay. Repair (agent phase) commits AFTER wear, so a wear tick and a repair
+        on the same structure resolve deterministically as a wear then a rejected
+        repair that retries next tick."""
+        current = int(e.get("condition", 0) or 0)
+        if current <= STRUCTURE_WEAR_MIN_CONDITION:
+            return
+        weather = frame.entities.get(WEATHER_ENTITY_ID) or {}
+        weather_exposure = int(weather.get("exposure", 0) or 0)
+        amount = STRUCTURE_WEAR_BASE + weather_exposure // STRUCTURE_WEAR_WEATHER_DIVISOR
+        new_condition = max(STRUCTURE_WEAR_MIN_CONDITION, current - amount)
+        if new_condition == current:
+            return
+        explanation = (
+            f"passive shelter wear: condition {current} -> {new_condition} "
+            f"(weather exposure {weather_exposure})"
+        )
+        proposals.append({
+            "proposal_family": "ecology_process",
+            "proposal_type": "structure_wear",
+            "proposer_engine_id": self.engine_id,
+            "proposer_engine_version": self.engine_version,
+            "entity_id": eid,
+            "causal_parent_event_ids": [],
+            "is_exogenous": True,
+            "requested_time": frame.simulation_time,
+            "phase": "environment",
+            "engine_priority": self.engine_priority,
+            "touched_scope": [eid],
+            "preconditions": [
+                {"entity_id": eid, "field": "condition", "op": "gt", "value": STRUCTURE_WEAR_MIN_CONDITION},
+            ],
+            "mutation": {"entity_updates": {eid: {"condition": new_condition}}, "new_entities": {}},
+            "explanation": explanation,
+        })
+        diagnostics[eid] = {"candidates": [], "selected_goal": "STRUCTURE_WEAR", "explanation": explanation}
 
     def _regrow(self, e, eid, frame, proposals, diagnostics):
         if e["resource"] >= e["max_resource"]:

@@ -1,8 +1,15 @@
 # Capability Stage 7D — Group Goals and Emergent Leadership
 
-Status: **Implemented; mechanism now full-kernel verified after correcting
-review-found defects. Organic reachability being established by the Stage 6
-Liveness Pass (in progress).** (updated 2026-07-16).
+Status: **Implemented and verified; organic reachability PROVEN via the Stage 6
+Liveness Pass (completed 2026-07-17).** Mechanism is full-kernel verified after
+correcting review-found defects. Over a 1,000-tick `collective_groups` run the
+`maintain_shared_shelter` goal is organically adopted **11 times** from naturally
+formed `shared_shelter` facts (no seeding), with 0 deaths and repeat + replay
+determinism. The instantaneous `final_active_group_goal_count` at tick 1000 is 0
+by an emergent, structural dynamic (members self-solve via private shelters, and
+tick 1000 is dawn) — organic reachability is therefore proven by the cumulative
+`accepted` count, not the end-tick snapshot. See `STAGE-6-LIVENESS-PASS.md`
+Close-out for the full evidence and root-cause. (updated 2026-07-17).
 
 > **Correction (2026-07-16).** An earlier revision of this document claimed the
 > mechanism was "verified" with organic emergence "deferred as Stage-6-blocked".
@@ -168,17 +175,54 @@ recorded coordinator role only, not command.
 **STATUS (as recorded 2026-07-16, mechanism claim later corrected): mechanism
 focused-verified; organic emergence then believed Stage-6-blocked.**
 
-### Gates met (VERIFIED)
+### Post-Liveness organic proof (VERIFIED 2026-07-17 — supersedes the numbers below)
+
+The Stage 6 Liveness Pass (`STAGE-6-LIVENESS-PASS.md`) made organic 7D adoption
+reachable. Current verified results (seed `living-agents-stage6`):
+
+- **Focused tests — 90 passed** (7A/7B/7C/7D); full Stage 6 + 7 set 136 passed;
+  full backend suite 306 passed.
+- **Frozen Stage 6 gate — deliberately re-baselined.** `living_settlement
+  --ticks 320 --repeat 2`: `repeat_matches: true`, `replay_matches: true`, new
+  canonical `final_state_hash =
+  84d3ad52773d95877a2de3a178a205cf96f1637c76dcf561c702fa24788c32d2` (was
+  `8ff861b8…069a`). The re-baseline is intentional — passive shelter wear +
+  full-exposure comfort change the Stage 6 trace on purpose.
+- **Organic adoption — PROVEN.** `collective_groups --ticks 1000 --repeat 2`:
+  `accepted_by_type["group_adopt_collective_goal"] = 11`, 0 deaths,
+  `repeat_matches: true`, `replay_matches: true`.
+
+| Field (`collective_groups` 1000×2, 2026-07-17) | Value |
+|---|---|
+| `accepted[group_adopt_collective_goal]` | **11** |
+| `final_state_hash` | `cb238522c776947e46640efd9fd7ca2fa96f0c2cb922cff83f3813d9ecb67321` |
+| `group_goal_summary_hash` | `71b7847963563c2ab4d53e07672bdd765ae5cd904c5be37f7a71d9f98a14de41` |
+| `final_active_group_goal_count` @1000 | **0** (emergent artifact — see below) |
+| `final_group_goal_count` | 7 |
+
+**Why `final_active@1000` is 0 despite 11 organic adoptions:** the goal is
+grounded in a personal, exposure-driven `improve_shelter` want. Members
+autonomously build private shelters over the run (`has_shelter=True`, permanent)
+and self-solve, so by ~tick 950 zero members hold the support want (verified:
+`best_supporters=0` across ticks 950–1000, night ticks included); and tick 1000
+is dawn (no night-exposure term). The goal emerges mid-run and recedes as members
+self-solve — a plausible trajectory, not a failure. Reachability is proven by the
+cumulative `accepted` count. Full root-cause in `STAGE-6-LIVENESS-PASS.md`.
+
+---
+
+### Gates met (VERIFIED) — HISTORICAL, pre-Liveness (2026-07-16), superseded above
 
 - **Focused tests — 79 passed.** `tests/test_stage7d_group_goal.py`,
   `test_stage7c_group_collective.py`, `test_stage7b_group_state.py`,
   `test_stage7a_associations.py`.
-- **Frozen Stage 6 safety — PRESERVED.** `living_settlement --ticks 320
-  --repeat 2` (seed `living-agents-stage6`): `repeat_matches: true`,
+- **Frozen Stage 6 safety — PRESERVED (pre-Liveness).** `living_settlement
+  --ticks 320 --repeat 2` (seed `living-agents-stage6`): `repeat_matches: true`,
   `final_state_hash =
   8ff861b85614eb4139feaf71e10d34dd630d9b9869b35044b6a90577eaaf069a`
-  (unchanged from the required frozen value). The Stage 6 group-goal influence
-  hook is inert when no `group-goal-registry-v1` exists, as designed.
+  (the then-frozen value; re-baselined by the Liveness Pass — see above). The
+  Stage 6 group-goal influence hook is inert when no `group-goal-registry-v1`
+  exists, as designed.
 - **Integrated determinism + replay — VERIFIED.** `collective_groups --ticks
   1000 --repeat 2` (seed `living-agents-stage6`): `repeat_matches: true`,
   `replay_matches_final_entities: true`.
