@@ -50,7 +50,8 @@ SUPPORT_WANT_TYPE = "improve_shelter"
 
 @dataclass(frozen=True)
 class GroupGoalLimits:
-    goals: int = 16
+    goals: int = 16               # max goals retained in the registry (bounded state)
+    adoptions_per_tick: int = 4   # max NEW goals adopted per tick across all groups
     supporters_per_goal: int = 8
     processed_goal_keys: int = 96
     causal_parents: int = 16
@@ -198,44 +199,56 @@ def derive_group_goal_changes(entities: dict, tick: int) -> tuple[list[dict], li
     recognised = _recognised_groups(association)
 
     existing_goals = (registry.get("goals") or {}) if isinstance(registry, dict) else {}
+    # One active goal per group: a group already holding an active goal does not
+    # adopt another, even for a second qualifying shared shelter.
+    groups_with_active_goal = {
+        goal.get("group_id") for goal in existing_goals.values()
+        if goal.get("status") == "active"
+    }
     adoptions: list[dict] = []
     for group_id, candidate in recognised.items():
+        if group_id in groups_with_active_goal:
+            continue
         members = list(candidate.get("member_ids") or [])
+        supporters = _eligible_supporters(entities, members)
+        if len(supporters) < MIN_SUPPORTERS:
+            continue
+        supporters = supporters[:LIMITS.supporters_per_goal]
+        # Choose ONE deterministic eligible shelter per group (lowest target_id,
+        # then fact_id) so a group never holds multiple simultaneous goals.
+        eligible = []
         for fact in _shared_shelter_facts(group_state, group_id):
-            target_id = fact["target_id"]
+            target_id = fact.get("target_id")
             shelter = entities.get(target_id)
             if not isinstance(shelter, dict) or shelter.get("type") not in ("shelter", "structure"):
                 continue
             if _shelter_condition(shelter) >= UPKEEP_THRESHOLD:
                 continue
-            supporters = _eligible_supporters(entities, members)
-            if len(supporters) < MIN_SUPPORTERS:
-                continue
-            supporters = supporters[:LIMITS.supporters_per_goal]
-            gid = group_goal_id(group_id, GOAL_TYPE, target_id)
-            existing = existing_goals.get(gid)
-            if existing and existing.get("status") == "active":
-                continue  # already adopted and live; refresh happens via expiry rules
-            adoption = {
-                "schema_version": GROUP_GOAL_VERSION,
-                "goal_id": gid,
-                "group_id": group_id,
-                "group_type": candidate.get("group_type"),
-                "goal_type": GOAL_TYPE,
-                "target_id": target_id,
-                "fact_id": fact.get("fact_id"),
-                "coordinator_id": supporters[0],
-                "supporter_ids": supporters,
-                "tick": int(tick),
-                "ttl_tick": int(tick) + GOAL_TTL_TICKS,
-                "association_revision": int(association.get("revision", 0)),
-                "group_state_revision": int(group_state.get("revision", 0)),
-                "recognition_event_id": candidate.get("recognition_event_id"),
-                "association_event_id": association.get("last_event_id"),
-                "group_state_event_id": group_state.get("last_event_id"),
-            }
-            adoption["goal_key"] = group_goal_key(adoption)
-            adoptions.append(adoption)
+            eligible.append((str(target_id), fact))
+        if not eligible:
+            continue
+        eligible.sort(key=lambda tf: (tf[0], str(tf[1].get("fact_id") or "")))
+        target_id, fact = eligible[0]
+        adoption = {
+            "schema_version": GROUP_GOAL_VERSION,
+            "goal_id": group_goal_id(group_id, GOAL_TYPE, target_id),
+            "group_id": group_id,
+            "group_type": candidate.get("group_type"),
+            "goal_type": GOAL_TYPE,
+            "target_id": target_id,
+            "fact_id": fact.get("fact_id"),
+            "coordinator_id": supporters[0],
+            "supporter_ids": supporters,
+            "tick": int(tick),
+            "ttl_tick": int(tick) + GOAL_TTL_TICKS,
+            "association_revision": int(association.get("revision", 0)),
+            "group_state_revision": int(group_state.get("revision", 0)),
+            "recognition_event_id": candidate.get("recognition_event_id"),
+            "association_event_id": association.get("last_event_id"),
+            "group_state_event_id": group_state.get("last_event_id"),
+        }
+        adoption["goal_key"] = group_goal_key(adoption)
+        adoptions.append(adoption)
 
     # Expiry: recovery above threshold, supporter loss below minimum, or TTL.
     expiring: list[str] = []
@@ -258,7 +271,7 @@ def derive_group_goal_changes(entities: dict, tick: int) -> tuple[list[dict], li
             expiring.append(gid)
 
     adoptions.sort(key=lambda a: (a["group_id"], a["target_id"], a["goal_key"]))
-    return adoptions[:LIMITS.goals], sorted(set(expiring))
+    return adoptions[:LIMITS.adoptions_per_tick], sorted(set(expiring))
 
 
 def _goal_record(adoption: dict, tick: int) -> dict:
@@ -535,26 +548,45 @@ def validate_group_goal_proposal(proposal: dict, entities: dict) -> str | None:
     expiring = metadata.get("expiring_goal_ids")
     if not isinstance(adoptions, list) or not isinstance(expiring, list):
         return REASON_METADATA
-    if len(adoptions) > LIMITS.goals:
+    if len(adoptions) > LIMITS.adoptions_per_tick:
+        return REASON_LIMIT
+    # One adoption per group per tick (one goal per group).
+    adoption_group_ids = [a.get("group_id") for a in adoptions if isinstance(a, dict)]
+    if len(adoption_group_ids) != len(set(adoption_group_ids)):
         return REASON_LIMIT
 
-    # Re-derive from the pinned frame and require byte-equality (determinism).
+    # Re-derive from the current canonical frame and require the submitted
+    # adoptions and expiries to equal the freshly derived ones EXACTLY. A
+    # goal_key does not bind goal_id or ttl_tick, so the previous
+    # subset-by-key check accepted a forged goal_id / arbitrary ttl_tick that
+    # kept a legitimate key; full equality closes that.
     derived_adoptions, derived_expiring = derive_group_goal_changes(
         entities, int(proposal.get("requested_time", 0)),
     )
-    derived_keys = {a["goal_key"] for a in derived_adoptions}
+    if adoptions != derived_adoptions:
+        return REASON_METADATA
+    if sorted(set(expiring)) != derived_expiring:
+        return REASON_METADATA
+    adoption_keys = [a.get("goal_key") for a in adoptions]
+    if len(adoption_keys) != len(set(adoption_keys)):
+        return REASON_METADATA
+    if list(metadata.get("adoption_keys") or []) != adoption_keys:
+        return REASON_METADATA
+    # Defense-in-depth: explicit identity, fixed-TTL, and grounding invariants.
     for adoption in adoptions:
-        if not isinstance(adoption, dict) or adoption.get("goal_key") not in derived_keys:
-            return REASON_METADATA
         if adoption.get("goal_type") != GOAL_TYPE:
+            return REASON_GOAL
+        if adoption.get("goal_id") != group_goal_id(
+            adoption.get("group_id"), GOAL_TYPE, adoption.get("target_id"),
+        ):
+            return REASON_GOAL
+        if int(adoption.get("ttl_tick", -1)) != int(adoption.get("tick", 0)) + GOAL_TTL_TICKS:
             return REASON_GOAL
         supporters = adoption.get("supporter_ids") or []
         if len(supporters) < MIN_SUPPORTERS or supporters != sorted(set(supporters)):
             return REASON_GOAL
         if adoption.get("coordinator_id") != supporters[0]:
             return REASON_GOAL
-    if sorted(set(expiring)) != derived_expiring:
-        return REASON_METADATA
 
     try:
         expected_registry, transitions = advance_group_goal_registry(
@@ -572,16 +604,22 @@ def validate_group_goal_proposal(proposal: dict, entities: dict) -> str | None:
         return REASON_LIMIT
 
     forbidden = {"inventory", "culture", "authority", "obedience", "orders", "law"}
+    active_group_ids: list[str] = []
     for goal in (registry.get("goals") or {}).values():
         if goal.get("schema_version") != GROUP_GOAL_VERSION or forbidden & set(goal):
             return REASON_GOAL
         if goal.get("goal_type") != GOAL_TYPE:
             return REASON_GOAL
         supporters = goal.get("supporter_ids") or []
-        if goal.get("status") == "active" and goal.get("coordinator_id") not in supporters:
-            return REASON_GOAL
+        if goal.get("status") == "active":
+            if goal.get("coordinator_id") not in supporters:
+                return REASON_GOAL
+            active_group_ids.append(goal.get("group_id"))
         if len(supporters) > LIMITS.supporters_per_goal:
             return REASON_GOAL
+    # One active goal per group in the resulting registry.
+    if len(active_group_ids) != len(set(active_group_ids)):
+        return REASON_LIMIT
     return None
 
 

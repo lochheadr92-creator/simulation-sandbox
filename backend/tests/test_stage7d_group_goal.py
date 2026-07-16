@@ -5,7 +5,7 @@ import copy
 
 from core.commit_pipeline import run_commit_frame
 from core.mutations import apply_mutation, snapshot_for_hash
-from core.hashing import canonical_hash
+from core.hashing import canonical_hash, canonical_json
 from domains.base import DomainOutput
 from domains.association_contracts import (
     ASSOCIATION_REGISTRY_ID,
@@ -24,6 +24,7 @@ from domains.group_goal_contracts import (
     GOAL_TTL_TICKS,
     PROPOSAL_TYPE,
     UPKEEP_THRESHOLD,
+    advance_group_goal_registry,
     build_group_goal_proposal,
     derive_group_goal_changes,
     group_goal_id,
@@ -254,6 +255,81 @@ def _upstream_revision_bump(entities, registry_id, tick, priority):
         "mutation": {"entity_updates": {registry_id: {"revision": rev + 1}}, "new_entities": {}},
         "explanation": "test: upstream registry revision bump in same frame",
     }
+
+
+def test_validate_rejects_forged_goal_id_and_ttl():
+    ents = _entities(condition=500)
+    proposal = build_group_goal_proposal(ents, 5)
+    assert validate_group_goal_proposal(proposal, ents) is None  # valid baseline
+    meta = proposal["group_goal_update"]
+    # Forge goal_id + ttl while keeping the legitimate goal_key, and rebuild a
+    # self-consistent registry/metadata (the reported exploit shape).
+    meta["adoptions"][0]["goal_id"] = "forged-goal-id"
+    meta["adoptions"][0]["ttl_tick"] = 999999
+    forged_registry, forged_transitions = advance_group_goal_registry(
+        None, meta["adoptions"], meta["expiring_goal_ids"], 5,
+    )
+    proposal["mutation"] = {
+        "new_entities": {GROUP_GOAL_REGISTRY_ID: forged_registry}, "entity_updates": {},
+    }
+    meta["transitions"] = forged_transitions
+    meta["goal_count"] = len(forged_registry["goals"])
+    meta["active_goal_count"] = sum(
+        1 for g in forged_registry["goals"].values() if g.get("status") == "active"
+    )
+    meta["next_revision"] = int(forged_registry["revision"])
+    meta["payload_bytes"] = len(canonical_json(forged_registry).encode("utf-8"))
+    assert validate_group_goal_proposal(proposal, ents) is not None
+
+
+def test_one_goal_per_group_with_multiple_qualifying_shelters():
+    ents = _entities(condition=500)  # GID + shelter-1 @500
+    ents["shelter-2"] = _shelter(400)
+    ents[GROUP_STATE_REGISTRY_ID]["groups"][GID]["facts"]["shared-fact-2"] = {
+        "schema_version": SHARED_GROUP_FACT_VERSION,
+        "category": "shared_shelter", "target_id": "shelter-2",
+        "fact_id": "shared-fact-2",
+    }
+    adoptions, _ = derive_group_goal_changes(ents, 5)
+    assert len(adoptions) == 1  # one goal per group despite two qualifying shelters
+    assert adoptions[0]["target_id"] == SHELTER  # deterministic: lowest target_id
+    # Core validation also rejects a hand-forged second goal for the same group.
+    proposal = build_group_goal_proposal(ents, 5)
+    assert validate_group_goal_proposal(proposal, ents) is None
+
+
+def test_adoptions_capped_at_four_per_tick():
+    ents = {}
+    group_candidates = {}
+    groups_state = {}
+    for i in range(6):  # six qualifying groups in one tick
+        gid = f"grp-{i}"
+        ma, mb = f"p{i}a", f"p{i}b"
+        ents[ma] = _person(ma, want=True)
+        ents[mb] = _person(mb, want=True)
+        sh = f"sh-{i}"
+        ents[sh] = _shelter(500)
+        group_candidates[gid] = {
+            "schema_version": GROUP_CANDIDATE_VERSION,
+            "recognition_state": "recognised", "ever_recognised": True,
+            "member_ids": [ma, mb], "group_type": "household",
+            "recognised_tick": 1, "recognition_event_id": "evt-0-recog",
+        }
+        groups_state[gid] = {"facts": {f"f-{i}": {
+            "schema_version": SHARED_GROUP_FACT_VERSION,
+            "category": "shared_shelter", "target_id": sh, "fact_id": f"f-{i}",
+        }}}
+    ents[ASSOCIATION_REGISTRY_ID] = {
+        "schema_version": ASSOCIATION_REGISTRY_VERSION, "revision": 1,
+        "last_event_id": "evt-0-assoc", "group_candidates": group_candidates,
+    }
+    ents[GROUP_STATE_REGISTRY_ID] = {
+        "schema_version": GROUP_STATE_REGISTRY_VERSION, "revision": 1,
+        "last_event_id": "evt-0-gstate", "groups": groups_state,
+    }
+    adoptions, _ = derive_group_goal_changes(ents, 5)
+    assert len(adoptions) == 4  # capped at adoptions_per_tick
+    assert len({a["group_id"] for a in adoptions}) == 4  # all distinct groups
 
 
 def test_adoption_survives_same_frame_association_and_group_state_churn():
