@@ -33,6 +33,7 @@ from domains.living_agent_social import (
     build_social_action_proposal,
 )
 from domains.perception import _compat_knowledge, empty_knowledge, merge_knowledge
+from domains.group_goal_contracts import GROUP_GOAL_REGISTRY_ID
 
 
 SOCIAL_DIRECT_ACTIONS = frozenset({
@@ -85,6 +86,33 @@ def _candidate(goal, action_type, score, *, target_id=None, target_pos=None, **e
         "target_pos": copy.deepcopy(target_pos),
         **extra,
     }
+
+
+GROUP_GOAL_REPAIR_INCREMENT = 250  # bounded, member-grounded Stage 7D upkeep nudge
+
+
+def _apply_group_goal_influence(candidates, entity_id, entities):
+    """Stage 7D read-only influence: raise REPAIR_SHELTER priority for a member
+    who supports an active shared-shelter upkeep goal.  Inert when no group-goal
+    registry exists (e.g. the living_settlement scenario), preserving the frozen
+    Stage 6 determinism hash.  Never creates a goal a member lacks and never
+    mutates world state."""
+    registry = entities.get(GROUP_GOAL_REGISTRY_ID)
+    if not isinstance(registry, dict):
+        return candidates
+    targets = set()
+    for goal in (registry.get("goals") or {}).values():
+        if (goal.get("status") == "active"
+                and goal.get("goal_type") == "maintain_shared_shelter"
+                and entity_id in (goal.get("supporter_ids") or [])
+                and goal.get("target_id")):
+            targets.add(goal["target_id"])
+    if not targets:
+        return candidates
+    for cand in candidates:
+        if cand.get("goal") == "REPAIR_SHELTER" and cand.get("target_entity_id") in targets:
+            cand["score"] = int(cand.get("score", 0)) + GROUP_GOAL_REPAIR_INCREMENT
+    return candidates
 
 
 def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowledge: dict,
@@ -392,6 +420,7 @@ class LivingSettlementDomain(DomainEngine):
             )
             state = refresh_wants(state, entity_id, tick)
             base_candidates = build_settlement_candidates(entity_id, entity, state, knowledge, delta, tick)
+            base_candidates = _apply_group_goal_influence(base_candidates, entity_id, frame.entities)
             candidates = score_goal_candidates(
                 base_candidates, actor_id=entity_id, state=state,
                 knowledge=knowledge, tick=tick,

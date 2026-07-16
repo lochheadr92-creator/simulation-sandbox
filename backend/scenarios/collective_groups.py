@@ -48,6 +48,7 @@ SCENARIO = replace(
         *EMERGENT_GROUPS.enabled_domains,
         "group_state",
         "group_collective",
+        "group_goal",
     ],
     world_gen=_WORLD,
     presentation={

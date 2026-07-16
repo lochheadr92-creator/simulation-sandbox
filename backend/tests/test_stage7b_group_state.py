@@ -594,7 +594,7 @@ def test_stage7a_association_behaviour_remains_unchanged():
     assert "group_state" not in stage6.enabled_domains
     assert "group_state" not in stage7a.enabled_domains
     assert stage7b.enabled_domains == [
-        *stage7a.enabled_domains, "group_state", "group_collective",
+        *stage7a.enabled_domains, "group_state", "group_collective", "group_goal",
     ]
     assert "group_collective" not in stage7a.enabled_domains
     result = run_living_agent_harness(

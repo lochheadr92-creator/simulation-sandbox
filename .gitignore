@@ -8,3 +8,10 @@ credentials.json
 
 __pycache__/
 *.pyc
+
+# Frontend build caches — must never be committed
+frontend/node_modules/
+frontend/node_modules/.cache/
+
+# Timestamped backup files
+*.bak.*
