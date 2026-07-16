@@ -53,7 +53,7 @@ SCENARIO = replace(
     world_gen=_WORLD,
     presentation={
         **EMERGENT_GROUPS.presentation,
-        "capability_stage": "7C",
+        "capability_stage": "7D",
     },
 )
 

@@ -1,21 +1,38 @@
 # Capability Stage 7D — Group Goals and Emergent Leadership
 
-Status: **Implemented; mechanism-verified. Organic emergence deferred as
-Stage-6-blocked** (2026-07-16). The proposal-only `group_goal` domain, its
-`group-goal-registry-v1`, the Core validator/provenance wiring, the guarded
-read-only Stage 6 upkeep-influence hook, and harness reporting are implemented
-and focused-verified (79 tests). The integrated `collective_groups` run is
-deterministic (`repeat_matches` + replay equal) and the frozen Stage 6
-`living_settlement` hash is preserved. The one unmet gate — organic long-run
-adoption — is **deferred**: over 1,000 ticks no goal is adopted because the
-member-grounding precondition (≥2 members holding an *active* `improve_shelter`
-want) is never met. That want depends on Stage 6 comfort pressure, which never
-reaches the want-activation threshold, so 7D's organic proof is blocked upstream
-on Stage 6 dynamics — directly analogous to 7C's Stage-9 block. See
-**Verification results (2026-07-16)** at the end of this document. Drafted
-2026-07-14 as the ratified "depth" next-capability after Stage 7C; the contract
-below is now implemented (constants finalised in the "Implemented constants"
-note).
+Status: **Implemented; mechanism now full-kernel verified after correcting
+review-found defects. Organic reachability being established by the Stage 6
+Liveness Pass (in progress).** (updated 2026-07-16).
+
+> **Correction (2026-07-16).** An earlier revision of this document claimed the
+> mechanism was "verified" with organic emergence "deferred as Stage-6-blocked".
+> That mechanism claim was **overstated**: a subsequent Codex adversarial review
+> found that in the *enabled* kernel every adoption/cleanup proposal was rejected
+> (`group_goal.stale_membership`) because group_goal committed after Stage 7A/7B
+> revision churn — so adoption had never actually been exercised end-to-end, and
+> the 14 focused tests all bypassed the full commit pipeline. The review also
+> found a group could hold multiple simultaneous goals (one per shared_shelter
+> fact, 16/tick vs the documented 1-per-group/4-per-tick), that validation
+> accepted a forged `goal_id`/`ttl_tick`, and that the influence hook boosted
+> stale supporters and could override an urgent survival decision. These are now
+> fixed (commits on branch `capability/stage-6-living-agents`), each with
+> full-kernel or focused regression tests. The mechanism is therefore verified
+> **through the real commit pipeline**, not in isolation.
+>
+> The earlier "organic emergence is Stage-6-blocked" analysis was **correct but
+> incomplete**: even with the two Stage 6 causes (no shelter decay; comfort
+> urgency peaks at 79 < the 150 want-activation threshold), the ordering defect
+> would independently have rejected any adoption. With the ordering defect fixed,
+> the remaining blocker is genuinely the Stage 6 world dynamics, which the **Stage
+> 6 Liveness Pass** (`STAGE-6-LIVENESS-PASS.md`) now addresses. Organic
+> reachability is therefore **in progress, not deferred**; the final organic
+> proof and the re-baselined `living_settlement` hash are recorded by that pass.
+
+The proposal-only `group_goal` domain, its `group-goal-registry-v1`, the Core
+validator/provenance wiring, the guarded read-only Stage 6 upkeep-influence hook,
+and harness reporting are implemented. Drafted 2026-07-14 as the ratified "depth"
+next-capability after Stage 7C; the contract below is implemented (constants
+finalised in the "Implemented constants" note).
 
 ## Goal
 
@@ -139,7 +156,17 @@ recorded coordinator role only, not command.
 
 ## Verification results (2026-07-16)
 
-**STATUS: mechanism VERIFIED; organic emergence DEFERRED (Stage-6-blocked).**
+> **Superseded in part — see the Correction note at the top.** The mechanism
+> gates below were run against the *isolated* domain functions and the 79-test
+> focused set, which did not exercise adoption through the full commit pipeline;
+> a later review found the enabled kernel rejected all adoptions (now fixed). The
+> frozen-hash and determinism results below stand. The "organic emergence
+> DEFERRED" conclusion is superseded: it is being established by the Stage 6
+> Liveness Pass, whose final organic-adoption count and re-baselined
+> `living_settlement` hash replace the numbers here.
+
+**STATUS (as recorded 2026-07-16, mechanism claim later corrected): mechanism
+focused-verified; organic emergence then believed Stage-6-blocked.**
 
 ### Gates met (VERIFIED)
 
