@@ -20,6 +20,7 @@ from domains.group_state_contracts import (
 from domains.group_goal_contracts import (
     GROUP_GOAL_REGISTRY_ID,
     GROUP_GOAL_REGISTRY_VERSION,
+    GROUP_GOAL_VERSION,
     GOAL_TYPE,
     GOAL_TTL_TICKS,
     PROPOSAL_TYPE,
@@ -29,6 +30,10 @@ from domains.group_goal_contracts import (
     derive_group_goal_changes,
     group_goal_id,
     validate_group_goal_proposal,
+)
+from domains.living_settlement_domain import (
+    GROUP_GOAL_REPAIR_INCREMENT,
+    _apply_group_goal_influence,
 )
 
 LINEAGE = "stage7d-lineage"
@@ -255,6 +260,74 @@ def _upstream_revision_bump(entities, registry_id, tick, priority):
         "mutation": {"entity_updates": {registry_id: {"revision": rev + 1}}, "new_entities": {}},
         "explanation": "test: upstream registry revision bump in same frame",
     }
+
+
+# --- Stage 6 influence hook (living_settlement_domain._apply_group_goal_influence)
+
+
+def _influence_entities(*, ttl=100, want=True, member=True,
+                        schema=GROUP_GOAL_REGISTRY_VERSION):
+    ents = {"p-a": _person("p-a", want=want)}
+    ents[ASSOCIATION_REGISTRY_ID] = _assoc(["p-a", "p-b"])
+    if not member:
+        ents[ASSOCIATION_REGISTRY_ID]["group_candidates"][GID]["member_ids"] = ["p-b"]
+    ents[GROUP_GOAL_REGISTRY_ID] = {
+        "type": "group_goal_registry", "schema_version": schema, "revision": 1,
+        "goals": {"g1": {
+            "schema_version": GROUP_GOAL_VERSION, "goal_id": "g1", "group_id": GID,
+            "goal_type": GOAL_TYPE, "target_id": SHELTER, "coordinator_id": "p-a",
+            "supporter_ids": ["p-a", "p-b"], "status": "active", "ttl_tick": ttl,
+        }},
+    }
+    return ents
+
+
+def _repair_cand(score=2400):
+    return {"goal": "REPAIR_SHELTER", "target_entity_id": SHELTER, "score": score}
+
+
+def _drink_cand(score):
+    return {"goal": "DRINK_WATER", "target_entity_id": "water-1", "score": score}
+
+
+def test_influence_boosts_current_supporter_without_urgent_survival():
+    ents = _influence_entities()
+    out = _apply_group_goal_influence([_repair_cand(2400)], "p-a", ents, 5)
+    assert out[0]["score"] == 2400 + GROUP_GOAL_REPAIR_INCREMENT
+
+
+def test_influence_suppressed_by_urgent_survival_candidate():
+    ents = _influence_entities()
+    out = _apply_group_goal_influence([_repair_cand(2400), _drink_cand(2500)], "p-a", ents, 5)
+    repair = next(c for c in out if c["goal"] == "REPAIR_SHELTER")
+    assert repair["score"] == 2400  # survival dominates; nudge suppressed
+
+
+def test_influence_skips_dormant_or_absent_supporter_want():
+    ents = _influence_entities(want=False)  # p-a no longer holds active want
+    out = _apply_group_goal_influence([_repair_cand(2400)], "p-a", ents, 5)
+    assert out[0]["score"] == 2400
+
+
+def test_influence_skips_non_current_member():
+    ents = _influence_entities(member=False)  # p-a dropped from recognised group
+    out = _apply_group_goal_influence([_repair_cand(2400)], "p-a", ents, 5)
+    assert out[0]["score"] == 2400
+
+
+def test_influence_skips_ttl_expired_goal():
+    ents = _influence_entities(ttl=5)  # tick 5 >= ttl_tick 5
+    out = _apply_group_goal_influence([_repair_cand(2400)], "p-a", ents, 5)
+    assert out[0]["score"] == 2400
+
+
+def test_influence_inert_without_valid_registry():
+    ents = _influence_entities(schema="wrong-schema")
+    out = _apply_group_goal_influence([_repair_cand(2400)], "p-a", ents, 5)
+    assert out[0]["score"] == 2400
+    bare = {"p-a": _person("p-a")}
+    out2 = _apply_group_goal_influence([_repair_cand(2400)], "p-a", bare, 5)
+    assert out2[0]["score"] == 2400
 
 
 def test_validate_rejects_forged_goal_id_and_ttl():

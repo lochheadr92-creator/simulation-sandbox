@@ -33,7 +33,14 @@ from domains.living_agent_social import (
     build_social_action_proposal,
 )
 from domains.perception import _compat_knowledge, empty_knowledge, merge_knowledge
-from domains.group_goal_contracts import GROUP_GOAL_REGISTRY_ID
+from domains.association_contracts import ASSOCIATION_REGISTRY_ID
+from domains.group_goal_contracts import (
+    GROUP_GOAL_REGISTRY_ID,
+    GROUP_GOAL_REGISTRY_VERSION,
+    GOAL_TYPE as GROUP_GOAL_TYPE,
+    _holds_improve_shelter_want,
+    _recognised_groups,
+)
 
 
 SOCIAL_DIRECT_ACTIONS = frozenset({
@@ -91,27 +98,52 @@ def _candidate(goal, action_type, score, *, target_id=None, target_pos=None, **e
 GROUP_GOAL_REPAIR_INCREMENT = 250  # bounded, member-grounded Stage 7D upkeep nudge
 
 
-def _apply_group_goal_influence(candidates, entity_id, entities):
+def _apply_group_goal_influence(candidates, entity_id, entities, tick):
     """Stage 7D read-only influence: raise REPAIR_SHELTER priority for a member
-    who supports an active shared-shelter upkeep goal.  Inert when no group-goal
-    registry exists (e.g. the living_settlement scenario), preserving the frozen
-    Stage 6 determinism hash.  Never creates a goal a member lacks and never
-    mutates world state."""
+    who CURRENTLY supports an active, unexpired shared-shelter upkeep goal.
+
+    Inert when no valid group-goal registry exists (e.g. the living_settlement
+    scenario), preserving the frozen Stage 6 determinism hash.  Guards
+    (member grounding, current membership, schema, TTL) ensure the nudge only
+    reaches a member who still holds an active improve_shelter want and is still
+    in the recognised group; it never creates a goal a member lacks, never
+    survives goal expiry, and never overrides an urgent survival candidate."""
     registry = entities.get(GROUP_GOAL_REGISTRY_ID)
-    if not isinstance(registry, dict):
+    if not isinstance(registry, dict) or registry.get("schema_version") != GROUP_GOAL_REGISTRY_VERSION:
         return candidates
+    # Member grounding: only a member who currently holds an active
+    # improve_shelter want is influenced (a stale/dormant supporter is not).
+    if not _holds_improve_shelter_want(entities.get(entity_id)):
+        return candidates
+    association = entities.get(ASSOCIATION_REGISTRY_ID)
+    recognised = _recognised_groups(association) if isinstance(association, dict) else {}
     targets = set()
     for goal in (registry.get("goals") or {}).values():
-        if (goal.get("status") == "active"
-                and goal.get("goal_type") == "maintain_shared_shelter"
-                and entity_id in (goal.get("supporter_ids") or [])
-                and goal.get("target_id")):
+        if goal.get("status") != "active" or goal.get("goal_type") != GROUP_GOAL_TYPE:
+            continue
+        if int(tick) >= int(goal.get("ttl_tick", tick)):
+            continue  # unexpired goals only
+        if entity_id not in (goal.get("supporter_ids") or []):
+            continue
+        group = recognised.get(goal.get("group_id")) or {}
+        if entity_id not in (group.get("member_ids") or []):
+            continue  # current recognised-group membership only
+        if goal.get("target_id"):
             targets.add(goal["target_id"])
     if not targets:
         return candidates
+    # Survival dominance: the nudge is a strictly lower tier than survival.
+    # Never lift a repair candidate to/above an urgent survival candidate (one
+    # whose base score already meets or exceeds this repair candidate's base).
+    survival_scores = [
+        int(c.get("score", 0)) for c in candidates if c.get("goal") in SURVIVAL_GOALS
+    ]
     for cand in candidates:
         if cand.get("goal") == "REPAIR_SHELTER" and cand.get("target_entity_id") in targets:
-            cand["score"] = int(cand.get("score", 0)) + GROUP_GOAL_REPAIR_INCREMENT
+            base = int(cand.get("score", 0))
+            if any(s >= base for s in survival_scores):
+                continue  # urgent survival present; suppress the group nudge
+            cand["score"] = base + GROUP_GOAL_REPAIR_INCREMENT
     return candidates
 
 
@@ -420,7 +452,7 @@ class LivingSettlementDomain(DomainEngine):
             )
             state = refresh_wants(state, entity_id, tick)
             base_candidates = build_settlement_candidates(entity_id, entity, state, knowledge, delta, tick)
-            base_candidates = _apply_group_goal_influence(base_candidates, entity_id, frame.entities)
+            base_candidates = _apply_group_goal_influence(base_candidates, entity_id, frame.entities, tick)
             candidates = score_goal_candidates(
                 base_candidates, actor_id=entity_id, state=state,
                 knowledge=knowledge, tick=tick,
