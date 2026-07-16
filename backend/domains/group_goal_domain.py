@@ -14,7 +14,13 @@ from domains.group_goal_contracts import (
 class GroupGoalDomain(DomainEngine):
     engine_id = "group_goal"
     engine_version = "1.0.0"
-    engine_priority = 91  # after group_state (89) and group_collective (90)
+    # Prior-frame semantics: commit BEFORE the Stage 7A association (90) and
+    # Stage 7B group_state (89) registry updates churn their revisions this tick.
+    # group_goal derives from the frozen pre-tick frame, so committing first lets
+    # its pinned association/group_state revisions still match at commit-time
+    # revalidation (fixes the same-frame stale_membership rejection). One-tick
+    # lag on this-tick recognitions/facts is acceptable and deterministic.
+    engine_priority = 88  # before group_state (89), association (90)
     phase = "agent"
 
     def select_due_ids(self, entities: dict, tick: int) -> list:

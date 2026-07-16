@@ -461,7 +461,8 @@ def build_group_goal_proposal(
         "is_exogenous": False,
         "requested_time": int(tick),
         "phase": "agent",
-        "engine_priority": 91,  # after group_state (89) and group_collective (90)
+        # Commit before Stage 7A/7B revision churn (see GroupGoalDomain).
+        "engine_priority": 88,  # before group_state (89), association (90)
         "touched_scope": [GROUP_GOAL_REGISTRY_ID, ASSOCIATION_REGISTRY_ID, GROUP_STATE_REGISTRY_ID],
         "preconditions": preconditions,
         "mutation": mutation,
