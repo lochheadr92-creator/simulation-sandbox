@@ -41,6 +41,12 @@ from domains.group_goal_contracts import (
     _holds_improve_shelter_want,
     _recognised_groups,
 )
+from domains.group_norm_contracts import (
+    GROUP_NORM_REGISTRY_ID,
+    GROUP_NORM_REGISTRY_VERSION,
+    NORM_TYPE as GROUP_NORM_TYPE,
+    _norm_is_live,
+)
 
 
 SOCIAL_DIRECT_ACTIONS = frozenset({
@@ -98,6 +104,26 @@ def _candidate(goal, action_type, score, *, target_id=None, target_pos=None, **e
 GROUP_GOAL_REPAIR_INCREMENT = 250  # bounded, member-grounded Stage 7D upkeep nudge
 
 
+def _effective_score(candidate) -> int:
+    """The candidate's decisive score: the final score_total when present (this
+    hook runs after score_goal_candidates), else the raw score (focused tests use
+    un-scored candidates)."""
+    return int(candidate.get("score_total", candidate.get("score", 0)))
+
+
+def _boost_score(candidate, increment: int, component: str | None = None) -> None:
+    """Raise a candidate's decisive score by a bounded increment, keeping score and
+    score_total in step so the winner ranking (which uses score_total) reflects it,
+    and crediting the named score component so persisted decision receipts still
+    explain the total (the group/cultural weight the scorer left at zero)."""
+    candidate["score"] = int(candidate.get("score", 0)) + int(increment)
+    if "score_total" in candidate:
+        candidate["score_total"] = int(candidate.get("score_total", 0)) + int(increment)
+    if component and isinstance(candidate.get("score_components"), dict):
+        comps = candidate["score_components"]
+        comps[component] = int(comps.get(component, 0)) + int(increment)
+
+
 def _apply_group_goal_influence(candidates, entity_id, entities, tick):
     """Stage 7D read-only influence: raise REPAIR_SHELTER priority for a member
     who CURRENTLY supports an active, unexpired shared-shelter upkeep goal.
@@ -132,18 +158,63 @@ def _apply_group_goal_influence(candidates, entity_id, entities, tick):
             targets.add(goal["target_id"])
     if not targets:
         return candidates
-    # Survival dominance: the nudge is a strictly lower tier than survival.
-    # Never lift a repair candidate to/above an urgent survival candidate (one
-    # whose base score already meets or exceeds this repair candidate's base).
-    survival_scores = [
-        int(c.get("score", 0)) for c in candidates if c.get("goal") in SURVIVAL_GOALS
-    ]
+    # Survival dominance: the nudge is a strictly lower tier than survival. Compare
+    # against the FINAL score_total (this hook runs after score_goal_candidates) so
+    # a survival goal whose urgency the scorer injects is correctly seen as urgent;
+    # never lift a repair candidate to/above such a candidate.
+    survival_scores = [_effective_score(c) for c in candidates if c.get("goal") in SURVIVAL_GOALS]
     for cand in candidates:
         if cand.get("goal") == "REPAIR_SHELTER" and cand.get("target_entity_id") in targets:
-            base = int(cand.get("score", 0))
+            base = _effective_score(cand)
             if any(s >= base for s in survival_scores):
                 continue  # urgent survival present; suppress the group nudge
-            cand["score"] = base + GROUP_GOAL_REPAIR_INCREMENT
+            _boost_score(cand, GROUP_GOAL_REPAIR_INCREMENT, "group_value")
+    return candidates
+
+
+NORM_REPAIR_INCREMENT = 150  # bounded Stage 8A cultural nudge (below the 7D 250)
+
+
+def _apply_group_norm_influence(candidates, entity_id, entities, tick):
+    """Stage 8A read-only norm influence: raise REPAIR_SHELTER priority for ANY
+    current living member of a group that holds a live ``shelter_upkeep_norm`` for
+    that shelter - whether or not the member individually holds the improve_shelter
+    want. This is the transmission contrast with the 7D hook: a member recognised
+    into the group after the norm formed inherits the nudge without re-earning it.
+
+    Inert when no valid group-norm registry exists (e.g. the living_settlement
+    scenario), preserving the frozen Stage 6 determinism hash. It stays
+    member-grounded (it only boosts an already-available REPAIR_SHELTER candidate,
+    never creating one) and never overrides an urgent survival candidate."""
+    registry = entities.get(GROUP_NORM_REGISTRY_ID)
+    if not isinstance(registry, dict) or registry.get("schema_version") != GROUP_NORM_REGISTRY_VERSION:
+        return candidates
+    association = entities.get(ASSOCIATION_REGISTRY_ID)
+    recognised = _recognised_groups(association) if isinstance(association, dict) else {}
+    targets = set()
+    for norm in (registry.get("norms") or {}).values():
+        if norm.get("norm_type") != GROUP_NORM_TYPE or not _norm_is_live(norm, tick):
+            continue
+        group = recognised.get(norm.get("group_id")) or {}
+        # Transmission: eligibility is CURRENT recognised-group membership, with no
+        # improve_shelter-want requirement (that is the whole point of a norm).
+        if entity_id not in (group.get("member_ids") or []):
+            continue
+        if norm.get("target_id"):
+            targets.add(norm["target_id"])
+    if not targets:
+        return candidates
+    # Compare against the FINAL score_total (this hook runs AFTER
+    # score_goal_candidates), so survival goals whose urgency is added by the
+    # scorer's pressure/survival components are correctly seen as urgent. Falls
+    # back to score for un-scored candidates (focused tests).
+    survival_scores = [_effective_score(c) for c in candidates if c.get("goal") in SURVIVAL_GOALS]
+    for cand in candidates:
+        if cand.get("goal") == "REPAIR_SHELTER" and cand.get("target_entity_id") in targets:
+            base = _effective_score(cand)
+            if any(s >= base for s in survival_scores):
+                continue  # urgent survival present; suppress the norm nudge
+            _boost_score(cand, NORM_REPAIR_INCREMENT, "cultural_weight")
     return candidates
 
 
@@ -452,11 +523,16 @@ class LivingSettlementDomain(DomainEngine):
             )
             state = refresh_wants(state, entity_id, tick)
             base_candidates = build_settlement_candidates(entity_id, entity, state, knowledge, delta, tick)
-            base_candidates = _apply_group_goal_influence(base_candidates, entity_id, frame.entities, tick)
             candidates = score_goal_candidates(
                 base_candidates, actor_id=entity_id, state=state,
                 knowledge=knowledge, tick=tick,
             )
+            # Read-only Stage 7D goal + Stage 8A norm nudges are applied AFTER
+            # scoring so their survival-dominance guard compares final score_total
+            # (the scorer injects survival urgency); both remain inert without their
+            # registries, preserving the frozen Stage 6 hash.
+            candidates = _apply_group_goal_influence(candidates, entity_id, frame.entities, tick)
+            candidates = _apply_group_norm_influence(candidates, entity_id, frame.entities, tick)
             selected = select_goal(candidates)
             desired_action = selected["direct_action_type"]
             target_id = selected.get("target_entity_id")

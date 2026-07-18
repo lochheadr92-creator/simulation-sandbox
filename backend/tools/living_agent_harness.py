@@ -24,6 +24,7 @@ from domains.association_contracts import (
 from core.rng import DeterministicRNG
 from scenarios import get_scenario
 from domains.group_goal_contracts import GROUP_GOAL_REGISTRY_ID
+from domains.group_norm_contracts import GROUP_NORM_REGISTRY_ID
 from domains.group_state_contracts import (
     GROUP_STATE_REGISTRY_ID,
     LIMITS as GROUP_STATE_LIMITS,
@@ -373,6 +374,12 @@ def run_living_agent_harness(
     final_active_group_goal_count = sum(
         1 for _g in _final_group_goals.values() if _g.get("status") == "active"
     )
+    final_group_norm_registry = entities.get(GROUP_NORM_REGISTRY_ID) or {}
+    _final_group_norms = final_group_norm_registry.get("norms") or {}
+    final_group_norm_count = len(_final_group_norms)
+    final_active_group_norm_count = sum(
+        1 for _n in _final_group_norms.values() if _n.get("status") == "active"
+    )
     final_groups = final_association_registry.get("group_candidates") or {}
     final_shared_groups = final_group_state_registry.get("groups") or {}
     final_shared_facts = sum(
@@ -522,6 +529,9 @@ def run_living_agent_harness(
             "final_group_goal_count": final_group_goal_count,
             "final_active_group_goal_count": final_active_group_goal_count,
             "group_goal_summary_hash": canonical_hash(final_group_goal_registry),
+            "final_group_norm_count": final_group_norm_count,
+            "final_active_group_norm_count": final_active_group_norm_count,
+            "group_norm_summary_hash": canonical_hash(final_group_norm_registry),
             "accepted_event_sequence_hash": canonical_hash(event_hashes),
             "frame_sequence_hash": canonical_hash(frame_hashes),
             "replay_state_hash": replay_state_hash,

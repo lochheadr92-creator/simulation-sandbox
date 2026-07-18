@@ -67,11 +67,12 @@ SCENARIO = replace(
         "group_state",
         "group_collective",
         "group_goal",
+        "group_norm",
     ],
     world_gen=_WORLD,
     presentation={
         **EMERGENT_GROUPS.presentation,
-        "capability_stage": "7D",
+        "capability_stage": "8A",
     },
 )
 
