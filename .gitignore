@@ -15,3 +15,7 @@ frontend/node_modules/.cache/
 
 # Timestamped backup files
 *.bak.*
+
+# Claude Code local worktrees and machine-local settings
+.claude/worktrees/
+.claude/settings.local.json
