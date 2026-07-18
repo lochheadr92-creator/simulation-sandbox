@@ -9,10 +9,17 @@ import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL")
 if not BASE_URL:
-    with open("/app/frontend/.env") as f:
-        for line in f:
-            if line.startswith("REACT_APP_BACKEND_URL"):
-                BASE_URL = line.strip().split("=", 1)[1]
+    try:
+        with open("/app/frontend/.env") as f:
+            for line in f:
+                if line.startswith("REACT_APP_BACKEND_URL"):
+                    BASE_URL = line.strip().split("=", 1)[1]
+    except FileNotFoundError:
+        pytest.skip(
+            "REACT_APP_BACKEND_URL not set and /app/frontend/.env absent "
+            "(requires the Docker live-server environment)",
+            allow_module_level=True,
+        )
 BASE_URL = BASE_URL.rstrip("/")
 API = f"{BASE_URL}/api"
 

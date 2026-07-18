@@ -22,7 +22,8 @@ Close-out for the full evidence and root-cause. (updated 2026-07-17).
 > fact, 16/tick vs the documented 1-per-group/4-per-tick), that validation
 > accepted a forged `goal_id`/`ttl_tick`, and that the influence hook boosted
 > stale supporters and could override an urgent survival decision. These are now
-> fixed (commits on branch `capability/stage-6-living-agents`), each with
+> fixed (commits on the branch then named `capability/stage-6-living-agents`,
+> renamed to `capability/stage-8-culture` 2026-07-18), each with
 > full-kernel or focused regression tests. The mechanism is therefore verified
 > **through the real commit pipeline**, not in isolation.
 >

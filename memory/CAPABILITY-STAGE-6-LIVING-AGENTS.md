@@ -4,8 +4,10 @@
 
 **Implemented and verified (2026-07-13).** This document defines the executable
 Stage 6 schema, authority, compatibility, and bounded-growth contract. The
-6A–6E closed-loop gates are implemented on
-`capability/stage-6-living-agents`; Stage 7 remains out of scope.
+6A–6E closed-loop gates are implemented on the branch then named
+`capability/stage-6-living-agents` (renamed to `capability/stage-8-culture` at
+the Stage 8 Leg 0 boundary, 2026-07-18 — same branch, same history); Stage 7
+remains out of scope as of this doc's original writing.
 
 ## Authority and data flow
 

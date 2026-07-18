@@ -417,8 +417,9 @@ gate-and-stop by leg (`STAGE-8-MASTER-PROMPT.md`).** Leg 8A **Emergent Norms** i
 mechanism-verified and committed (one `shelter_upkeep_norm` forms from repeated 7D
 adoptions, influences an already-existing repair choice, decays; contract
 `CAPABILITY-STAGE-8A-EMERGENT-NORMS.md`). Its organic influence-firing gate is
-**Deferred — unobserved** (scenario horizon does not exercise the repair seam in the
-norm window; recorded with tick evidence). Legs 8B (Transmission) → 8C (plurality /
+**Deferred — scenario-dynamics-blocked** (repair-candidate window ticks 1–236 and
+norm-active window ticks 377+ are disjoint by scenario construction, not by
+threshold; full required record in the 8A doc). Legs 8B (Transmission) → 8C (plurality /
 enforcement) → 8D (divergence / diffusion / conflict / event-change) follow, each
 spec'd from measured evidence and confirmed at a STOP. The Stage 8 item list below
 is graded at the Stage 8 close-out audit (Implemented / Deferred-Stage-9-blocked /
@@ -734,6 +735,97 @@ Partial implementation should be recorded as:
 - Deferred
 
 Do not mark an entire capability stage complete because one mechanic within it exists.
+
+## Deferral taxonomy
+
+Every deferred gate item across every capability stage is classified as exactly
+one of the following four categories. A deferral without its required record is
+an **open gate**, not a closed one. Never invent a fifth category ad hoc; if
+none of the four fits, stop and propose one for explicit ratification before
+using it.
+
+- **Deferred — Stage-9-blocked**: the gate honestly requires surplus/economy
+  mechanics that do not exist before Stage 9. Required record: the concrete
+  Stage 9 dependency (7C-style — name the specific mechanic, e.g. "requires
+  reliable resource surplus to produce `shared_storage` facts").
+- **Deferred — content stage**: the item is myth, ritual, symbolic-object,
+  naming-convention, or generational-myth material reserved for a later
+  content-authoring pass, per ratified core-loop scope decisions. Required
+  record: the scope decision that excluded it and where it was made.
+- **Deferred — scenario-dynamics-blocked**: the mechanism is implemented and
+  mechanism-verified through the real commit pipeline, but the *scenario's*
+  dynamics never produce the conditions the organic gate measures — this is a
+  property of the chosen scenario, not an implementation defect. Required
+  record: (a) the blocking measurement — the probe/tick evidence proving the
+  conditions cannot co-occur in the standing scenario; (b) the concrete unblock
+  condition — an alternative/extended scenario permitting co-occurrence, or an
+  authorised dynamics change with its re-baseline consequence named; (c) an
+  explicit statement that no threshold was lowered to manufacture a firing.
+- **Deferred — demography-blocked (Stage 11)**: the gate requires lifecycle
+  events (births/deaths) that the simulated horizon does not produce. Required
+  record: the probe evidence showing zero in-horizon lifecycle events.
+
+## Test-suite flake taxonomy (separate from capability deferrals above)
+
+This is not a fifth deferral category for capability gate items — the
+four-category list above stays closed per its own rule. `test-flake` classifies
+*test-infrastructure* non-determinism (a test intermittently fails under
+identical code and environment), which is an orthogonal concern to whether a
+capability gate is honestly deferred.
+
+- **test-flake**: a test exhibits non-deterministic pass/fail behaviour under
+  identical code, confirmed present in a pre-change baseline via a controlled
+  detached-worktree A/B comparison — not attributable to the change under
+  review. Required record: test name, assertion signature, observed vs
+  expected values, run counts on both the baseline and current side, the
+  baseline comparison SHA, and the environment-parity method used to rule out
+  confounds (shared DB state, differing interpreter/venv, etc.).
+
+**Sighting (2026-07-19, Leg 0 regression-attribution check):**
+
+- **`backend/tests/test_concurrency.py::test_concurrent_stage7a_steps_do_not_duplicate_groups_or_head`**
+  — classified **test-flake**. Assertion `int(registry["revision"]) ==
+  int(registry_before["revision"]) + 1` intermittently fails as `N == N`
+  (observed revision unchanged where +1 was expected) under concurrent
+  `asyncio.gather` CAS contention. Controlled comparison: detached worktree at
+  comparison SHA `e7e87832960967f3ed45ef5d368efb821a616539` (pre-Leg-0 HEAD,
+  identical code to the Leg-0-unmodified test file) — **3/10 runs failed**,
+  signature `assert 5 == (5 + 1)` each time; current tree (Leg 0 uncommitted
+  changes present, none touching this test or its code path) — **4/10 runs
+  failed**, same signature. Failure present in the pre-Leg-0 baseline itself,
+  same signature both sides ⇒ not Leg-0-caused. Environment-parity method: a
+  purpose-created scratch database (`DB_NAME=leg0_attrib_check`, override
+  verified to land through the same `load_dotenv` path the app uses before
+  trusting it, dropped after use), identical Python 3.12.10 interpreter and
+  `python -m pytest` invocation, identical working directory convention, 10
+  runs per side interleaved ABAB to cancel time-of-day drift. Confound sizing
+  on the previously-shared live DB (pre-scratch-DB): 20 accumulated
+  `stage7a-conc-*`-seeded runs, 160 orphaned `commit_frames`, from this
+  repo's undifferentiated test history — the earlier same-session 3-run
+  comparison against that shared DB had classified this test **E.
+  FLAKY-INDUCED** (worktree 3/3 pass, current tree intermittent); that
+  classification is **superseded** by this 10-run scratch-DB result, which
+  reproduces the identical failure signature in the baseline worktree itself
+  and demonstrates the flake is pre-existing, not induced by anything in the
+  current tree.
+- **`backend/tests/test_concurrency.py::test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head`**
+  — **annotated as suspected same cause** (same CAS-revision-race shape, same
+  file, same `asyncio.gather` pattern). It failed once in this session's
+  initial unseeded full-suite run (`4 == 4`, expected `5`) but passed 3/3 in
+  an isolated same-session recheck and 10/10 on both sides of this scratch-DB
+  matrix. Not independently reproduced under controls; recorded as a
+  suspected-shared-cause sighting, not a confirmed flake in its own right.
+- **P1 stabilisation ticket (do not bury in this ledger):** CAS `revision`
+  increment observed as `N == N` under `asyncio.gather` contention in both
+  `test_concurrent_stage7a_steps_do_not_duplicate_groups_or_head` and
+  (suspected) `test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head`.
+  This is a correctness canary in an event-sourced engine with an optimistic-
+  concurrency commit pipeline — determine whether this is a genuine engine
+  lost-update (a second concurrent `step_run` silently no-ops instead of
+  retrying/erroring) or a test-side read race (reading `registry` before the
+  second attempt's write is durably visible), via instrumentation. Not
+  investigated further here per the regression-attribution directive's "do
+  not repair forward."
 
 # Frontier and immediate next capability
 

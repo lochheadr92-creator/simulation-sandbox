@@ -83,9 +83,11 @@ All four documentation conflicts below remain live at HEAD.
   chain isn't demonstrably closed under natural runs.
 - Correct label: **"Implemented — verification pending."**
 
-### C6 — Branch name understates scope *(minor — UNCHANGED)*
-- Branch is still `capability/stage-6-living-agents`; HEAD now carries 6, 7A, 7B,
-  7B.1, 7C.
+### (Resolved 2026-07-18) C6 — Branch name understates scope
+- Was: branch still `capability/stage-6-living-agents`; HEAD now carries 6, 7A,
+  7B, 7B.1, 7C. **Now renamed to `capability/stage-8-culture` at the Stage 8
+  Leg 0 boundary** (`memory/STAGE-8-CONTINUATION-PROMPT.md` item 4) — same
+  branch, same commit history, no rewrite. Closed.
 
 ### (Resolved) C5 — VCS provenance
 - Was: 7C untracked, 7B.1 uncommitted. **Now committed in `ca2419e0`.** Closed.

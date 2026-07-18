@@ -1,9 +1,9 @@
 # Capability Stage 8A — Emergent Norms (smallest culture proof)
 
 Status: **VERIFIED (mechanism), IMPLEMENTED & COMMITTED (2026-07-18). Gate-5
-(organic influence firing): DEFERRED — organic-firing unobserved (scenario horizon
-does not exercise the repair seam; evidence below). Stage 8A = partially complete
-(core loop / mechanism-verified), NOT "complete".** Path A ratified.
+(organic influence firing): Deferred — scenario-dynamics-blocked (full required
+record below). Stage 8A = partially complete (core loop / mechanism-verified),
+NOT "complete".** Path A ratified.
 
 This contract mirrors the 7B/7C/7D registry + validator + provenance + diagnostics
 structure exactly and folds in the corrected-7D implementation lessons.
@@ -13,10 +13,29 @@ structure exactly and folds in the corrected-7D implementation lessons.
 **Verified results** (seed `living-agents-stage6`, all fixes in tree; actual run
 output, not from memory):
 
-- **Tests:** full backend suite **338 passed** (+4 pre-existing collection errors
-  in `test_phase2/3/4` + `test_simulation_sandbox`, unrelated — they import a
-  Docker-only `/app/frontend/.env`); Stage 8A focused **32 passed**; Stage 6+7A–7D
-  focused all green.
+- **Tests:** full backend suite (bare `python -m pytest` from `backend/`) —
+  **336 executed passed; 4 named skips; 2 known test-flake failures excluded
+  from the pass count (`test_concurrency.py::test_concurrent_stage7a_steps_do_not_duplicate_groups_or_head`,
+  intermittent CAS-revision race, attributed pre-existing — not caused by
+  Leg 0 — under a controlled detached-worktree A/B comparison; see
+  `CAPABILITY_ROADMAP.md` § Test-suite flake taxonomy for the full record and
+  the linked `test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head`
+  suspected-same-cause sighting); no other executed test failed** (re-verified
+  2026-07-19). Historical note (Leg 0, 2026-07-18): the 4 modules
+  (`tests/test_phase2.py`, `test_phase3.py`, `test_phase4.py`,
+  `test_simulation_sandbox.py`) previously raised `FileNotFoundError: [Errno 2]
+  No such file or directory: '/app/frontend/.env'` at module-import time
+  (reached when `REACT_APP_BACKEND_URL` is unset), a Docker-container-only
+  absolute path not present on this host — this made them **collection
+  errors** that aborted the whole bare `python -m pytest` session (0 executed);
+  `--continue-on-collection-errors` was needed to reach 338 executed passed at
+  the time. Leg 0 fixed this (trivial, <30 min): each module now wraps the read
+  in `try/except FileNotFoundError: pytest.skip(..., allow_module_level=True)`,
+  so bare `python -m pytest` now correctly reports the named skips with no
+  special flag and no aborted session. Unrelated to Stage 8A substance in
+  either state. Stage 8A focused **32 passed**; Stage 6+7A–7D focused all
+  green except the two attributed concurrency flakes above (pre-existing,
+  outside the 6+7A–7D/8A change set).
 - **Frozen-hash safety:** `living_settlement --ticks 320 --repeat 2` →
   `final_state_hash = 84d3ad52773d95877a2de3a178a205cf96f1637c76dcf561c702fa24788c32d2`
   **byte-identical** to the frozen baseline; `repeat_matches` + `replay_matches` = true.
@@ -34,25 +53,42 @@ output, not from memory):
 - **Forbidden fields** (`inventory, authority, obedience, orders, law, command,
   punishment`) absent from every norm record (validator-enforced, tested).
 
-**Gate-5 — DEFERRED (organic influence firing unobserved).** Over the 1,000-tick
-run the norm influence fired **0 times**; so did the 7D goal influence (identical
-cause). Tick evidence: shelter-`REPAIR_SHELTER` candidates exist on only **17 ticks,
-all within ticks 1–236** (agents repair the initially-damaged shelter early, then
-build private shelters and never repair the shared shelter again — the documented
-Liveness self-solving dynamic). Norms cannot form until **tick 377+** (they require
-≥2, here 3, distinct 7D adoptions, which require the shelter to *re-degrade* first —
+**Gate-5 — Deferred — scenario-dynamics-blocked** (taxonomy: `CAPABILITY_ROADMAP.md`
+§ Deferral taxonomy). Full required record:
+
+**(a) Blocking measurement.** Over the 1,000-tick run the norm influence fired
+**0 times**; so did the 7D goal influence (identical cause). Tick evidence:
+shelter-`REPAIR_SHELTER` candidates exist on only **17 ticks, all within ticks
+1–236** (agents repair the initially-damaged shelter early, then build private
+shelters and never repair the shared shelter again — the documented Liveness
+self-solving dynamic). Norms cannot form until **tick 377+** (they require ≥2,
+here 3, distinct 7D adoptions, which require the shelter to *re-degrade* first —
 adoptions begin at tick 282). The repair window (≤236) and the norm-active window
 (≥377) are **disjoint**, so the read-only nudge has no already-existing
 `REPAIR_SHELTER` candidate to boost. This is a scenario-horizon limitation, not a
 mechanism defect: the influence firing IS proven through the real commit pipeline by
 the integrated tests (a norm-holding member with a present repair candidate is
-boosted, and it transmits to a want-less later joiner). Per the ratified Path A,
-Stage 8A ships mechanism-verified with organic firing Deferred; NOT reframed and NO
-threshold lowered to manufacture a firing (the `NORM_FORMATION_COUNT = 2` fallback
-was measured too — it also yields **0** organic firings, first norm at tick 377,
-because the disjoint-window cause is threshold-independent; so 3 is retained on its
-recurrence merits). Evidence tooling: `backend/tools/_probe_norm_influence.py`
-(firing + capacity), `_probe_repair_timing.py` (repair-vs-norm windows).
+boosted, and it transmits to a want-less later joiner). Evidence tooling:
+`backend/tools/_probe_norm_influence.py` (firing + capacity),
+`_probe_repair_timing.py` (repair-vs-norm windows).
+
+**(b) Unblock condition — one of two sanctioned paths, neither taken here.**
+(i) An alternative or extended `collective_groups`-family scenario whose
+dynamics let a `REPAIR_SHELTER`-candidate window and a norm-active window
+co-occur (e.g. periodic re-degradation past tick 377, or a longer horizon that
+revisits shelter damage after norm formation) — this is the question the Stage
+8B overlap probe (Leg 1 Phase 1) is required to answer before the 8B contract is
+written. (ii) An authorised Stage 6 dynamics change (e.g. reintroducing
+shared-shelter re-degradation cycles) that would **break the frozen
+`living_settlement` 320-tick hash** (`84d3ad52…c32d2`) and requires explicit
+re-baseline authorisation from the user at a STOP — never self-granted.
+
+**(c) No threshold was lowered.** Per the ratified Path A, Stage 8A ships
+mechanism-verified with organic firing Deferred; NOT reframed. The
+`NORM_FORMATION_COUNT = 2` fallback was measured too — it also yields **0**
+organic firings, first norm at tick 377, because the disjoint-window cause is
+threshold-independent; so 3 is retained on its recurrence merits. No constant in
+this contract was changed to manufacture a firing.
 
 **Adversarial review — cross-model, automated (independence caveat, recorded).**
 Two adversarial reviews were run by **Codex (OpenAI GPT-5)** as a separate CLI
