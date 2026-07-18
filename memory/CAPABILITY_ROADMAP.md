@@ -412,6 +412,19 @@ politics, and Stage 8 institutions remain out of scope.
 
 # Capability Stage 8 - Culture, Norms, Beliefs, and Knowledge Transmission
 
+**Status (2026-07-18): partially complete — core-culture-loop delivery in progress,
+gate-and-stop by leg (`STAGE-8-MASTER-PROMPT.md`).** Leg 8A **Emergent Norms** is
+mechanism-verified and committed (one `shelter_upkeep_norm` forms from repeated 7D
+adoptions, influences an already-existing repair choice, decays; contract
+`CAPABILITY-STAGE-8A-EMERGENT-NORMS.md`). Its organic influence-firing gate is
+**Deferred — unobserved** (scenario horizon does not exercise the repair seam in the
+norm window; recorded with tick evidence). Legs 8B (Transmission) → 8C (plurality /
+enforcement) → 8D (divergence / diffusion / conflict / event-change) follow, each
+spec'd from measured evidence and confirmed at a STOP. The Stage 8 item list below
+is graded at the Stage 8 close-out audit (Implemented / Deferred-Stage-9-blocked /
+Deferred-content-stage); the stage is **not** marked complete because the core loop
+exists. Hard boundary: nothing that requires Stage 9 surplus/economy.
+
 ## Goal
 
 Allow repeated behaviour, shared history, environment, teaching, and group identity to form persistent cultures.
@@ -724,26 +737,29 @@ Do not mark an entire capability stage complete because one mechanic within it e
 
 # Frontier and immediate next capability
 
-**Frontier (2026-07-14):** Stages 6, 7A, 7B, 7B.1, and 7C are implemented and
-committed (`ca2419e0`). Stage 7C is **mechanism-verified**; its only unmet gate,
-organic emergence, is **deferred as Stage 9-blocked** (see the Stage 7C section)
-and is off the critical path.
+**Frontier (2026-07-18):** Stages 6, 7A, 7B, 7B.1, 7C, and **7D** are implemented
+and committed. Stage 7C is mechanism-verified (organic emergence deferred as
+Stage-9-blocked). Stage 7D is verified via the Stage 6 Liveness Pass (`f6850d0b`).
+**Stage 8A (Emergent Norms) is mechanism-verified and committed** — one
+`shelter_upkeep_norm` crystallises from repeated Stage 7D adoptions, influences an
+already-existing repair choice (read-only, survival-dominant, transmission-inclusive),
+and decays; its gate-5 *organic influence firing* is **Deferred — unobserved**
+because the `collective_groups` horizon does not exercise the repair seam in the
+norm-active window (repairs cease ~tick 236; norms form 377+; disjoint), evidenced
+and recorded in `CAPABILITY-STAGE-8A-EMERGENT-NORMS.md`. Stage 8A is **partially
+complete (core loop / mechanism-verified)**, not complete.
 
-**Next authorised work** is the next-stage decision (below). In parallel, the
-technical **5A2** live-transaction infrastructure gate (transaction-capable
-Mongo) remains unexercised and should be cleared, because the Stage 7
-persistence claims inherit it.
+**The single frontier is: Stage 8B (Transmission) — decision + contract.** Per the
+Stage 8 gate-and-stop plan (`STAGE-8-MASTER-PROMPT.md`), 8B makes norm carriage
+per-individual and observable (teaching/imitation via the 6C/6D seams) so culture
+outlives its originators. Its contract is written from measured probes of the
+committed 8A run and confirmed at a STOP before implementation. In parallel, the
+technical **5A2** live-transaction gate (transaction-capable Mongo) remains
+unexercised. **Stage 9 (Economy)** stays on the critical path for 7C's organic
+emergence (surplus-blocked) but is out of bounds until Stage 8's core loop closes.
 
-The next-stage direction is **decided (2026-07-14): depth.** The next capability
-is **Stage 7D — finish the group loop (leadership, collective goals)**, not
-Stage 8 (Culture). Rationale: Stage 8 culture rests on persistent group identity
-and collective decision-making the Stage 7 loop only partially delivers;
-deepening 7 before widening into 8 keeps the capability chain honest. **Stage 8
-is deferred** until the group loop is complete; **Stage 9 (Economy)** stays on
-the critical path for *organic* group behaviour (7C's organic emergence waits on
-surplus); the **5A2** live-transaction gate is a parallel technical task.
-
-Guardrail: Stage 7D must not create a hidden group mind — leadership and
-collective goals remain proposal-only, Core-authored, and member-grounded. No
-autonomous group cognition, obedience, warfare, diplomacy, politics, religion,
-or player control until separately contracted and accepted.
+Guardrail (all Stage 7/8 culture work): no hidden group mind — norms, goals, and
+leadership remain proposal-only, Core-authored, member-grounded; influence never
+outranks survival; forbidden fields (`inventory, authority, obedience, orders, law,
+command, punishment`) absent from every record. No obedience, warfare, diplomacy,
+politics, religion, economy, or player control until separately contracted.
