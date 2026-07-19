@@ -9,6 +9,11 @@
 
 input=$(cat)
 
+# Windows: winget-installed jq may not be on PATH in fresh shells.
+if ! command -v jq >/dev/null 2>&1; then
+  export PATH="$PATH:/c/Users/RJLoc/AppData/Local/Microsoft/WinGet/Links:/c/Users/RJLoc/AppData/Local/Microsoft/WinGet/Packages/jqlang.jq_Microsoft.Winget.Source_8wekyb3d8bbwe"
+fi
+
 if ! command -v jq >/dev/null 2>&1; then
   echo "{}"
   exit 0

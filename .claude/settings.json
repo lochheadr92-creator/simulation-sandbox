@@ -7,7 +7,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/filter-run-output.sh\""
+            "command": "\"C:/Program Files/Git/bin/bash.exe\" \"C:/dev/simulation-sandbox/simulation-sandbox/.claude/hooks/filter-run-output.sh\""
+          },
+          {
+            "type": "command",
+            "command": "\"C:/Program Files/Git/bin/bash.exe\" \"C:/dev/simulation-sandbox/simulation-sandbox/.claude/hooks/block-destructive-git.sh\""
           }
         ]
       }
