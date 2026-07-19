@@ -64,9 +64,28 @@ is the index, not the brain dump. Keep it under 150 lines.
   execution; no executed test failed."
 - Hash strings pasted from run output, never from memory.
 - STOP report: STATUS / CHANGES / RISKS / NEXT STEP.
-- Deferral taxonomy (roadmap-defined): Stage-9-blocked, content-stage,
-  scenario-dynamics-blocked, demography-blocked. A deferral without its
-  required record is an open gate. Never invent a fifth category.
+- Deferral taxonomy: the taxonomy section in `CAPABILITY_ROADMAP.md` is the
+  sole authority — do not mirror its category list here or elsewhere. A
+  deferral without its required record is an open gate. New categories only
+  with explicit user authorisation recorded in the close-out; never invented
+  unilaterally.
+
+## Proportionality (verification is bounded)
+
+- Verification effort is bounded by the cost of the failure it prevents.
+  Scale rigor to irreversibility × blast radius: reversible, backed-up,
+  local-only work earns one cheap decisive check; the full apparatus is
+  reserved for hard-rail territory (frozen hash, history rewrite, pushes,
+  schema/cap changes, data migration).
+- Cheapest decisive observation first. Before designing any verification
+  plan, name the single observation that would settle the decision (a grep
+  of committed reports beats a 40-run experiment); run it; escalate to
+  statistics only if it returns ambiguous.
+- Review verdicts are bounded: when reviewing, report the single
+  highest-severity flaw or state "no blocking flaw" — do not enumerate.
+  "Good enough, ship" is a valid and expected verdict.
+- Alarm threshold: if your proposed verification plan is longer than the
+  diff it verifies, cut the plan before presenting it, and say so.
 
 ## Runs and tests
 
