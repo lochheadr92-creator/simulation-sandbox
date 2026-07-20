@@ -1,6 +1,7 @@
 # Capability Stage 8B, Leg 1 — Norm Transmission (individual carriage)
 
-Status: **PROPOSED. Not implemented. STOP for user confirmation before any code.**
+Status: **CONFIRMED with riders (2026-07-20). See "Confirmation and decision log" below
+for the exact ruling. Phase D (implementation) is authorised.**
 
 ## Disclosure — prior exposure (read before anything else)
 
@@ -85,14 +86,33 @@ organically here either, only via a focused test).
 
 ### 6. Carriage/supporter evidence — the central, load-bearing measurement
 
-**22 adoptions observed across all 7 groups (exactly 3 per group, matching
-`NORM_FORMATION_COUNT = 3`), spanning ticks 282–777. Every single one of the 22
-has the identical ratio 7/8, with `person-004` as the sole non-supporter, zero
-exceptions**, across all 7 groups and all 3 adoption waves per group. This was
-cross-checked against `want_holders_min=0`/`want_holders_max=7` (of 8 persons) —
-`person-004` structurally never holds the `improve_shelter` want that drives
-support, at any sampled tick. This is a stable, organic, non-seeded property of
-that one person, not an artifact of sampling.
+**22 adoptions observed across all 7 groups, spanning ticks 282–777. Every
+single one of the 22 has the identical ratio 7/8, with `person-004` as the sole
+non-supporter, zero exceptions.**
+
+**Count reconciliation (added at confirmation, 2026-07-20):** the true count is
+22, not 7×3=21. Source, verified against the raw per-row probe data: **one**
+group (`group-77ec2beb76de22397715`) adopts **four** times (ticks 282, 376,
+682, 776); the other **six** groups adopt exactly **three** times each (ticks
+~377/683/777) — `4 + (3×6) = 22`. The norm-formation timeline (item 5, above)
+confirms this group forms its norm only **once**, at tick 683 (after its 3rd
+adoption, per `NORM_FORMATION_COUNT = 3`); its 4th adoption (tick 776) is a
+post-formation re-adoption that refreshes the norm's decay deadline, not a
+second formation — consistent with 8A's documented refresh mechanism
+(`CAPABILITY-STAGE-8A-EMERGENT-NORMS.md`, "on formation and on each subsequent
+counted adoption... `decay_deadline_tick` extended"). This is not a new
+asymmetry: it independently **reproduces** 8A's own previously-published
+per-group adoption distribution `[4, 3, 3, 3, 3, 3, 3]` at ticks "282 / 376 /
+682 / 776" for the top group and "~377 / ~683 / ~777" for the rest
+(`CAPABILITY-STAGE-8A-EMERGENT-NORMS.md:165-167`) — the same seed, same
+scenario, measured independently by a different probe script two legs apart,
+landing on the identical tick sequence. Cross-validation, not coincidence.
+
+Every one of the 22 adoptions was cross-checked against
+`want_holders_min=0`/`want_holders_max=7` (of 8 persons) — `person-004`
+structurally never holds the `improve_shelter` want that drives support, at any
+sampled tick. This is a stable, organic, non-seeded property of that one
+person, not an artifact of sampling.
 
 **Carrier/non-carrier interaction evidence** (this is new measurement work added
 for this leg, cross-referencing the carriage probe's `social_events` array
@@ -192,6 +212,15 @@ The one demonstrated crossing rides `social_request_help`. Per the "ride one
 trigger is scoped narrowly to this one type — not generalised to `social_*`
 broadly, since no other type was ever observed crossing the carrier boundary
 post-formation. Widening the type set would be inventing untested behaviour.
+
+**Rider (confirmed 2026-07-20):** the whitelist is implemented as a **data
+constant**, `TRANSMISSION_QUALIFYING_EVENT_TYPES = ("social_request_help",)`,
+in `group_carriage_contracts.py`'s constants block (alongside
+`TRANSMISSION_COUNT`), and the trigger checks membership in that tuple — never
+a hardcoded `if etype == "social_request_help"` structural assumption in the
+domain logic. Widening the set later (should future probe evidence justify it)
+is a one-line constants change plus a contract-amendment note in this doc's
+decision log — never a rewrite of the trigger-detection code path.
 
 ### Decision 5 — registry: **new `group-carriage-registry-v1`**, not an extension of `group-norm-registry-v1`
 
@@ -318,7 +347,7 @@ One carrier record per (norm_id, person_id) pair, idempotent by
 | Constant | Value | Justification |
 |---|---|---|
 | `TRANSMISSION_COUNT` | **1** | Exactly one qualifying carrier/non-carrier interaction exists in the standard 1,000-tick horizon (Decision 3); the only reachable value, measured not assumed. |
-| Qualifying event type | **`social_request_help`** | The only event type ever observed crossing the carrier/non-carrier boundary post-formation (Decision 4). |
+| `TRANSMISSION_QUALIFYING_EVENT_TYPES` | **`("social_request_help",)`** — a data constant (tuple), not a structural code assumption | The only event type ever observed crossing the carrier/non-carrier boundary post-formation (Decision 4); extension is a constants change, per the confirmed rider. |
 | Transmission direction | **non-carrier-initiated (imitation)** | Zero carrier-initiated events toward the non-carrier were observed post-formation; the one qualifying event is non-carrier-initiated (Decision 2). |
 | `carriers` registry cap | **128** | `norms` cap (16) × `members_per_candidate` cap (8); observed need 50, 61% headroom. |
 | `processed_transmission_keys` cap | **96** | Mirrors `group_norm`'s `processed_norm_keys` cap exactly (same idempotence-guard role, same order of magnitude). |
@@ -362,23 +391,42 @@ or player-facing surface. Widening the qualifying-event-type set beyond
    decay-independence (carrier survives a synthetic norm expiry — focused only,
    per item 5); forged-field rejection (re-derivation + byte-equality);
    duplicate-key idempotence; capacity bound; replay + resume reconstruction.
+   **Required (confirmed rider, 2026-07-20): a deterministic synthetic-fixture
+   test** that constructs a carrier and a non-carrier directly (not via the
+   organic scenario), injects one qualifying `social_request_help` interaction
+   between them, and asserts the transmission machinery (trigger detection,
+   `carrier_record` write, provenance, idempotence) fires correctly —
+   independent of whether the organic tick-699 event exists at all. This is
+   the actual proof of mechanism correctness; item 5's organic run below is
+   rescoped to test **scenario integration only** (does the real pipeline
+   reach and exercise this machinery), not mechanism correctness in isolation.
 2. **Integrated full-kernel test:** `group_carriage` enabled in the real commit
    pipeline, backfill and transmission proven end-to-end **through same-frame
    upstream (7A/7B/7D/8A) revision churn**.
 3. **Regression:** full backend suite stays green per the reporting rule.
 4. **Determinism:** `collective_groups` repeat + replay + resume match with
    `group_carriage` enabled.
-5. **Organic proof (reachable part):** the unseeded 1,000-tick `collective_groups`
-   run backfills carriage for all 7 formations (49 records, `person-004`
-   excluded from all 7 — already measured, Decision 1) **and** shows **exactly
-   the one** measured transmission event (tick 699, `person-004` learns
-   `shelter_upkeep_norm` on `group-77ec2beb76de22397715` from `person-000`) fire
-   through the real pipeline, with 0 deaths, survival dominant.
-6. **Frozen-hash safety:** `living_settlement` 320-tick hash unchanged
+5. **Organic proof — scenario integration only** (mechanism correctness is
+   proven by item 1's synthetic fixture, per the confirmed rider): the unseeded
+   1,000-tick `collective_groups` run backfills carriage for all 7 formations
+   (49 records, `person-004` excluded from all 7 — already measured, Decision
+   1) **and** shows **exactly the one** measured transmission event (tick 699,
+   `person-004` learns `shelter_upkeep_norm` on `group-77ec2beb76de22397715`
+   from `person-000`) fire through the real pipeline, with 0 deaths, survival
+   dominant. This item confirms the real commit pipeline *reaches* the
+   machinery under organic conditions; it is not the correctness proof.
+6. **Registry size measurement (confirmed rider, 2026-07-20):** the first
+   Phase D run that exercises `group-carriage-registry-v1` (integrated test or
+   the organic run, whichever first writes carrier records) records the
+   measured peak serialized size and record count in the verification report,
+   against the 128-record / 24 KiB projection in Decision 5 — same
+   measure-against-cap discipline 8A used, not skipped because the estimate
+   looks reasonable on paper.
+7. **Frozen-hash safety:** `living_settlement` 320-tick hash unchanged
    (`84d3ad52…c32d2` — `group_carriage` absent/inert there, same guard as every
    prior culture domain). New `collective_groups` hashes recorded (this domain
    WILL change them — a new domain enters the pipeline).
-7. **Adversarial review before promoting status** (Codex or equivalent,
+8. **Adversarial review before promoting status** (Codex or equivalent,
    independence level recorded honestly) against the branch diff.
 
 **Tier B — Deferred up front, scenario-dynamics-blocked, full required record (taxonomy: `CAPABILITY_ROADMAP.md` § Deferral taxonomy):**
@@ -393,14 +441,32 @@ or player-facing surface. Widening the qualifying-event-type set beyond
   `REPAIR_SHELTER` candidate for anyone. This is identically the disjoint-window
   cause recorded in 8A's gate-5 — not a new defect, the same one, one hop
   further down the causal chain.
-- **(b) Unblock condition.** Identical to 8A gate-5's: (i) an alternative or
-  extended scenario whose dynamics let a `REPAIR_SHELTER`-candidate window and
-  the post-transmission window co-occur, or (ii) an authorised Stage 6 dynamics
-  change breaking the frozen `living_settlement` hash, requiring explicit
-  re-baseline authorisation at a STOP. **This is the same standing-scenario
-  decision the continuation prompt flagged at the Leg 1 Phase 1 STOP** (line
-  104) — the overlap probe reconfirms the blocking condition rather than
-  resolving it. It is presented to you here rather than picked.
+- **(b) Unblock condition — RULED (2026-07-20): purpose-built scenario.** The
+  standing-scenario decision the continuation prompt flagged at the Leg 1 Phase
+  1 STOP (line 104) is resolved as follows, superseding the three-option
+  presentation above (kept for the record of what was considered):
+  - **Extend-horizon: rejected.** 764 post-window ticks (237–1000, past the
+    last `REPAIR_SHELTER` candidate at 236) show **zero** recurrence at the
+    standard 1,000-tick horizon — the overlap probe (item 1) already measured
+    this; more ticks of the same dynamics would not produce a different
+    result.
+  - **Authorised dynamics change: rejected.** An era-level re-baseline (the
+    frozen `living_settlement` hash, and every downstream hash built on it)
+    is a disproportionate cost for a leg-level gate, and it would split
+    verification onto two incomparable baselines going forward.
+  - **Purpose-built scenario: RULED.** A new scenario, built as the **first
+    contract-gated work item after Leg 1 closes**, scoped to exactly two named
+    outcomes: (1) retire 8A's gate-5 and this leg's Tier B in **one
+    consolidated verification pass** (both are the identical disjoint-window
+    cause; one fix answers both), and (2) provide organic-gate substrate for
+    remaining legs (8C, 8D). One scenario, these two named gates, no general
+    framework beyond what those two require.
+  - **Consequence for this leg:** Phase D proceeds **now**, under the existing
+    Tier B deferral — implementation does not block on the scenario work.
+    Leg 2's (8C's) contract is written against the new scenario once it
+    exists; **no third scenario-dynamics-blocked deferral accrues** past this
+    point — if 8C's own organic gate would otherwise need one, that is a
+    signal the new scenario's scope was wrong, not a reason to defer again.
 - **(c) No threshold was lowered.** `TRANSMISSION_COUNT = 1` is the measured
   floor (Decision 3), not a lowering to manufacture a firing — the opposite
   direction of adjustment would be needed to reach Tier B and none was made.
@@ -430,11 +496,48 @@ or player-facing surface. Widening the qualifying-event-type set beyond
    models transmission as instantaneous while 8A modelled norm formation as
    requiring repetition. This is scenario-forced, not a considered choice.
 
+## Confirmation and decision log
+
+**2026-07-20 — CONFIRMED with riders.** All five contract decisions (eligibility
+fork carriage-only, mechanism imitation-only, `TRANSMISSION_COUNT = 1`, event
+type `social_request_help` only, new registry separate from 8A's) confirmed as
+recommended. Riders applied and folded into the relevant sections above:
+
+- Rider (a): the event-type whitelist is a data constant
+  (`TRANSMISSION_QUALIFYING_EVENT_TYPES`), not a structural code assumption —
+  see Decision 4 and the Constants table.
+- Rider (b): a deterministic synthetic-fixture test is required in Tier A,
+  independent of the organic tick-699 event; the organic-proof gate item is
+  rescoped to integration-only — see Tier A items 1 and 5.
+- Rider (c): the first Phase D run to exercise the carriage registry must
+  record measured size against the 128-record / 24 KiB projection in the
+  verification report — see Tier A item 6.
+- Adoption count reconciled: true count is 22 (4 + 3×6, not 7×3), sourced and
+  cross-validated against 8A's own published distribution — see the probe
+  evidence section, item 6.
+- Standing scenario decision RULED: purpose-built scenario, scoped to retiring
+  8A gate-5 and this leg's Tier B together plus providing organic-gate
+  substrate for remaining legs; built as the first contract-gated item after
+  this leg closes; Phase D does not block on it — see Tier B, item (b).
+- Docstring-exposure disclosure (top of this doc) is accepted **permanently** —
+  it stays in this document; it is not to be trimmed in a later edit.
+  **Phase D's post-implementation archive diff (step 13 of the original
+  five-phase directive) must explicitly call out any divergence in the three
+  areas where this contract's independent derivation converged with the
+  archived module's docstring: carriage-only formation backfill, the
+  `entity["action"]`/`accepted_event_id` seam, and `engine_priority = 86`.**
+  Convergence in the diff is expected and not itself a finding; the report
+  must say so explicitly rather than passing over those three areas silently.
+- Phase D authorised: fresh implementation from this confirmed contract,
+  test-first, no archive consultation during implementation; the archive is a
+  post-hoc diff cross-check only, after Tier A's own acceptance criteria pass;
+  the contract — never the archive — resolves any divergence found. STOP at
+  Leg 1 close-out with the standard report.
+
 ## What this contract does NOT authorise
 
-No implementation. Phase D (implementation) begins only after your explicit
-confirmation of this contract in a later turn, and even then: fresh
-implementation from this document, test-first, without consulting the archived
-module (per the session directive); the archive is used only as a post-hoc
-diff cross-check after Tier A's own acceptance criteria pass, and the contract —
-not the archive — resolves any divergence.
+Any deviation from the confirmed decisions and riders above without a new,
+recorded confirmation. Any consultation of the archived module during
+implementation (post-hoc diff only, per the log above). Any scenario-dynamics
+work beyond this leg's scope — that is explicitly parked as the first
+contract-gated item after this leg closes, not folded into Phase D.
