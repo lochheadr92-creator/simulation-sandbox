@@ -1,0 +1,5036 @@
+{
+  "ticks": 1000,
+  "task1_diagnosis": {
+    "prescore_candidate_windows": [
+      {
+        "start": 1,
+        "end": 12,
+        "length": 12
+      },
+      {
+        "start": 71,
+        "end": 71,
+        "length": 1
+      },
+      {
+        "start": 156,
+        "end": 156,
+        "length": 1
+      },
+      {
+        "start": 161,
+        "end": 162,
+        "length": 2
+      },
+      {
+        "start": 236,
+        "end": 236,
+        "length": 1
+      }
+    ],
+    "postscore_candidate_windows": [
+      {
+        "start": 1,
+        "end": 12,
+        "length": 12
+      },
+      {
+        "start": 71,
+        "end": 71,
+        "length": 1
+      },
+      {
+        "start": 156,
+        "end": 156,
+        "length": 1
+      },
+      {
+        "start": 161,
+        "end": 162,
+        "length": 2
+      },
+      {
+        "start": 236,
+        "end": 236,
+        "length": 1
+      }
+    ],
+    "active_norm_windows": [
+      {
+        "start": 683,
+        "end": 1000,
+        "length": 318
+      }
+    ],
+    "prescore_vs_norm_intersection_size": 0,
+    "postscore_vs_norm_intersection_size": 0,
+    "truncation_undercount_ticks": 0,
+    "final_candidate_tick": 236,
+    "first_active_norm_tick": 683,
+    "gap_final_candidate_to_first_norm": 447,
+    "gate_failure_totals_all_ticks": {
+      "all_satisfied": 16,
+      "damaged_shelter_visible": 255,
+      "wood_gt_0": 764,
+      "hammer_visible": 25
+    },
+    "gate_failure_totals_from_final_candidate_tick_onward": {
+      "all_satisfied": 1,
+      "damaged_shelter_visible": 35,
+      "wood_gt_0": 764,
+      "hammer_visible": 25
+    },
+    "gate_state_samples_first_400": [
+      {
+        "tick": 1,
+        "entity": "person-002",
+        "wood": 10,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 2,
+        "entity": "person-002",
+        "wood": 10,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 3,
+        "entity": "person-002",
+        "wood": 10,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 4,
+        "entity": "person-002",
+        "wood": 10,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 5,
+        "entity": "person-002",
+        "wood": 10,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 6,
+        "entity": "person-002",
+        "wood": 10,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 7,
+        "entity": "person-002",
+        "wood": 9,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 8,
+        "entity": "person-002",
+        "wood": 8,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 9,
+        "entity": "person-002",
+        "wood": 7,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 10,
+        "entity": "person-002",
+        "wood": 6,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 11,
+        "entity": "person-002",
+        "wood": 6,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 12,
+        "entity": "person-002",
+        "wood": 5,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 13,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 14,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 15,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 16,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 17,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 18,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 19,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 20,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 21,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 22,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 23,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 24,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 25,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 26,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 27,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 28,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 29,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 30,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 31,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 32,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 33,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 34,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 35,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 36,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 37,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 38,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 39,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 40,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 41,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 42,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 43,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 44,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 45,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 46,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 47,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 48,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 49,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 50,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 51,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 52,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 53,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 54,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 55,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 56,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 57,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 58,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 59,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 60,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 61,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 62,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 63,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 64,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 65,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 66,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 67,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 68,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 69,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 70,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 71,
+        "entity": "person-002",
+        "wood": 4,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 72,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 73,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 74,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 75,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 76,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 77,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 78,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 79,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 80,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 81,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 82,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 83,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 84,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 85,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 86,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 87,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 88,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 89,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 90,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 91,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 92,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 93,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 94,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 95,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 96,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 97,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 98,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 99,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 100,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 101,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 102,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 103,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 104,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 105,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 106,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 107,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 108,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 109,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 110,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 111,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 112,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 113,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 114,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 115,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 116,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 117,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 118,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 119,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 120,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 121,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 122,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 123,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 124,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 125,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 126,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 127,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 128,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 129,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 130,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 131,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 132,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 133,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 134,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 135,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 136,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 137,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 138,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 139,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 140,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 141,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 142,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 143,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 144,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 145,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 146,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 147,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 148,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 149,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 150,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 151,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 152,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 153,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 154,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 155,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 156,
+        "entity": "person-002",
+        "wood": 3,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 157,
+        "entity": "person-002",
+        "wood": 2,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 158,
+        "entity": "person-002",
+        "wood": 2,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 159,
+        "entity": "person-002",
+        "wood": 2,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 160,
+        "entity": "person-002",
+        "wood": 2,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 161,
+        "entity": "person-002",
+        "wood": 2,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 162,
+        "entity": "person-002",
+        "wood": 2,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 163,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 164,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 165,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 166,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 167,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 168,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 169,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 170,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 171,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 172,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 173,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 174,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 175,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 176,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 177,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 178,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 179,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 180,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 181,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 182,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 183,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 184,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 185,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 186,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 187,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 188,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 189,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 190,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 191,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 192,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 193,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 194,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 195,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 196,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 197,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 198,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 199,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 200,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 201,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 202,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 203,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 204,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 205,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 206,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 207,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 208,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 209,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 210,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 211,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 212,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 213,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 214,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 215,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 216,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 217,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 218,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 219,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 220,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 221,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 222,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 223,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 224,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 225,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 226,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 227,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 228,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 229,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 230,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 231,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 232,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 233,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 234,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 235,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible"
+        ]
+      },
+      {
+        "tick": 236,
+        "entity": "person-002",
+        "wood": 1,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": []
+      },
+      {
+        "tick": 237,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 238,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 239,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 240,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 241,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 242,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 243,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 244,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 245,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 246,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 247,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 248,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 249,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 250,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 251,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 252,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 253,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 254,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 255,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 256,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 257,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 258,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 259,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 260,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 261,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 262,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 263,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 264,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 265,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 266,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 267,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 268,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 269,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 270,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 271,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 272,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 273,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 274,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 275,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 276,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 277,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 278,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 279,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 280,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 281,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 282,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 283,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 284,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 285,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 286,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 287,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 288,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 289,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 290,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 291,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 292,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 293,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 294,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 295,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 296,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 297,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 298,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 299,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": false,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0",
+          "hammer_visible"
+        ]
+      },
+      {
+        "tick": 300,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 0,
+        "hammer": true,
+        "failed_gates": [
+          "damaged_shelter_visible",
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 301,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 302,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 303,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 304,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 305,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 306,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 307,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 308,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 309,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 310,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 311,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 312,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 313,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 314,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 315,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 316,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 317,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 318,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 319,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 320,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 321,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 322,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 323,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 324,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 325,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 326,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 327,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 328,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 329,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 330,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 331,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 332,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 333,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 334,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 335,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 336,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 337,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 338,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 339,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 340,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 341,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 342,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 343,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 344,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 345,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 346,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 347,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 348,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 349,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 350,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 351,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 352,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 353,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 354,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 355,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 356,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 357,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 358,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 359,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 360,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 361,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 362,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 363,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 364,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 365,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 366,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 367,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 368,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 369,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 370,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 371,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 372,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 373,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 374,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 375,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 376,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 377,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 378,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 379,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 380,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 1,
+        "damaged_visible": 1,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 381,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 382,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 383,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 384,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 385,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 386,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 387,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 388,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 389,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 390,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 391,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 392,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 393,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 394,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 395,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 396,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 397,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 398,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 399,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      },
+      {
+        "tick": 400,
+        "entity": "person-002",
+        "wood": 0,
+        "shelters_visible": 2,
+        "damaged_visible": 2,
+        "hammer": true,
+        "failed_gates": [
+          "wood_gt_0"
+        ]
+      }
+    ],
+    "shelter_condition_trajectory": {
+      "1": {
+        "shelter-damaged": 380,
+        "shelter-family": 850
+      },
+      "26": {
+        "shelter-damaged": 957,
+        "shelter-family": 827
+      },
+      "51": {
+        "shelter-damaged": 914,
+        "shelter-family": 784
+      },
+      "76": {
+        "shelter-damaged": 871,
+        "shelter-family": 861
+      },
+      "101": {
+        "shelter-damaged": 848,
+        "shelter-family": 838
+      },
+      "126": {
+        "shelter-damaged": 809,
+        "shelter-family": 799
+      },
+      "151": {
+        "shelter-damaged": 762,
+        "shelter-family": 752
+      },
+      "176": {
+        "shelter-damaged": 856,
+        "shelter-family": 846
+      },
+      "201": {
+        "shelter-damaged": 824,
+        "shelter-family": 814
+      },
+      "226": {
+        "shelter-damaged": 773,
+        "shelter-family": 763
+      },
+      "227": {
+        "shelter-damaged": 773,
+        "shelter-family": 763
+      },
+      "228": {
+        "shelter-damaged": 773,
+        "shelter-family": 763
+      },
+      "229": {
+        "shelter-damaged": 773,
+        "shelter-family": 763
+      },
+      "230": {
+        "shelter-damaged": 766,
+        "shelter-family": 756
+      },
+      "231": {
+        "shelter-damaged": 766,
+        "shelter-family": 756
+      },
+      "232": {
+        "shelter-damaged": 766,
+        "shelter-family": 756
+      },
+      "233": {
+        "shelter-damaged": 766,
+        "shelter-family": 756
+      },
+      "234": {
+        "shelter-damaged": 766,
+        "shelter-family": 756
+      },
+      "235": {
+        "shelter-damaged": 759,
+        "shelter-family": 749
+      },
+      "236": {
+        "shelter-damaged": 759,
+        "shelter-family": 869
+      },
+      "237": {
+        "shelter-damaged": 759,
+        "shelter-family": 869
+      },
+      "238": {
+        "shelter-damaged": 759,
+        "shelter-family": 869
+      },
+      "239": {
+        "shelter-damaged": 759,
+        "shelter-family": 869
+      },
+      "240": {
+        "shelter-damaged": 752,
+        "shelter-family": 862
+      },
+      "241": {
+        "shelter-damaged": 752,
+        "shelter-family": 862
+      },
+      "242": {
+        "shelter-damaged": 752,
+        "shelter-family": 862
+      },
+      "243": {
+        "shelter-damaged": 752,
+        "shelter-family": 862
+      },
+      "244": {
+        "shelter-damaged": 752,
+        "shelter-family": 862
+      },
+      "245": {
+        "shelter-damaged": 748,
+        "shelter-family": 858
+      },
+      "246": {
+        "shelter-damaged": 748,
+        "shelter-family": 858
+      },
+      "251": {
+        "shelter-damaged": 744,
+        "shelter-family": 854
+      },
+      "276": {
+        "shelter-damaged": 715,
+        "shelter-family": 825
+      },
+      "301": {
+        "shelter-damaged": 664,
+        "shelter-family": 774
+      },
+      "326": {
+        "shelter-damaged": 632,
+        "shelter-family": 742
+      },
+      "351": {
+        "shelter-damaged": 606,
+        "shelter-family": 716
+      },
+      "376": {
+        "shelter-damaged": 559,
+        "shelter-family": 669
+      },
+      "401": {
+        "shelter-damaged": 520,
+        "shelter-family": 630
+      },
+      "426": {
+        "shelter-damaged": 497,
+        "shelter-family": 607
+      },
+      "451": {
+        "shelter-damaged": 454,
+        "shelter-family": 564
+      },
+      "476": {
+        "shelter-damaged": 411,
+        "shelter-family": 521
+      },
+      "501": {
+        "shelter-damaged": 388,
+        "shelter-family": 498
+      },
+      "526": {
+        "shelter-damaged": 349,
+        "shelter-family": 459
+      },
+      "551": {
+        "shelter-damaged": 302,
+        "shelter-family": 412
+      },
+      "576": {
+        "shelter-damaged": 276,
+        "shelter-family": 386
+      },
+      "601": {
+        "shelter-damaged": 244,
+        "shelter-family": 354
+      },
+      "626": {
+        "shelter-damaged": 193,
+        "shelter-family": 303
+      },
+      "651": {
+        "shelter-damaged": 164,
+        "shelter-family": 274
+      },
+      "676": {
+        "shelter-damaged": 135,
+        "shelter-family": 245
+      },
+      "701": {
+        "shelter-damaged": 84,
+        "shelter-family": 194
+      },
+      "726": {
+        "shelter-damaged": 52,
+        "shelter-family": 162
+      },
+      "751": {
+        "shelter-damaged": 26,
+        "shelter-family": 136
+      },
+      "776": {
+        "shelter-damaged": 0,
+        "shelter-family": 89
+      },
+      "801": {
+        "shelter-damaged": 0,
+        "shelter-family": 50
+      },
+      "826": {
+        "shelter-damaged": 0,
+        "shelter-family": 27
+      },
+      "851": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      },
+      "876": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      },
+      "901": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      },
+      "926": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      },
+      "951": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      },
+      "976": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      },
+      "1000": {
+        "shelter-damaged": 0,
+        "shelter-family": 0
+      }
+    },
+    "repair_events": [
+      {
+        "tick": 7,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 8,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 9,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 11,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 12,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 71,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 156,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 162,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      },
+      {
+        "tick": 236,
+        "actor": "person-002",
+        "event_type": "living_repair"
+      }
+    ],
+    "structure_wear_events": 323,
+    "accepted_by_type": {
+      "expire_signal": 460,
+      "flee": 5,
+      "graze": 936,
+      "group_adopt_collective_goal": 11,
+      "group_form_norm": 7,
+      "lifecycle_tick": 8000,
+      "living_consume": 157,
+      "living_drink": 126,
+      "living_gather": 151,
+      "living_move": 266,
+      "living_repair": 9,
+      "living_rest": 7199,
+      "living_retrieve": 1,
+      "rest": 59,
+      "social_apologise": 1,
+      "social_cooperate": 1,
+      "social_lie": 1,
+      "social_promise": 1,
+      "social_reconcile": 1,
+      "social_repay": 1,
+      "social_request_help": 19,
+      "social_share_information": 1,
+      "social_threaten": 1,
+      "social_trade": 1,
+      "structure_wear": 323,
+      "update_association_registry": 1000,
+      "update_group_shared_state": 991,
+      "weather_transition": 50
+    },
+    "survival": {
+      "alive_persons_final": 8,
+      "deaths": 0
+    }
+  },
+  "item1_overlap": {
+    "active_norm_tick_count": 318,
+    "active_norm_tick_min": 683,
+    "active_norm_tick_max": 1000,
+    "repair_candidate_tick_count": 17,
+    "repair_candidate_tick_min": 1,
+    "repair_candidate_tick_max": 236,
+    "intersection_size": 0,
+    "intersection_ticks_sample": []
+  },
+  "item2_membership_turnover": {
+    "tracked_group_ids": [
+      "group-4d0bc1c7612fc73e8051",
+      "group-77ec2beb76de22397715",
+      "group-781c8e715971da41f7b4",
+      "group-88b4f16e9da744c2cf1b",
+      "group-a237af6b87996c3b29aa",
+      "group-b372a74989e560fea8a1",
+      "group-c99926420a591a67cfe9"
+    ],
+    "join_event_count": 0,
+    "leave_event_count": 0,
+    "join_events": [],
+    "leave_events": []
+  },
+  "item3_interactions": {
+    "counts_by_event_type": {},
+    "examples_by_event_type": {}
+  },
+  "item4_lifecycle": {
+    "births": 0,
+    "birth_event_types_seen": [],
+    "deaths": 0
+  },
+  "item5_timeline": {
+    "formations": [
+      {
+        "tick": 683,
+        "norm_id": "group-norm-5ae28cfdb0f88c3addd5",
+        "group_id": "group-77ec2beb76de22397715",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-08ed41b8fd4e662a63ba",
+        "group_id": "group-781c8e715971da41f7b4",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-65d7eab91dfb1b980239",
+        "group_id": "group-4d0bc1c7612fc73e8051",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-9f1d94756b5118d85950",
+        "group_id": "group-88b4f16e9da744c2cf1b",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      },
+      {
+        "tick": 778,
+        "norm_id": "group-norm-124f20e5f8e70d3d089e",
+        "group_id": "group-a237af6b87996c3b29aa",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      },
+      {
+        "tick": 778,
+        "norm_id": "group-norm-45bbebd2ad1d9c36c909",
+        "group_id": "group-b372a74989e560fea8a1",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      },
+      {
+        "tick": 778,
+        "norm_id": "group-norm-577ad737cd773b4ae077",
+        "group_id": "group-c99926420a591a67cfe9",
+        "member_count": 8,
+        "members": [
+          "person-000",
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ]
+      }
+    ],
+    "all_transitions": [
+      {
+        "tick": 683,
+        "norm_id": "group-norm-5ae28cfdb0f88c3addd5",
+        "group_id": "group-77ec2beb76de22397715",
+        "kind": "formed"
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-08ed41b8fd4e662a63ba",
+        "group_id": "group-781c8e715971da41f7b4",
+        "kind": "formed"
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-65d7eab91dfb1b980239",
+        "group_id": "group-4d0bc1c7612fc73e8051",
+        "kind": "formed"
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-9f1d94756b5118d85950",
+        "group_id": "group-88b4f16e9da744c2cf1b",
+        "kind": "formed"
+      },
+      {
+        "tick": 777,
+        "norm_id": "group-norm-5ae28cfdb0f88c3addd5",
+        "group_id": "group-77ec2beb76de22397715",
+        "kind": "refreshed"
+      },
+      {
+        "tick": 778,
+        "norm_id": "group-norm-124f20e5f8e70d3d089e",
+        "group_id": "group-a237af6b87996c3b29aa",
+        "kind": "formed"
+      },
+      {
+        "tick": 778,
+        "norm_id": "group-norm-45bbebd2ad1d9c36c909",
+        "group_id": "group-b372a74989e560fea8a1",
+        "kind": "formed"
+      },
+      {
+        "tick": 778,
+        "norm_id": "group-norm-577ad737cd773b4ae077",
+        "group_id": "group-c99926420a591a67cfe9",
+        "kind": "formed"
+      }
+    ]
+  }
+}

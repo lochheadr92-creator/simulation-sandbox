@@ -1,0 +1,446 @@
+{
+  "ticks": 1000,
+  "person_count": 8,
+  "adoptions_observed": 22,
+  "supporters_over_members_histogram": {
+    "7/8": 22
+  },
+  "any_strict_subset": true,
+  "adoption_samples": [
+    {
+      "tick": 282,
+      "group": "group-77ec2beb76de22397715",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 376,
+      "group": "group-77ec2beb76de22397715",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 376,
+      "group": "group-781c8e715971da41f7b4",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 376,
+      "group": "group-4d0bc1c7612fc73e8051",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 376,
+      "group": "group-88b4f16e9da744c2cf1b",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 377,
+      "group": "group-c99926420a591a67cfe9",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 377,
+      "group": "group-b372a74989e560fea8a1",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 377,
+      "group": "group-a237af6b87996c3b29aa",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 682,
+      "group": "group-77ec2beb76de22397715",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 682,
+      "group": "group-781c8e715971da41f7b4",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 682,
+      "group": "group-4d0bc1c7612fc73e8051",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 682,
+      "group": "group-88b4f16e9da744c2cf1b",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 683,
+      "group": "group-c99926420a591a67cfe9",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 683,
+      "group": "group-b372a74989e560fea8a1",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 683,
+      "group": "group-a237af6b87996c3b29aa",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 776,
+      "group": "group-77ec2beb76de22397715",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 776,
+      "group": "group-781c8e715971da41f7b4",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 776,
+      "group": "group-4d0bc1c7612fc73e8051",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 776,
+      "group": "group-88b4f16e9da744c2cf1b",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 777,
+      "group": "group-c99926420a591a67cfe9",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 777,
+      "group": "group-b372a74989e560fea8a1",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    },
+    {
+      "tick": 777,
+      "group": "group-a237af6b87996c3b29aa",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    }
+  ],
+  "want_holders_min": 0,
+  "want_holders_max": 7,
+  "want_holders_sample_every_25": {
+    "25": 0,
+    "50": 0,
+    "75": 0,
+    "100": 0,
+    "125": 0,
+    "150": 0,
+    "175": 0,
+    "200": 0,
+    "225": 0,
+    "250": 0,
+    "275": 0,
+    "300": 0,
+    "325": 0,
+    "350": 0,
+    "375": 7,
+    "400": 0,
+    "425": 0,
+    "450": 0,
+    "475": 0,
+    "500": 0,
+    "525": 0,
+    "550": 0,
+    "575": 0,
+    "600": 0,
+    "625": 0,
+    "650": 0,
+    "675": 0,
+    "700": 0,
+    "725": 0,
+    "750": 0,
+    "775": 7,
+    "800": 0,
+    "825": 0,
+    "850": 0,
+    "875": 0,
+    "900": 0,
+    "925": 0,
+    "950": 0,
+    "975": 0,
+    "1000": 0
+  },
+  "social_event_count": 28,
+  "social_events": [
+    {
+      "tick": 1,
+      "etype": "social_cooperate",
+      "actor": "person-001",
+      "target": "person-007"
+    },
+    {
+      "tick": 2,
+      "etype": "social_repay",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 5,
+      "etype": "social_share_information",
+      "actor": "person-003",
+      "target": "person-000"
+    },
+    {
+      "tick": 6,
+      "etype": "social_trade",
+      "actor": "person-003",
+      "target": "person-002"
+    },
+    {
+      "tick": 7,
+      "etype": "social_promise",
+      "actor": "person-001",
+      "target": "person-007"
+    },
+    {
+      "tick": 8,
+      "etype": "social_lie",
+      "actor": "person-005",
+      "target": "person-004"
+    },
+    {
+      "tick": 11,
+      "etype": "social_threaten",
+      "actor": "person-004",
+      "target": "person-000"
+    },
+    {
+      "tick": 13,
+      "etype": "social_apologise",
+      "actor": "person-005",
+      "target": "person-004"
+    },
+    {
+      "tick": 15,
+      "etype": "social_reconcile",
+      "actor": "person-005",
+      "target": "person-004"
+    },
+    {
+      "tick": 43,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 45,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 46,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 47,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 49,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 51,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 53,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 59,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 287,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 289,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 290,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 292,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 294,
+      "etype": "social_request_help",
+      "actor": "person-001",
+      "target": "person-000"
+    },
+    {
+      "tick": 295,
+      "etype": "social_request_help",
+      "actor": "person-002",
+      "target": "person-000"
+    },
+    {
+      "tick": 296,
+      "etype": "social_request_help",
+      "actor": "person-004",
+      "target": "person-000"
+    },
+    {
+      "tick": 297,
+      "etype": "social_request_help",
+      "actor": "person-001",
+      "target": "person-000"
+    },
+    {
+      "tick": 299,
+      "etype": "social_request_help",
+      "actor": "person-004",
+      "target": "person-000"
+    },
+    {
+      "tick": 697,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 699,
+      "etype": "social_request_help",
+      "actor": "person-004",
+      "target": "person-000"
+    }
+  ]
+}

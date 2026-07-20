@@ -1,0 +1,198 @@
+{
+  "ticks": 350,
+  "person_count": 8,
+  "adoptions_observed": 1,
+  "supporters_over_members_histogram": {
+    "7/8": 1
+  },
+  "any_strict_subset": true,
+  "adoption_samples": [
+    {
+      "tick": 282,
+      "group": "group-77ec2beb76de22397715",
+      "members": 8,
+      "supporters": 7,
+      "non_supporters": [
+        "person-004"
+      ],
+      "strict_subset": true
+    }
+  ],
+  "want_holders_min": 0,
+  "want_holders_max": 7,
+  "want_holders_sample_every_25": {
+    "25": 0,
+    "50": 0,
+    "75": 0,
+    "100": 0,
+    "125": 0,
+    "150": 0,
+    "175": 0,
+    "200": 0,
+    "225": 0,
+    "250": 0,
+    "275": 0,
+    "300": 0,
+    "325": 0,
+    "350": 0
+  },
+  "social_event_count": 26,
+  "social_events": [
+    {
+      "tick": 1,
+      "etype": "social_cooperate",
+      "actor": "person-001",
+      "target": "person-007"
+    },
+    {
+      "tick": 2,
+      "etype": "social_repay",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 5,
+      "etype": "social_share_information",
+      "actor": "person-003",
+      "target": "person-000"
+    },
+    {
+      "tick": 6,
+      "etype": "social_trade",
+      "actor": "person-003",
+      "target": "person-002"
+    },
+    {
+      "tick": 7,
+      "etype": "social_promise",
+      "actor": "person-001",
+      "target": "person-007"
+    },
+    {
+      "tick": 8,
+      "etype": "social_lie",
+      "actor": "person-005",
+      "target": "person-004"
+    },
+    {
+      "tick": 11,
+      "etype": "social_threaten",
+      "actor": "person-004",
+      "target": "person-000"
+    },
+    {
+      "tick": 13,
+      "etype": "social_apologise",
+      "actor": "person-005",
+      "target": "person-004"
+    },
+    {
+      "tick": 15,
+      "etype": "social_reconcile",
+      "actor": "person-005",
+      "target": "person-004"
+    },
+    {
+      "tick": 43,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 45,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 46,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 47,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 49,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 51,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 53,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 59,
+      "etype": "social_request_help",
+      "actor": "person-007",
+      "target": "person-001"
+    },
+    {
+      "tick": 287,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 289,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 290,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 292,
+      "etype": "social_request_help",
+      "actor": "person-005",
+      "target": "person-000"
+    },
+    {
+      "tick": 294,
+      "etype": "social_request_help",
+      "actor": "person-001",
+      "target": "person-000"
+    },
+    {
+      "tick": 295,
+      "etype": "social_request_help",
+      "actor": "person-002",
+      "target": "person-000"
+    },
+    {
+      "tick": 296,
+      "etype": "social_request_help",
+      "actor": "person-004",
+      "target": "person-000"
+    },
+    {
+      "tick": 297,
+      "etype": "social_request_help",
+      "actor": "person-001",
+      "target": "person-000"
+    },
+    {
+      "tick": 299,
+      "etype": "social_request_help",
+      "actor": "person-004",
+      "target": "person-000"
+    }
+  ]
+}
