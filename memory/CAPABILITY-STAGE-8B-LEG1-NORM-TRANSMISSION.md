@@ -278,15 +278,19 @@ person who is a **current member of that norm's group**, the carriage domain
 checks whether that person's own entity `action` field (the existing accepted-
 action seam — independently confirmed at `association_contracts.py:212-213`:
 `action = entity.get("action"); action.get("accepted_event_id")` — already used
-by 7A for identical purposes, not invented here) shows a *committed, this-tick*
+by 7A for identical purposes, not invented here), **as visible in the frame
+frozen at the end of the previous tick** (see Commit ordering — no domain sees
+same-tick data, regardless of priority), shows a committed
 `social_request_help` action whose `target_id` is a current carrier of that
 norm. On the 1st such qualifying occurrence (`TRANSMISSION_COUNT = 1`, per
 Decision 3) for a given (norm, non-carrier) pair, a `carrier_record` is written
 for the non-carrier with `source = "transmission"`, `learned_from` = the
 carrier's id, `via_event_id` = the qualifying action's `accepted_event_id`,
-`learned_tick` = the current tick. Idempotent: a `processed_transmission_keys`
-set (mirroring `group_norm`'s `processed_norm_keys` pattern) prevents
-re-triggering on the same qualifying event.
+`learned_tick` = the current (carriage-domain-evaluation) tick — one tick after
+the qualifying action's own accepted tick, per the corrected Commit ordering
+section. Idempotent: a `processed_transmission_keys` set (mirroring
+`group_norm`'s `processed_norm_keys` pattern) prevents re-triggering on the
+same qualifying event.
 
 ### Influence (unchanged guard, new eligibility source)
 
@@ -299,25 +303,76 @@ this leg changes *who is eligible*, never *what the nudge does*.
 
 ## Commit ordering
 
-`group_carriage` runs at **`engine_priority = 86`** — one below `group_norm`
-(87), independently derived from the established, mechanically-repeated pattern
-at each existing layer (association 90 → group_state 89 → group_goal 88 →
-group_norm 87, each new consumer sitting exactly one below what it reads;
-confirmed via direct grep of each domain file's own `engine_priority` line, not
-from the archived module). It pins `group-goal-000` (88) and `group-norm-000`
-(87) — both **higher** priority numbers, both therefore evaluated *after*
-`group_carriage` in the same tick's commit cascade, so `group_carriage` sees
-their state as of the end of the *previous* tick (the same one-tick-lag
-discipline as 8A: a norm formed at tick T is backfilled at T+1; a goal's
-`supporter_ids` update at T is visible to carriage at T+1). It also reads each
-person entity's `action` field — `living_agent_social`/`living_agent_actions`
-commit at **priority 10** (confirmed:
-`living_agent_social.py:521`, `living_agent_actions.py:541`), well *below* 86,
-so those commits happen *earlier* in the same tick's cascade and
-`group_carriage` sees **this tick's** just-committed social actions with **no
-lag** — this is why the transmission trigger can fire same-tick rather than
-one-tick-delayed. Both lags (and the one no-lag case) are documented, not
-incidental.
+**Correction made during Phase D prep (2026-07-20), before any code was
+written** — the paragraph below replaces an incorrect claim in the originally
+confirmed contract. The original text asserted `group_carriage` would see
+*this-tick's* social actions with "no lag" because `living_agent_social` commits
+at a lower `engine_priority` (10) than `group_carriage`'s proposed 86. That
+claim was **wrong**, caught by reading `core/kernel.py` and
+`core/commit_pipeline.py` directly rather than trusting the pattern-extrapolation
+that produced it. It does not change any of the five confirmed decisions,
+`TRANSMISSION_COUNT`, the event type, or the mechanism — it corrects a
+commit-tick arithmetic detail and a mischaracterisation of what `engine_priority`
+governs. Recorded here rather than silently fixed, per the same disclosure
+standard as the rest of this document.
+
+**What `engine_priority` actually governs (verified,
+`core/kernel.py:72-91` + `core/commit_pipeline.py:317-331`):** every domain's
+`activate()` call for tick T reads from **one single `entities_view`**, deep-copied
+**once** at the start of `run_tick`, from `entities` as they stood at the end of
+tick T−1 (`kernel.py:73`: `entities_view = copy.deepcopy(entities)`, before the
+per-domain loop; no domain ever sees another domain's proposal-in-progress this
+same tick — proposals are collected from ALL domains first, then passed as a
+single batch to `run_commit_frame`). **`engine_priority` has no effect on what
+data a domain can read.** It only determines the order proposals are
+*validated and applied* within `run_commit_frame`'s single pass
+(`order_key = (requested_time, phase_rank, engine_priority, content_hash)`,
+ascending — confirmed `commit_pipeline.py:99-100,331,337`), where each
+proposal's preconditions are checked against `entities` as **progressively
+mutated by earlier-in-this-pass commits** (`commit_pipeline.py:9-15`, its own
+docstring: "commits proposals ONE AT A TIME... re-validates preconditions
+against the progressively-mutated state before each commit"). Committing at a
+lower priority number means your pinned-revision precondition is checked
+*before* a higher-priority-number proposal has had a chance to bump that
+revision this tick — avoiding a same-tick stale-precondition rejection. It says
+nothing about visibility during proposal-*building*, which is always frozen at
+end-of-T−1 for every domain, without exception.
+
+**Corrected statement:** `group_carriage` runs at **`engine_priority = 86`** —
+one below `group_norm` (87), independently derived from the established,
+mechanically-repeated pattern at each existing layer (association 90 →
+group_state 89 → group_goal 88 → group_norm 87, each new consumer sitting
+exactly one below what it reads; confirmed via direct grep of each domain
+file's own `engine_priority` line). Being one below `group_norm` means its
+proposal's pinned `group-goal-000` (88) and `group-norm-000` (87) revisions are
+revalidated *before* those two domains' own proposals get a chance to bump them
+this tick — avoiding a same-tick stale-precondition rejection, the same
+discipline 8A applied one layer up. **But data visibility has nothing to do
+with priority: `group_carriage` sees `group-goal-000`, `group-norm-000`, AND
+every person's `action` field — all of it — as of the end of the *previous*
+tick, universally, for every registry it reads, with no exception for
+`living_agent_social`'s low priority number.** A norm formed at tick T is
+backfilled at T+1 (unchanged from the original claim). A qualifying
+`social_request_help` action **accepted** at tick T is **detected and turned
+into a transmission proposal at tick T+1**, not tick T (corrected — the
+original claimed same-tick detection). This does not change `TRANSMISSION_COUNT`
+or which event qualifies; it changes only the tick at which the resulting
+`carrier_record` is stamped, consistent with 8A's own convention of never
+backdating a commit to the tick that caused it (norm formation itself is
+stamped at the domain's own evaluation tick, one after the causing adoption,
+not backdated to the adoption's tick).
+
+**Consequence for the measured evidence:** the one qualifying event in the
+probe data is an **accepted event at tick 699**. Under the corrected model,
+`group_carriage` (once implemented and enabled) would detect it and commit the
+resulting transmission `carrier_record` at **tick 700**, with `via_event_id`
+referencing the tick-699 event and `learned_tick = 700`. This is a relabelling
+of *when the record is stamped*, not a change to *whether* the transmission
+fires — the underlying accepted event, its actor/target, and its type are
+unchanged. Every other reference to "tick 699" elsewhere in this document
+describes the underlying accepted event (an already-committed, immutable fact
+from the probe run) and is left as-is; only the *carriage domain's own*
+commit tick is corrected to 700.
 
 ## Validation (re-derivation + byte-equality, mirroring 8A)
 
@@ -410,11 +465,14 @@ or player-facing surface. Widening the qualifying-event-type set beyond
    proven by item 1's synthetic fixture, per the confirmed rider): the unseeded
    1,000-tick `collective_groups` run backfills carriage for all 7 formations
    (49 records, `person-004` excluded from all 7 — already measured, Decision
-   1) **and** shows **exactly the one** measured transmission event (tick 699,
-   `person-004` learns `shelter_upkeep_norm` on `group-77ec2beb76de22397715`
-   from `person-000`) fire through the real pipeline, with 0 deaths, survival
-   dominant. This item confirms the real commit pipeline *reaches* the
-   machinery under organic conditions; it is not the correctness proof.
+   1) **and** shows **exactly the one** measured transmission event — the
+   qualifying `social_request_help` action accepted at tick 699, detected and
+   committed as a `carrier_record` at tick 700 per the corrected Commit
+   ordering section — fire through the real pipeline (`person-004` learns
+   `shelter_upkeep_norm` on `group-77ec2beb76de22397715` from `person-000`),
+   with 0 deaths, survival dominant. This item confirms the real commit
+   pipeline *reaches* the machinery under organic conditions; it is not the
+   correctness proof.
 6. **Registry size measurement (confirmed rider, 2026-07-20):** the first
    Phase D run that exercises `group-carriage-registry-v1` (integrated test or
    the organic run, whichever first writes carrier records) records the
@@ -433,11 +491,12 @@ or player-facing surface. Widening the qualifying-event-type set beyond
 
 - **(a) Blocking measurement.** "Verifiably influenced on the new carrier"
   (the acceptance item's own phrase, continuation prompt line 121) requires a
-  `REPAIR_SHELTER` candidate to exist for `person-004` at or after tick 699 (the
-  only transmission event). The overlap probe (item 1, this doc) measures
+  `REPAIR_SHELTER` candidate to exist for `person-004` at or after tick 700 (the
+  tick the one transmission event actually commits, per the corrected Commit
+  ordering section). The overlap probe (item 1, this doc) measures
   `REPAIR_SHELTER` candidates existing **only** on ticks 1–236, all of them
   *before* any norm exists (first formation at 683) and therefore before
-  transmission is even possible. No tick from 699 through 1000 has a
+  transmission is even possible. No tick from 700 through 1000 has a
   `REPAIR_SHELTER` candidate for anyone. This is identically the disjoint-window
   cause recorded in 8A's gate-5 — not a new defect, the same one, one hop
   further down the causal chain.
