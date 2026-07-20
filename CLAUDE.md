@@ -21,6 +21,9 @@ is the index, not the brain dump. Keep it under 150 lines.
   user's confirmation in a later turn.
 - One leg per session (minimum one phase per session). If context runs low,
   write a Session handoff note into the leg doc and tell the user to restart.
+- STOPs are for judgment calls: contracts, scope, risk, authority. Mechanical
+  process rules (e.g. diagnostic escalation order) are standing rules
+  enforced by review, not per-instance STOPs.
 
 ## Hard rails (never, without explicit user confirmation at a STOP)
 
@@ -86,6 +89,14 @@ is the index, not the brain dump. Keep it under 150 lines.
   "Good enough, ship" is a valid and expected verdict.
 - Alarm threshold: if your proposed verification plan is longer than the
   diff it verifies, cut the plan before presenting it, and say so.
+- Discrepancy investigations: narrowest falsifying diagnostic first (targeted
+  trace or dump of the divergent window); a full harness re-run is the
+  escalation after an inconclusive narrow check, never the opening move.
+- Prefer deterministic fixture/injection (Tier A) proof wherever a claim can
+  be shown directly; reserve organic-run evidence for claims that require
+  unscripted emergence.
+- Before building new probe or scenario infrastructure, check whether an
+  existing probe or fixture extends to answer the question.
 
 ## Runs and tests
 
@@ -98,7 +109,9 @@ is the index, not the brain dump. Keep it under 150 lines.
 - Delegate probes to the `probe-runner` subagent; delegate summary extraction
   from existing output files to `log-summarizer`. Adversarial review remains
   an independent agent (Codex flow) — never self-review, and record the
-  independence level honestly in every report.
+  independence level honestly in every report. Stage-end reviews follow
+  `memory/ADVERSARIAL-REVIEW-PROTOCOL.md`: claims attacked blind-first,
+  findings ledger (FIX / ACCEPT / DISPUTE) ships in the close-out.
 
 ## Model / cost discipline
 
