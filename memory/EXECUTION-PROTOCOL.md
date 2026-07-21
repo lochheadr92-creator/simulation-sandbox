@@ -1,6 +1,6 @@
 # Execution Protocol — capability-stage delivery (stage-agnostic)
 
-**Version: 1.1 (2026-07-19) · Status: PROPOSED — uncommitted draft, user review pending**
+**Version: 1.2 (2026-07-22) · Status: PROPOSED — uncommitted draft, user review pending**
 
 Scope: binding process for every capability-stage leg from **Stage 9 onward**.
 Stage 8 remains governed by `STAGE-8-CONTINUATION-PROMPT.md` (in flight; a leg
@@ -33,7 +33,12 @@ harness conduct → CLAUDE.md.
    contract without a pasted distribution. Organic reachability is probed
    BEFORE the contract is written: every organic gate item cites probe
    evidence that its conditions can co-occur in the standing scenario, or
-   carries its taxonomy classification up front.
+   carries its taxonomy classification up front. *(v1.2)* Where a leg
+   introduces decision logic that cannot exist before implementation,
+   reachability is instead deferred to a post-build acceptance gate per
+   invariant 12(b): the contract states this classification up front,
+   pre-registers the acceptance gates, and the probe phase still measures
+   every constant it can from committed runs.
 2. **Contract** — the leg doc in `memory/`, mirroring the established
    structure (goal, organic-reachability evidence, agency model, mechanism,
    commit-order analysis, validation, contracts table, justified constants
@@ -113,8 +118,16 @@ stage's kickoff. This wording is the forward authority for new stages.
     proven by test, per leg.
 11. Focused tests are never sufficient; the integrated churn test always
     ships.
-12. Organic reachability is probed before a contract is written, per the
-    lifecycle.
+12. Organic reachability, two modes: (a) features extending behaviour the
+    simulation already performs organically — probed before the contract is
+    written, per the lifecycle; (b) features introducing decision logic that
+    cannot exist before implementation — a post-build acceptance gate: a
+    bounded probe-build against pre-registered gates (run length, gate
+    counts, threshold-provenance rules fixed before the build, never revised
+    after a failed run), at most one evidence-based calibration, rollback of
+    the capability from mainline on failure, and no dependent work before
+    the gate passes. Only the ratified text governs; in-conversation
+    reinterpretations carry no authority.
 
 ## Deferral mechanics
 
@@ -173,6 +186,14 @@ STOP.
 
 ## Changelog
 
+- **v1.2 (2026-07-22)** — invariant 12 amended to two-mode form: probe-before-
+  contract retained for extensions of existing organic behaviour; a post-build
+  acceptance gate (bounded probe-build, pre-registered gates, single
+  evidence-based calibration, rollback on failure, no dependent work before
+  pass) added for genuinely new decision logic. Lifecycle step 1 gains the
+  matching classification carve-out. Motivated by the Stage 8C aid-lifecycle
+  finding that reachability of unbuilt decision logic cannot be probed
+  read-only; ratified by the user at the Stage 8C Phase 1 STOP.
 - **v1.1 (2026-07-19)** — gate-metrics upgrade (readiness-audit workstream 3,
   ratified 2026-07-19): **Stability** and **Robustness (multi-seed)** clauses
   added to the gate template. Additionally directed into the Stage 8B–8D

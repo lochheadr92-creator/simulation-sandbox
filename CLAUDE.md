@@ -8,7 +8,7 @@ is the index, not the brain dump. Keep it under 150 lines.
 ## Session start (every session, before acting)
 
 1. `git log --oneline -10` and `git status`.
-2. Read `memory/STAGE-8-CONTINUATION-PROMPT.md` and the active leg's contract doc.
+2. Read `AGENT_WORKFLOW.md` and the active leg's contract doc.
 3. Restate your position in one paragraph. Then act.
 
 ## STOP discipline
@@ -55,9 +55,12 @@ is the index, not the brain dump. Keep it under 150 lines.
 9. Culture is canonical decision-affecting state, never generated text.
 10. Validators re-derive + exact equality; forged-field rejection tested.
 11. Every leg carries the integrated full-kernel same-frame churn test.
-12. Organic reachability is probed BEFORE a contract is written — every
-    organic gate item cites probe evidence its conditions can co-occur, or
-    carries its deferral classification up front.
+12. Organic reachability (v2, 2026-07-22): extensions of existing organic
+    behaviour — probed BEFORE the contract; probe evidence or deferral
+    classification up front. Genuinely new decision logic — post-build
+    acceptance gate: bounded probe-build, pre-registered gates, one
+    evidence-based calibration max, rollback on failure, no dependent work
+    before the gate passes. Only the ratified doc text governs.
 
 ## Reporting rules
 
