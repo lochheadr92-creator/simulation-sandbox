@@ -1,0 +1,26 @@
+{
+  "ticks": 1000,
+  "enabled_domains": [
+    "weather",
+    "ecology",
+    "lifecycle",
+    "living_settlement",
+    "animal",
+    "association",
+    "group_state",
+    "group_collective",
+    "group_goal",
+    "group_norm",
+    "group_carriage"
+  ],
+  "boost_firing_check": {
+    "firing_count": 0,
+    "firing_tick_count": 0,
+    "firing_ticks": [],
+    "distinct_entities_boosted": 0,
+    "distinct_entities": [],
+    "distinct_targets": 0,
+    "distinct_target_entities": [],
+    "firings": []
+  }
+}

@@ -17,6 +17,7 @@ from domains.group_state_domain import GroupStateDomain
 from domains.group_collective_domain import GroupCollectiveDomain
 from domains.group_goal_domain import GroupGoalDomain
 from domains.group_norm_domain import GroupNormDomain
+from domains.group_carriage_domain import GroupCarriageDomain
 
 DOMAIN_REGISTRY = {
     "ecology": EcologyDomain(),
@@ -30,4 +31,5 @@ DOMAIN_REGISTRY = {
     "group_collective": GroupCollectiveDomain(),
     "group_goal": GroupGoalDomain(),
     "group_norm": GroupNormDomain(),
+    "group_carriage": GroupCarriageDomain(),
 }

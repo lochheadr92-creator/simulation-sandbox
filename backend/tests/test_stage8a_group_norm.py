@@ -41,6 +41,12 @@ from domains.living_settlement_domain import (
     NORM_REPAIR_INCREMENT,
     _apply_group_norm_influence,
 )
+from domains.group_carriage_contracts import (
+    GROUP_CARRIAGE_REGISTRY_ID,
+    GROUP_CARRIAGE_VERSION,
+    carrier_key,
+    empty_group_carriage_registry,
+)
 
 LINEAGE = "stage8a-lineage"
 RUN = "stage8a-run"
@@ -312,12 +318,29 @@ def _norm_registry(*, group_id=GID, target=SHELTER, tick=10, status="active",
 
 def _influence_entities(*, members=("p-a", "p-b"), norm_status="active",
                         recognised=True, schema=GROUP_NORM_REGISTRY_VERSION,
-                        deadline=None):
+                        deadline=None, carriers=()):
+    """`carriers`: person_ids to grant carriage of the norm to (Stage 8B Leg 1
+    eligibility source - see memory/CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md
+    Decision 1). Defaults to none: a bare member of the recognised group is NOT
+    eligible on its own since carriage confirmed Leg 1, exclusive of membership."""
     ents = {m: _person(m, want=False) for m in members}  # NOTE: no improve_shelter want
     ents[ASSOCIATION_REGISTRY_ID] = _assoc(members, recognised=recognised)
     reg = _norm_registry(status=norm_status, deadline=deadline)
     reg["schema_version"] = schema
     ents[GROUP_NORM_REGISTRY_ID] = reg
+    if carriers:
+        nid = group_norm_id(GID, NORM_TYPE)
+        carriage = empty_group_carriage_registry(0)
+        for pid in carriers:
+            key = carrier_key(nid, pid)
+            carriage["carriers"][key] = {
+                "schema_version": GROUP_CARRIAGE_VERSION, "group_id": GID,
+                "source": "formation_backfill", "learned_from": None,
+                "via_event_id": "evt", "learned_tick": 0, "revision": 1,
+                "created_event_id": "evt", "last_event_id": "evt",
+                "pending_event_tick": None, "pending_transition": None,
+            }
+        ents[GROUP_CARRIAGE_REGISTRY_ID] = carriage
     return ents
 
 
@@ -330,25 +353,42 @@ def _survival_cand(goal="DRINK_WATER", score=100):
     return {"goal": goal, "direct_action_type": "drink", "score": score}
 
 
-def test_influence_boosts_repair_for_current_member_without_want():
-    # Transmission: a member holding NO improve_shelter want is still nudged.
-    ents = _influence_entities()
+def test_influence_boosts_carrier_without_want():
+    # Stage 8B Leg 1 (confirmed contract, Decision 1): a CARRIER holding NO
+    # improve_shelter want is still nudged - eligibility is carriage, not the
+    # want, and (per the next test) not membership either.
+    ents = _influence_entities(carriers=("p-a",))
     cands = [_repair_cand(score=100)]
     out = _apply_group_norm_influence(cands, "p-a", ents, 20)
     assert out[0]["score"] == 100 + NORM_REPAIR_INCREMENT
 
 
-def test_influence_transmits_to_later_joiner():
-    # p-c joins the group after the norm formed; it inherits the nudge.
-    ents = _influence_entities(members=("p-a", "p-b"))
-    ents["p-c"] = _person("p-c", want=False)
-    ents[ASSOCIATION_REGISTRY_ID] = _assoc(("p-a", "p-b", "p-c"))
+def test_influence_skips_member_without_carriage():
+    # Stage 8B Leg 1 (confirmed contract, Decision 1): membership alone is no
+    # longer sufficient. Supersedes 8A's original "implicit coverage via
+    # current membership" - p-a is a recognised-group member here but holds no
+    # carrier_record (the default _influence_entities has no carriers), so the
+    # nudge does not fire even though it did under 8A's own membership rule.
+    ents = _influence_entities()
+    cands = [_repair_cand(score=100)]
+    out = _apply_group_norm_influence(cands, "p-a", ents, 20)
+    assert out[0]["score"] == 100  # unchanged: member but not a carrier
+
+
+def test_influence_boosts_carrier_independent_of_current_membership():
+    # Stage 8B Leg 1 (confirmed contract, Decision 6): carriage outlives
+    # membership - a carrier who is no longer even a current recognised-group
+    # member is still nudged. Supersedes 8A's "later joiner inherits via
+    # membership" test: under carriage-only eligibility, join/leave timing is
+    # irrelevant: only holding a carrier_record is.
+    ents = _influence_entities(members=("p-a", "p-b"), carriers=("p-c",))
+    ents["p-c"] = _person("p-c", want=False)  # p-c is NOT in the association's members
     cands = [_repair_cand(score=100)]
     out = _apply_group_norm_influence(cands, "p-c", ents, 20)
     assert out[0]["score"] == 100 + NORM_REPAIR_INCREMENT
 
 
-def test_influence_skips_non_member():
+def test_influence_skips_non_carrier_non_member():
     ents = _influence_entities()
     ents["p-z"] = _person("p-z", want=False)
     cands = [_repair_cand(score=100)]
@@ -357,14 +397,18 @@ def test_influence_skips_non_member():
 
 
 def test_influence_only_boosts_the_norm_shelter():
-    ents = _influence_entities()
+    # p-a IS a carrier here (carriers=("p-a",)) so this actually exercises the
+    # target-scoping gate, not the carriage gate proven separately above.
+    ents = _influence_entities(carriers=("p-a",))
     cands = [_repair_cand(target="other-shelter", score=100)]
     out = _apply_group_norm_influence(cands, "p-a", ents, 20)
     assert out[0]["score"] == 100  # different target, no boost
 
 
 def test_influence_never_overrides_urgent_survival():
-    ents = _influence_entities()
+    # p-a IS a carrier here so this exercises the survival-dominance guard,
+    # not the carriage gate proven separately above.
+    ents = _influence_entities(carriers=("p-a",))
     cands = [_repair_cand(score=100), _survival_cand(score=100)]  # survival >= base
     out = _apply_group_norm_influence(cands, "p-a", ents, 20)
     repair = next(c for c in out if c["goal"] == "REPAIR_SHELTER")
@@ -378,11 +422,31 @@ def test_influence_inert_without_registry():
     assert out[0]["score"] == 100
 
 
+def test_influence_no_carriage_registry_is_honest_default_not_membership_fallback():
+    # Stage 8B Leg 1 (confirmed contract): with no group-carriage-000 registry
+    # at all (e.g. group_carriage not enabled in a scenario), NO ONE is ever
+    # eligible - it never falls back to membership. p-a is a valid current
+    # member of a live norm's group and would have been boosted under 8A's own
+    # rule; it is not boosted here.
+    ents = _influence_entities()  # no carriers= -> no GROUP_CARRIAGE_REGISTRY_ID key at all
+    assert GROUP_CARRIAGE_REGISTRY_ID not in ents
+    out = _apply_group_norm_influence([_repair_cand(score=100)], "p-a", ents, 20)
+    assert out[0]["score"] == 100
+
+
+def test_influence_wrong_version_carriage_registry_is_inert():
+    ents = _influence_entities(carriers=("p-a",))
+    ents[GROUP_CARRIAGE_REGISTRY_ID]["schema_version"] = "wrong-version"
+    out = _apply_group_norm_influence([_repair_cand(score=100)], "p-a", ents, 20)
+    assert out[0]["score"] == 100
+
+
 def test_influence_survival_guard_uses_final_score_total():
     # Adversarial-review regression: the hook runs AFTER scoring, so a survival
     # goal whose urgency lives in score_total (low raw score) must still suppress
     # the nudge. The OLD pre-scoring guard (comparing raw score) would wrongly boost.
-    ents = _influence_entities()
+    # p-a IS a carrier here so this exercises the survival guard specifically.
+    ents = _influence_entities(carriers=("p-a",))
     repair = {"goal": "REPAIR_SHELTER", "direct_action_type": "repair",
               "score": 100, "score_total": 100, "target_entity_id": SHELTER}
     urgent_food = {"goal": "DRINK_WATER", "direct_action_type": "drink",
@@ -393,7 +457,7 @@ def test_influence_survival_guard_uses_final_score_total():
 
 
 def test_influence_boosts_score_total_when_survival_low():
-    ents = _influence_entities()
+    ents = _influence_entities(carriers=("p-a",))
     repair = {"goal": "REPAIR_SHELTER", "direct_action_type": "repair",
               "score": 100, "score_total": 100, "target_entity_id": SHELTER}
     weak_food = {"goal": "DRINK_WATER", "direct_action_type": "drink",
@@ -405,12 +469,14 @@ def test_influence_boosts_score_total_when_survival_low():
 
 
 def test_influence_skips_expired_or_past_deadline_norm():
+    # p-a IS a carrier in both cases here so this exercises the norm-liveness
+    # gate specifically, not the carriage gate proven separately above.
     # committed-expired norm
-    ents = _influence_entities(norm_status="expired")
+    ents = _influence_entities(norm_status="expired", carriers=("p-a",))
     out = _apply_group_norm_influence([_repair_cand(score=100)], "p-a", ents, 20)
     assert out[0]["score"] == 100
     # active record but past its decay deadline (expiry not yet committed)
-    ents2 = _influence_entities(deadline=15)
+    ents2 = _influence_entities(deadline=15, carriers=("p-a",))
     out2 = _apply_group_norm_influence([_repair_cand(score=100)], "p-a", ents2, 50)
     assert out2[0]["score"] == 100
 

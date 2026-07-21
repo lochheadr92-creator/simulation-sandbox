@@ -47,6 +47,11 @@ from domains.group_norm_contracts import (
     NORM_TYPE as GROUP_NORM_TYPE,
     _norm_is_live,
 )
+from domains.group_carriage_contracts import (
+    GROUP_CARRIAGE_REGISTRY_ID,
+    GROUP_CARRIAGE_REGISTRY_VERSION,
+    carrier_key,
+)
 
 
 SOCIAL_DIRECT_ACTIONS = frozenset({
@@ -176,29 +181,42 @@ NORM_REPAIR_INCREMENT = 150  # bounded Stage 8A cultural nudge (below the 7D 250
 
 
 def _apply_group_norm_influence(candidates, entity_id, entities, tick):
-    """Stage 8A read-only norm influence: raise REPAIR_SHELTER priority for ANY
-    current living member of a group that holds a live ``shelter_upkeep_norm`` for
-    that shelter - whether or not the member individually holds the improve_shelter
-    want. This is the transmission contrast with the 7D hook: a member recognised
-    into the group after the norm formed inherits the nudge without re-earning it.
+    """Stage 8B Leg 1 read-only norm influence: raise REPAIR_SHELTER priority for
+    a CARRIER of a live ``shelter_upkeep_norm`` for that shelter - whether or not
+    the carrier individually holds the improve_shelter want. Eligibility changed
+    from Stage 8A's current-group-membership to Stage 8B Leg 1's carriage (see
+    memory/CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md, Decision 1): exactly
+    one source of truth grants the nudge, and it is now carriage, never
+    membership. A person becomes a carrier once, via formation backfill or
+    transmission (domains/group_carriage_contracts.py) - never automatically by
+    joining or leaving a group.
 
-    Inert when no valid group-norm registry exists (e.g. the living_settlement
-    scenario), preserving the frozen Stage 6 determinism hash. It stays
-    member-grounded (it only boosts an already-available REPAIR_SHELTER candidate,
-    never creating one) and never overrides an urgent survival candidate."""
+    Inert when no valid group-norm registry OR no valid group-carriage registry
+    exists (e.g. the living_settlement scenario, or group_carriage not enabled),
+    preserving the frozen Stage 6 determinism hash: with no carriage registry,
+    no one is ever eligible, so the nudge never fires - the honest default, not
+    a membership fallback. It stays member-grounded (it only boosts an
+    already-available REPAIR_SHELTER candidate, never creating one) and never
+    overrides an urgent survival candidate."""
     registry = entities.get(GROUP_NORM_REGISTRY_ID)
     if not isinstance(registry, dict) or registry.get("schema_version") != GROUP_NORM_REGISTRY_VERSION:
         return candidates
-    association = entities.get(ASSOCIATION_REGISTRY_ID)
-    recognised = _recognised_groups(association) if isinstance(association, dict) else {}
+    carriage_registry = entities.get(GROUP_CARRIAGE_REGISTRY_ID)
+    carriers = (
+        (carriage_registry.get("carriers") or {})
+        if isinstance(carriage_registry, dict)
+        and carriage_registry.get("schema_version") == GROUP_CARRIAGE_REGISTRY_VERSION
+        else {}
+    )
     targets = set()
     for norm in (registry.get("norms") or {}).values():
         if norm.get("norm_type") != GROUP_NORM_TYPE or not _norm_is_live(norm, tick):
             continue
-        group = recognised.get(norm.get("group_id")) or {}
-        # Transmission: eligibility is CURRENT recognised-group membership, with no
-        # improve_shelter-want requirement (that is the whole point of a norm).
-        if entity_id not in (group.get("member_ids") or []):
+        # Carriage, not membership: eligibility is holding a carrier_record for
+        # this specific norm, independent of current group membership (a
+        # carrier who leaves keeps the norm; a current member who never
+        # earned carriage is not nudged).
+        if carrier_key(norm.get("norm_id"), entity_id) not in carriers:
             continue
         if norm.get("target_id"):
             targets.add(norm["target_id"])

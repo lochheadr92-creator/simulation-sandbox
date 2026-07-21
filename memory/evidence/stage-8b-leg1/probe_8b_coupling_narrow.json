@@ -1,0 +1,49 @@
+{
+  "question": "Did adding group_norm (8A) shift UNRELATED domains' behaviour, as adding group_carriage (8B Leg 1) was measured to do?",
+  "ticks_run": 286,
+  "max_ticks_configured": 720,
+  "config_a_7D_baseline": [
+    "weather",
+    "ecology",
+    "lifecycle",
+    "living_settlement",
+    "animal",
+    "association",
+    "group_state",
+    "group_collective",
+    "group_goal"
+  ],
+  "config_b_8A": [
+    "weather",
+    "ecology",
+    "lifecycle",
+    "living_settlement",
+    "animal",
+    "association",
+    "group_state",
+    "group_collective",
+    "group_goal",
+    "group_norm"
+  ],
+  "comparison_excludes_event_types": [
+    "group_carry_norm",
+    "group_form_norm"
+  ],
+  "first_tick_group_norm_committed_its_own_event": 283,
+  "ANSWER_first_divergent_tick_excluding_new_domains_own_events": 286,
+  "divergence_detail": {
+    "tick": 286,
+    "config_a_event_count_excl_new_domain": 19,
+    "config_b_event_count_excl_new_domain": 18,
+    "present_only_in_A": [
+      [
+        "social_request_help",
+        "person-005"
+      ]
+    ],
+    "present_only_in_B": []
+  },
+  "social_events_A_count": 18,
+  "social_events_B_count": 17,
+  "same_actor_target_type_at_different_tick": []
+}

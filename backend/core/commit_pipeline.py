@@ -45,6 +45,10 @@ from domains.group_norm_contracts import (
     stamp_group_norm_provenance,
     validate_group_norm_proposal,
 )
+from domains.group_carriage_contracts import (
+    stamp_group_carriage_provenance,
+    validate_group_carriage_proposal,
+)
 
 PHASE_RANK = {"environment": 0, "agent": 1}
 
@@ -406,6 +410,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             ))
             continue
 
+        group_carriage_err = validate_group_carriage_proposal(proposal, entities)
+        if group_carriage_err:
+            rejected.append(_reject(
+                proposal, "initial_validation", group_carriage_err,
+                group_carriage_err, tick,
+            ))
+            continue
+
         if not proposal.get("is_exogenous"):
             causal_parents = proposal.get("causal_parent_event_ids") or []
             if not causal_parents:
@@ -445,6 +457,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         stamp_collective_action_provenance(proposal, mutation, event_id)
         stamp_group_goal_provenance(proposal, mutation, event_id)
         stamp_group_norm_provenance(proposal, mutation, event_id)
+        stamp_group_carriage_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
         post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))

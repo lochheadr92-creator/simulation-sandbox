@@ -1,0 +1,97 @@
+{
+  "question": "Does adding `group_carriage` to collective_groups.enabled_domains change WHEN the person-004 -> person-000 social_request_help interaction is accepted (698 vs 699)?",
+  "seed": "living-agents-stage6",
+  "scenario": "collective_groups",
+  "ticks": 1000,
+  "probe_script": "backend/tools/_probe_8b_tick_discrepancy.py",
+  "method": "Reused build_genesis/run_tick exactly as backend/tools/_probe_8b_carriage.py. Read-only; no simulation code modified. Step 1: ran the current committed pipeline (group_carriage enabled, as currently present -- uncommitted -- in scenarios/collective_groups.py). Step 2: temporarily removed \"group_carriage\" from collective_groups.enabled_domains, re-ran the identical 1000-tick probe, then restored the file to its exact prior (uncommitted) content.",
+
+  "PRE_EXISTING_CONDITION_FOUND": {
+    "label": "VERIFIED",
+    "finding": "backend/scenarios/collective_groups.py already carried an UNCOMMITTED, unstaged working-tree modification before this probe touched anything: `\"group_carriage\"` appended to `enabled_domains` and `capability_stage` bumped from \"8A\" to \"8B\". This was not listed in the session's initial `git status` snapshot (which showed only frontend cache files and three untracked files: domains/group_carriage_contracts.py, tools/_probe_8b_carriage.py, tools/_probe_8b_leg1.py). `git log --oneline -3 -- backend/scenarios/collective_groups.py` shows the file's last commit is 9cff3f62 (Stage 8A), which does NOT include group_carriage.",
+    "evidence": "git diff scenarios/collective_groups.py (before any edit by this probe):\n--- a/backend/scenarios/collective_groups.py\n+++ b/backend/scenarios/collective_groups.py\n@@ -68,11 +68,12 @@\n         \"group_norm\",\n+        \"group_carriage\",\n     ],\n-        \"capability_stage\": \"8A\",\n+        \"capability_stage\": \"8B\","
+  },
+
+  "STEP_1_current_pipeline_group_carriage_enabled": {
+    "label": "VERIFIED",
+    "result": "Exactly ONE social_request_help event from person-004 to person-000 exists in the whole 1000-tick run. It is accepted at TICK 698, id `evt-698-13861-115d344e`.",
+    "evidence": {
+      "matching_event": {
+        "id": "evt-698-13861-115d344e",
+        "event_type": "social_request_help",
+        "entity_id": "person-004",
+        "simulation_time": 698,
+        "social_action": {"actor_id": "person-004", "target_id": "person-000", "action_type": "request_help"}
+      },
+      "evt_698_prefixed_match_found": true,
+      "evt_699_prefixed_match_found": false,
+      "all_person004_to_person000_social_request_help_whole_run": [
+        {"id": "evt-296-5874-1dde079e", "simulation_time": 296},
+        {"id": "evt-299-5920-002d45ab", "simulation_time": 299},
+        {"id": "evt-698-13861-115d344e", "simulation_time": 698}
+      ],
+      "adjacent_context_evt_699": {
+        "id": "evt-699-13885-c979b581",
+        "event_type": "group_carry_norm",
+        "entity_id": "group-carriage-000",
+        "simulation_time": 699,
+        "note": "This is the group_carriage domain's own transmission-detection proposal, committed one tick after the qualifying action (698) per its documented one-tick observation lag (see domains/group_carriage_contracts.py module docstring: 'a qualifying social action accepted at tick T is detected and turned into a transmission event at T+1'). This explains why the carrier record's via_event_id cites evt-698-... while its own learned_tick is 699 -- that field pair is internally consistent and NOT itself a bug."
+      },
+      "raw_output_file": "scratchpad/probe_tick_discrepancy_enabled.json (session-local; wall_clock_seconds 478.12)"
+    }
+  },
+
+  "STEP_2_comparison_group_carriage_disabled": {
+    "label": "VERIFIED",
+    "edit_made": "Removed \"group_carriage\" from enabled_domains in scenarios/collective_groups.py (capability_stage label left at \"8B\", presentation-only, does not affect simulation behaviour). All other code held fixed at the current working-tree state.",
+    "result": "With group_carriage disabled, the SAME person-004 -> person-000 social_request_help event is accepted at TICK 699, id `evt-699-13877-06e25eb2` -- matching the earlier evidence file's tick=699 record exactly, and NOT at 698.",
+    "evidence": {
+      "matching_event": {
+        "id": "evt-699-13877-06e25eb2",
+        "event_type": "social_request_help",
+        "entity_id": "person-004",
+        "simulation_time": 699,
+        "social_action": {"actor_id": "person-004", "target_id": "person-000", "action_type": "request_help"}
+      },
+      "all_person004_to_person000_social_request_help_whole_run": [
+        {"id": "evt-296-5874-1dde079e", "simulation_time": 296},
+        {"id": "evt-299-5920-002d45ab", "simulation_time": 299},
+        {"id": "evt-699-13877-06e25eb2", "simulation_time": 699}
+      ],
+      "raw_output_file": "scratchpad/probe_tick_discrepancy_disabled.json (session-local; wall_clock_seconds 492.69)"
+    },
+    "revert_confirmed": {
+      "label": "VERIFIED",
+      "evidence": "git diff scenarios/collective_groups.py, taken AFTER restoring the file post-experiment, is byte-identical to the pre-existing uncommitted diff captured before the experiment (group_carriage present, capability_stage \"8B\"):\n--- a/backend/scenarios/collective_groups.py\n+++ b/backend/scenarios/collective_groups.py\n@@ -68,11 +68,12 @@\n         \"group_norm\",\n+        \"group_carriage\",\n     ],\n-        \"capability_stage\": \"8A\",\n+        \"capability_stage\": \"8B\",\nNote: this restores the file to the state it was in when this probe started (the pre-existing uncommitted modification), not to HEAD -- HEAD lacks group_carriage entirely and reverting to HEAD would have been a materially different (and out-of-scope) change."
+    }
+  },
+
+  "GROUND_TRUTH": {
+    "label": "VERIFIED",
+    "statement": "There is exactly ONE person-004 -> person-000 social_request_help event in the run (not two). Its accepted tick is NOT invariant to enabling group_carriage: it is tick 699 when group_carriage is disabled (matching the earlier probe_8b_carriage_1000.json evidence, and matching HEAD's committed enabled_domains list) and tick 698 when group_carriage is enabled (matching the current probe_8b_carriage_registry_state_1000.json via_event_id evidence, evt-698-13861-115d344e). The event_id tick-698 in the carrier record's via_event_id is therefore ground truth for the underlying action's accepted tick IN THE group_carriage-ENABLED CONFIGURATION -- but that configuration itself produces a different action-acceptance tick than the group_carriage-DISABLED configuration for this same actor/action. The earlier probe's tick=699 recording was not a probe bug; it reflects a genuinely different trajectory for the group_carriage-disabled run."
+  },
+
+  "ACCEPTED_EVENT_COUNT_COMPARISON_690_702": {
+    "label": "VERIFIED",
+    "with_group_carriage":    {"690":21,"691":19,"692":19,"693":19,"694":19,"695":21,"696":18,"697":19,"698":18,"699":18,"700":22,"701":21,"702":21},
+    "without_group_carriage": {"690":21,"691":19,"692":19,"693":19,"694":19,"695":21,"696":18,"697":19,"698":17,"699":18,"700":22,"701":21,"702":20},
+    "observation": "Ticks 690-697 (8 ticks) have byte-identical accepted-event counts between the two configurations. Divergence first appears at tick 698 (18 vs 17 -- the shifted social_request_help event) and reappears at tick 702 (21 vs 20, a further downstream divergence not explained by the single shifted event alone, evidencing the trajectories continue to differ after tick 698 rather than re-converging)."
+  },
+
+  "MECHANISM_IDENTIFIED": {
+    "label": "VERIFIED (code-level) / LIKELY (as the specific causal chain for this exact tick shift)",
+    "root_cause": "backend/domains/living_settlement_domain.py:_apply_group_norm_influence (lines ~183-236) is a Stage 8B Leg 1 hook, already present and wired into candidate scoring (called at line 553: `candidates = _apply_group_norm_influence(candidates, entity_id, frame.entities, tick)`), that boosts REPAIR_SHELTER candidate scores for any person who is a CARRIER (per group-carriage-000) of a live shelter_upkeep_norm targeting that shelter. Per its own docstring: 'Inert when no valid group-norm registry OR no valid group-carriage registry exists (e.g. the living_settlement scenario, or group_carriage not enabled) ... with no carriage registry, no one is ever eligible, so the nudge never fires.' This is confirmed by code reading, not simulation: `carriage_registry = entities.get(GROUP_CARRIAGE_REGISTRY_ID); carriers = (...) if isinstance(carriage_registry, dict) and carriage_registry.get('schema_version') == GROUP_CARRIAGE_REGISTRY_VERSION else {}` -- with group_carriage disabled, GROUP_CARRIAGE_REGISTRY_ID never exists in entities, so `carriers` is always `{}` and the function returns candidates unmodified for everyone, every tick.",
+    "activation_evidence": "Per memory/evidence/stage-8b-leg1/probe_8b_carriage_1000.json (adoption_samples), person-004 is the sole non-supporter in EVERY observed group-goal adoption (person-004 never appears as a formation-backfill carrier for any norm). Per probe_8b_carriage_registry_state_1000.json, the other 7 members (person-000,001,002,003,005,006,007) were formation-backfilled as carriers of group-norm-5ae28cfdb0f88c3addd5 at learned_tick=684 -- well before the tick-690-702 observation window. Therefore: when group_carriage is enabled, `_apply_group_norm_influence` becomes active for those 7 carriers starting shortly after tick 684, boosting their REPAIR_SHELTER candidates for the remainder of the run (subject to the urgent-survival suppression check). This alters their action selection across ticks 685-698, which -- because all agents read shared, mutually-observable world state (positions, resource levels, pressures) each tick -- cascades into a measurably different world trajectory by tick 698, which is exactly where the accepted-event-count divergence in this probe first appears. Person-004 itself only becomes a carrier THROUGH the tick-698/699 transmission event, so the influence cannot be acting on person-004's OWN candidates before that tick; the shift is attributed to the other 7 carriers' altered behaviour perturbing the shared camp state that person-004's own decision logic reads.",
+    "classification": "This is a DOCUMENTED, INTENTIONAL cross-domain influence pathway (CLAUDE.md invariant 6: 'Influence is read-only, member/carrier-grounded, boosts/suppresses only existing candidates, never outranks urgent survival'), not a hidden bug, not RNG-stream leakage (core/rng.py uses per-(seed,name) named streams specifically to prevent call-order-dependent draw shifting -- confirmed by reading core/rng.py; this mechanism instead operates purely through score-boost-driven candidate selection, which is expected to alter concrete action timing). It IS a real, measured, non-trivial change to the simulation's tick-by-tick trajectory caused solely by enabling a domain advertised as 'proposal-only' and writing only its own new registry (group-carriage-000): enabling group_carriage does not just add new registry-write events, it also ACTIVATES a pre-existing, previously-fully-inert influence hook in an unrelated domain (living_settlement_domain.py) that changes AGENT ACTION SELECTION for members unrelated to group_carriage's own registry writes. No deeper trace of the exact per-tick candidate-score chain from tick 684 to 698 was performed (would require additional multi-tick candidate-score instrumentation beyond this probe's scope); the code-level activation gate and the tick-684 pre-window backfill timing are the decisive, measured evidence for this classification."
+  },
+
+  "FILES_TOUCHED_TEMPORARILY_AND_REVERTED": [
+    "backend/scenarios/collective_groups.py (edited to remove group_carriage, probe run, then restored to exact pre-edit content; git diff after restore is byte-identical to git diff before the edit)"
+  ],
+  "FILES_CREATED_PERMANENT": [
+    "backend/tools/_probe_8b_tick_discrepancy.py (read-only probe script, follows _probe_* naming convention)",
+    "memory/evidence/stage-8b-leg1/probe_8b_tick_discrepancy_investigation.json (this file)"
+  ],
+  "NO_SIMULATION_CODE_MODIFIED": true,
+  "NO_group_carriage_contracts_or_living_settlement_domain_MODIFIED": true
+}
