@@ -1,0 +1,68 @@
+{
+  "D1_death_alone": {
+    "accepted": 1,
+    "rejected": [],
+    "final": {
+      "alive": false,
+      "current_goal": "DEAD",
+      "health": 0,
+      "death_cause": "syn_starvation"
+    }
+  },
+  "D2_death_then_health": {
+    "accepted": 2,
+    "rejected": [],
+    "final": {
+      "alive": false,
+      "current_goal": "DEAD",
+      "health": 500,
+      "death_cause": "syn_starvation"
+    },
+    "corrupted_death_alive_false_health_nonzero": true
+  },
+  "D3_health_then_death": {
+    "accepted": 2,
+    "rejected": [],
+    "final": {
+      "alive": false,
+      "current_goal": "DEAD",
+      "health": 0,
+      "death_cause": "syn_starvation"
+    },
+    "consistent_death_health_zero": true
+  },
+  "D4_death_then_resurrect": {
+    "accepted": 2,
+    "final": {
+      "alive": true,
+      "current_goal": "DEAD",
+      "health": 0,
+      "death_cause": "syn_starvation"
+    },
+    "pipeline_permits_unkill_alive_true": true,
+    "note": "structural only; grep shows NO domain writes alive=True on an existing person"
+  },
+  "DET_frame_ordering_determinism": {
+    "run1_final": {
+      "alive": false,
+      "current_goal": "DEAD",
+      "health": 500,
+      "death_cause": "syn_starvation"
+    },
+    "run2_final": {
+      "alive": false,
+      "current_goal": "DEAD",
+      "health": 500,
+      "death_cause": "syn_starvation"
+    },
+    "identical": true
+  },
+  "F2_out_of_scope_write": {
+    "accepted": 1,
+    "rejected": [],
+    "declared_touched_scope": [
+      "person-007"
+    ],
+    "wrote_undeclared_entity_person_002": true
+  }
+}
