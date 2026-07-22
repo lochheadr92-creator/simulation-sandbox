@@ -1,0 +1,3207 @@
+{
+  "scenario": "collective_groups",
+  "seed": "living-agents-stage6",
+  "target_ticks_at_stop": 308,
+  "ticks_run": 308,
+  "truncated": false,
+  "stopped_reason": "reached_target_ticks",
+  "wall_clock_seconds": 140.44,
+  "hunger_threshold_observed": 600,
+  "respond_help_accepted_count": 0,
+  "respond_help_rejected_count": 0,
+  "respond_help_rejected_reason_codes": {},
+  "respond_help_request_pairing": [],
+  "respond_help_events": [],
+  "respond_help_rejected": [],
+  "social_cooperate_by_source_goal": {
+    "HELP_PERSON": 1
+  },
+  "social_response_events_all": [
+    {
+      "tick": 1,
+      "event_id": "evt-1-34-0caf3036",
+      "actor_id": "person-001",
+      "target_id": "person-007",
+      "event_type": "social_cooperate",
+      "goal": "HELP_PERSON",
+      "causal_parent_event_ids": [
+        "evt-0-0-02c71d9c",
+        "evt-0-21-e7ef1fbf"
+      ]
+    }
+  ],
+  "social_goal_distribution_raw": {
+    "social_cooperate|HELP_PERSON": 1,
+    "social_repay|REPAY_DEBT": 1,
+    "social_share_information|VERIFY_INFORMATION": 1,
+    "social_trade|TRADE_RESOURCES": 1,
+    "social_promise|PROMISE_HELP": 1,
+    "social_lie|SHARE_RUMOUR": 1,
+    "social_threaten|THREATEN": 1,
+    "social_apologise|APOLOGISE": 1,
+    "social_reconcile|RECONCILE": 1,
+    "social_request_help|REQUEST_HELP": 17
+  },
+  "person_ids": [
+    "person-000",
+    "person-001",
+    "person-002",
+    "person-003",
+    "person-004",
+    "person-005",
+    "person-006",
+    "person-007"
+  ],
+  "max_hunger_per_agent": {
+    "person-000": 620,
+    "person-001": 632,
+    "person-002": 641,
+    "person-003": 625,
+    "person-004": 639,
+    "person-005": 651,
+    "person-006": 906,
+    "person-007": 734
+  },
+  "first_tick_crossed_600": {
+    "person-000": 13,
+    "person-001": 36,
+    "person-002": 44,
+    "person-003": 42,
+    "person-004": 44,
+    "person-005": 35,
+    "person-006": 1,
+    "person-007": 41
+  },
+  "agents_that_ever_requested": [
+    "person-001",
+    "person-002",
+    "person-003",
+    "person-004",
+    "person-005",
+    "person-007"
+  ],
+  "agents_hungry_ge600_ever": [
+    "person-000",
+    "person-001",
+    "person-002",
+    "person-003",
+    "person-004",
+    "person-005",
+    "person-006",
+    "person-007"
+  ],
+  "agents_hungry_ge600_but_never_requested": [
+    "person-000",
+    "person-006"
+  ],
+  "hunger_position_checkpoint_samples": [
+    {
+      "tick": 10,
+      "agents": {
+        "person-000": {
+          "hunger": 580,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 2,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 392,
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "role": "caretaker",
+          "carried_food": 2,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 329,
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 345,
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 335,
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 419,
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 530,
+          "position": {
+            "x": 6,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 358,
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 20,
+      "agents": {
+        "person-000": {
+          "hunger": 260,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 472,
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "role": "caretaker",
+          "carried_food": 2,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 409,
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 425,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 415,
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 483,
+          "position": {
+            "x": 5,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 610,
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 438,
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 30,
+      "agents": {
+        "person-000": {
+          "hunger": 340,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 552,
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "role": "caretaker",
+          "carried_food": 2,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 489,
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 505,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 495,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 563,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 290,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 518,
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 40,
+      "agents": {
+        "person-000": {
+          "hunger": 420,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 232,
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "role": "caretaker",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 569,
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 585,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 575,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 243,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 370,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 598,
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 50,
+      "agents": {
+        "person-000": {
+          "hunger": 500,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 312,
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "role": "caretaker",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 249,
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 265,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 255,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 323,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 450,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 646,
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 60,
+      "agents": {
+        "person-000": {
+          "hunger": 580,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 392,
+          "position": {
+            "x": 5,
+            "y": 6
+          },
+          "role": "caretaker",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 329,
+          "position": {
+            "x": 6,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 345,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 335,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 403,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 530,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 670,
+          "position": {
+            "x": 6,
+            "y": 6
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 70,
+      "agents": {
+        "person-000": {
+          "hunger": 260,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 472,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 409,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 425,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 415,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 483,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 610,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 342,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 80,
+      "agents": {
+        "person-000": {
+          "hunger": 340,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 552,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 489,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 505,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 495,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 563,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 290,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 422,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 1,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 90,
+      "agents": {
+        "person-000": {
+          "hunger": 420,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 232,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 569,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 585,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 575,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 243,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 370,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 502,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 1,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 100,
+      "agents": {
+        "person-000": {
+          "hunger": 500,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 312,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 249,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 265,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 255,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 323,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 450,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 582,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 1,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 110,
+      "agents": {
+        "person-000": {
+          "hunger": 580,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 392,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 329,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 345,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 335,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 403,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 530,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 262,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 120,
+      "agents": {
+        "person-000": {
+          "hunger": 260,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 472,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 409,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 425,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 415,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 483,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 610,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 342,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 130,
+      "agents": {
+        "person-000": {
+          "hunger": 340,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 552,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 489,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 505,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 495,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 563,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 290,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 422,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 140,
+      "agents": {
+        "person-000": {
+          "hunger": 420,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 232,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 569,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 585,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 575,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 243,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 370,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 502,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 150,
+      "agents": {
+        "person-000": {
+          "hunger": 500,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 312,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 249,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 265,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 255,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 323,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 450,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 582,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 160,
+      "agents": {
+        "person-000": {
+          "hunger": 580,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 392,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 329,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 345,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 335,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 403,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 530,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 262,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 170,
+      "agents": {
+        "person-000": {
+          "hunger": 260,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 472,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 409,
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 425,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 415,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 483,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 610,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 342,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 180,
+      "agents": {
+        "person-000": {
+          "hunger": 340,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 552,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 489,
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 505,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 495,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 563,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 290,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 422,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 190,
+      "agents": {
+        "person-000": {
+          "hunger": 420,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 232,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 569,
+          "position": {
+            "x": 5,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 585,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 575,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 243,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 370,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 502,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 200,
+      "agents": {
+        "person-000": {
+          "hunger": 500,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 312,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 249,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 265,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 255,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 323,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 450,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 582,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 210,
+      "agents": {
+        "person-000": {
+          "hunger": 580,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 392,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 329,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 345,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 335,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 403,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 530,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 262,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 220,
+      "agents": {
+        "person-000": {
+          "hunger": 260,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 472,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 409,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 425,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 415,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 483,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 610,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 1,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 342,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 230,
+      "agents": {
+        "person-000": {
+          "hunger": 340,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 552,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 489,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 505,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 495,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 563,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 290,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 422,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 240,
+      "agents": {
+        "person-000": {
+          "hunger": 420,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 232,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 569,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 585,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 575,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 243,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 370,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 502,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 250,
+      "agents": {
+        "person-000": {
+          "hunger": 500,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 312,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 249,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 265,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 255,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 323,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 450,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 582,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 260,
+      "agents": {
+        "person-000": {
+          "hunger": 580,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 392,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 329,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 345,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 335,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 403,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 530,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 262,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 270,
+      "agents": {
+        "person-000": {
+          "hunger": 260,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 472,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 409,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 425,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 415,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 483,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 610,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 342,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 280,
+      "agents": {
+        "person-000": {
+          "hunger": 340,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 552,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 489,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 505,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 495,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 563,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 290,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 422,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 290,
+      "agents": {
+        "person-000": {
+          "hunger": 420,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 600,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 569,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 585,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 575,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 627,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 370,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 502,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 300,
+      "agents": {
+        "person-000": {
+          "hunger": 500,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 624,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 617,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 609,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 631,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 643,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 450,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 582,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    },
+    {
+      "tick": 308,
+      "agents": {
+        "person-000": {
+          "hunger": 564,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "needy",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-001": {
+          "hunger": 288,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "caretaker",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-002": {
+          "hunger": 281,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "builder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-003": {
+          "hunger": 273,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "steward",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-004": {
+          "hunger": 295,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "hoarder",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-005": {
+          "hunger": 307,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "rumourmonger",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-006": {
+          "hunger": 514,
+          "position": {
+            "x": 4,
+            "y": 4
+          },
+          "role": "skeptic",
+          "carried_food": 0,
+          "alive": true
+        },
+        "person-007": {
+          "hunger": 246,
+          "position": {
+            "x": 4,
+            "y": 5
+          },
+          "role": "scout",
+          "carried_food": 0,
+          "alive": true
+        }
+      }
+    }
+  ],
+  "delivery_records": {
+    "commitment-c15028f399747da5": {
+      "commitment_id": "commitment-c15028f399747da5",
+      "created_tick": 43,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-3febb7bc105ef2f7": {
+      "commitment_id": "commitment-3febb7bc105ef2f7",
+      "created_tick": 45,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-167877450578231c": {
+      "commitment_id": "commitment-167877450578231c",
+      "created_tick": 46,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-7fc8d7733d6d3f8f": {
+      "commitment_id": "commitment-7fc8d7733d6d3f8f",
+      "created_tick": 47,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-980a4956cd0d8965": {
+      "commitment_id": "commitment-980a4956cd0d8965",
+      "created_tick": 49,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-2466b3aa92e724b6": {
+      "commitment_id": "commitment-2466b3aa92e724b6",
+      "created_tick": 51,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-36c7f2e2424fce4d": {
+      "commitment_id": "commitment-36c7f2e2424fce4d",
+      "created_tick": 53,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-4bcd3947ba05ff54": {
+      "commitment_id": "commitment-4bcd3947ba05ff54",
+      "created_tick": 59,
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-76ef0519ca50d498": {
+      "commitment_id": "commitment-76ef0519ca50d498",
+      "created_tick": 287,
+      "creator_id": "person-005",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-9272d7dd5bec9e1c": {
+      "commitment_id": "commitment-9272d7dd5bec9e1c",
+      "created_tick": 289,
+      "creator_id": "person-005",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-6554f6cb5bf27535": {
+      "commitment_id": "commitment-6554f6cb5bf27535",
+      "created_tick": 290,
+      "creator_id": "person-005",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-da436042b314de45": {
+      "commitment_id": "commitment-da436042b314de45",
+      "created_tick": 292,
+      "creator_id": "person-005",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-a4923739ca23134f": {
+      "commitment_id": "commitment-a4923739ca23134f",
+      "created_tick": 294,
+      "creator_id": "person-001",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-3507974cd43da9ae": {
+      "commitment_id": "commitment-3507974cd43da9ae",
+      "created_tick": 295,
+      "creator_id": "person-002",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-207f2095811423c4": {
+      "commitment_id": "commitment-207f2095811423c4",
+      "created_tick": 296,
+      "creator_id": "person-004",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-27496426440bd059": {
+      "commitment_id": "commitment-27496426440bd059",
+      "created_tick": 297,
+      "creator_id": "person-001",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    },
+    "commitment-4274e15a4252b9a9": {
+      "commitment_id": "commitment-4274e15a4252b9a9",
+      "created_tick": 299,
+      "creator_id": "person-004",
+      "beneficiary_id": "person-000",
+      "present_at_T1": false,
+      "status_at_T1": null,
+      "present_at_final": false
+    }
+  },
+  "requests_never_delivered_to_beneficiary": [
+    "commitment-c15028f399747da5",
+    "commitment-3febb7bc105ef2f7",
+    "commitment-167877450578231c",
+    "commitment-7fc8d7733d6d3f8f",
+    "commitment-980a4956cd0d8965",
+    "commitment-2466b3aa92e724b6",
+    "commitment-36c7f2e2424fce4d",
+    "commitment-4bcd3947ba05ff54",
+    "commitment-76ef0519ca50d498",
+    "commitment-9272d7dd5bec9e1c",
+    "commitment-6554f6cb5bf27535",
+    "commitment-da436042b314de45",
+    "commitment-a4923739ca23134f",
+    "commitment-3507974cd43da9ae",
+    "commitment-207f2095811423c4",
+    "commitment-27496426440bd059",
+    "commitment-4274e15a4252b9a9"
+  ],
+  "requests_delivered_then_evicted": [],
+  "requests_delivered_and_retained": [],
+  "accepted_by_type_full": {
+    "expire_signal": 171,
+    "flee": 5,
+    "graze": 289,
+    "group_adopt_collective_goal": 2,
+    "group_form_norm": 1,
+    "lifecycle_tick": 2464,
+    "living_consume": 49,
+    "living_drink": 38,
+    "living_gather": 41,
+    "living_move": 91,
+    "living_repair": 9,
+    "living_rest": 2150,
+    "living_retrieve": 1,
+    "rest": 14,
+    "social_apologise": 1,
+    "social_cooperate": 1,
+    "social_lie": 1,
+    "social_promise": 1,
+    "social_reconcile": 1,
+    "social_repay": 1,
+    "social_request_help": 17,
+    "social_share_information": 1,
+    "social_threaten": 1,
+    "social_trade": 1,
+    "structure_wear": 122,
+    "update_association_registry": 308,
+    "update_group_shared_state": 299,
+    "weather_transition": 15
+  },
+  "request_help_accepted_count": 17,
+  "request_help_rejected_count": 47,
+  "request_help_rejected_reason_codes": {
+    "precondition.failed": 46,
+    "social_action.not_adjacent": 1
+  },
+  "request_dyads_ordered": [
+    [
+      "person-001",
+      "person-000"
+    ],
+    [
+      "person-002",
+      "person-000"
+    ],
+    [
+      "person-004",
+      "person-000"
+    ],
+    [
+      "person-005",
+      "person-000"
+    ],
+    [
+      "person-007",
+      "person-001"
+    ]
+  ],
+  "respond_dyads_ordered": [],
+  "request_episodes": [
+    {
+      "start": 43,
+      "end": 59,
+      "count": 8
+    },
+    {
+      "start": 287,
+      "end": 299,
+      "count": 9
+    }
+  ],
+  "request_events": [
+    {
+      "tick": 43,
+      "event_id": "evt-43-871-857ab3ae",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-c15028f399747da5",
+      "created_tick": 43,
+      "due_tick": 51,
+      "causal_parent_event_ids": [
+        "evt-42-841-32961a27",
+        "evt-42-852-2d9443d0"
+      ]
+    },
+    {
+      "tick": 45,
+      "event_id": "evt-45-907-28c10877",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-3febb7bc105ef2f7",
+      "created_tick": 45,
+      "due_tick": 53,
+      "causal_parent_event_ids": [
+        "evt-44-879-52d4575b",
+        "evt-44-888-4d12c3d5"
+      ]
+    },
+    {
+      "tick": 46,
+      "event_id": "evt-46-929-7b95f512",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-167877450578231c",
+      "created_tick": 46,
+      "due_tick": 54,
+      "causal_parent_event_ids": [
+        "evt-45-907-28c10877",
+        "evt-45-910-73eabe07"
+      ]
+    },
+    {
+      "tick": 47,
+      "event_id": "evt-47-948-3409db8b",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-7fc8d7733d6d3f8f",
+      "created_tick": 47,
+      "due_tick": 55,
+      "causal_parent_event_ids": [
+        "evt-46-929-7b95f512",
+        "evt-46-930-d7ac8ee5"
+      ]
+    },
+    {
+      "tick": 49,
+      "event_id": "evt-49-985-5e6f5eb8",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-980a4956cd0d8965",
+      "created_tick": 49,
+      "due_tick": 57,
+      "causal_parent_event_ids": [
+        "evt-48-960-5d5d7ae1",
+        "evt-48-966-5ce4c03e"
+      ]
+    },
+    {
+      "tick": 51,
+      "event_id": "evt-51-1027-336ced33",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-2466b3aa92e724b6",
+      "created_tick": 51,
+      "due_tick": 59,
+      "causal_parent_event_ids": [
+        "evt-50-1006-f8818ee4",
+        "evt-50-1011-ae7ad4d7"
+      ]
+    },
+    {
+      "tick": 53,
+      "event_id": "evt-53-1067-717fc93e",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-36c7f2e2424fce4d",
+      "created_tick": 53,
+      "due_tick": 61,
+      "causal_parent_event_ids": [
+        "evt-52-1042-d8f740eb",
+        "evt-52-1049-9a519acb"
+      ]
+    },
+    {
+      "tick": 59,
+      "event_id": "evt-59-1183-aa76d661",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "commitment_id": "commitment-4bcd3947ba05ff54",
+      "created_tick": 59,
+      "due_tick": 67,
+      "causal_parent_event_ids": [
+        "evt-58-1152-7079ec55",
+        "evt-58-1163-c2931c1a"
+      ]
+    },
+    {
+      "tick": 287,
+      "event_id": "evt-287-5712-14e737eb",
+      "actor_id": "person-005",
+      "target_id": "person-000",
+      "commitment_id": "commitment-76ef0519ca50d498",
+      "created_tick": 287,
+      "due_tick": 295,
+      "causal_parent_event_ids": [
+        "evt-286-5687-46e95ed9",
+        "evt-286-5695-0cc3cc47"
+      ]
+    },
+    {
+      "tick": 289,
+      "event_id": "evt-289-5750-76f602a1",
+      "actor_id": "person-005",
+      "target_id": "person-000",
+      "commitment_id": "commitment-9272d7dd5bec9e1c",
+      "created_tick": 289,
+      "due_tick": 297,
+      "causal_parent_event_ids": [
+        "evt-288-5729-d22076b7",
+        "evt-288-5730-10332cbf"
+      ]
+    },
+    {
+      "tick": 290,
+      "event_id": "evt-290-5769-90355106",
+      "actor_id": "person-005",
+      "target_id": "person-000",
+      "commitment_id": "commitment-6554f6cb5bf27535",
+      "created_tick": 290,
+      "due_tick": 298,
+      "causal_parent_event_ids": [
+        "evt-289-5750-76f602a1",
+        "evt-289-5752-df622c4d"
+      ]
+    },
+    {
+      "tick": 292,
+      "event_id": "evt-292-5804-38fc4e16",
+      "actor_id": "person-005",
+      "target_id": "person-000",
+      "commitment_id": "commitment-da436042b314de45",
+      "created_tick": 292,
+      "due_tick": 300,
+      "causal_parent_event_ids": [
+        "evt-291-5785-e85c9ce5",
+        "evt-291-5786-155ab55f"
+      ]
+    },
+    {
+      "tick": 294,
+      "event_id": "evt-294-5841-70590453",
+      "actor_id": "person-001",
+      "target_id": "person-000",
+      "commitment_id": "commitment-a4923739ca23134f",
+      "created_tick": 294,
+      "due_tick": 302,
+      "causal_parent_event_ids": [
+        "evt-293-5820-c4c83afb",
+        "evt-293-5822-1350b6b8"
+      ]
+    },
+    {
+      "tick": 295,
+      "event_id": "evt-295-5858-1b0860fe",
+      "actor_id": "person-002",
+      "target_id": "person-000",
+      "commitment_id": "commitment-3507974cd43da9ae",
+      "created_tick": 295,
+      "due_tick": 303,
+      "causal_parent_event_ids": [
+        "evt-294-5839-44fdd9ad",
+        "evt-294-5844-c52014af"
+      ]
+    },
+    {
+      "tick": 296,
+      "event_id": "evt-296-5874-1dde079e",
+      "actor_id": "person-004",
+      "target_id": "person-000",
+      "commitment_id": "commitment-207f2095811423c4",
+      "created_tick": 296,
+      "due_tick": 304,
+      "causal_parent_event_ids": [
+        "evt-295-5851-862ae556",
+        "evt-295-5859-2558edfe"
+      ]
+    },
+    {
+      "tick": 297,
+      "event_id": "evt-297-5890-2e99534d",
+      "actor_id": "person-001",
+      "target_id": "person-000",
+      "commitment_id": "commitment-27496426440bd059",
+      "created_tick": 297,
+      "due_tick": 305,
+      "causal_parent_event_ids": [
+        "evt-296-5869-71326293",
+        "evt-296-5875-2f1620de"
+      ]
+    },
+    {
+      "tick": 299,
+      "event_id": "evt-299-5920-002d45ab",
+      "actor_id": "person-004",
+      "target_id": "person-000",
+      "commitment_id": "commitment-4274e15a4252b9a9",
+      "created_tick": 299,
+      "due_tick": 307,
+      "causal_parent_event_ids": [
+        "evt-298-5904-ff70ad7d",
+        "evt-298-5906-442b2954"
+      ]
+    }
+  ],
+  "survival": {
+    "alive_persons": 8
+  }
+}
