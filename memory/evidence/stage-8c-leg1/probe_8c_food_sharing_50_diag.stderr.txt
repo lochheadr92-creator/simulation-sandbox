@@ -1,0 +1,6 @@
+{"checkpoint_tick": 10, "cumulative_seconds": 4.74, "window_seconds": 4.74, "accumulator_sizes": {"valid_parent_ids": 222, "accepted_by_type_keys": 19, "accepted_event_count": 197, "food_event_records_total": 0, "food_event_pairs_total": 0}}
+{"checkpoint_tick": 20, "cumulative_seconds": 9.06, "window_seconds": 4.32, "accumulator_sizes": {"valid_parent_ids": 425, "accepted_by_type_keys": 23, "accepted_event_count": 400, "food_event_records_total": 0, "food_event_pairs_total": 0}}
+{"checkpoint_tick": 30, "cumulative_seconds": 14.11, "window_seconds": 5.05, "accumulator_sizes": {"valid_parent_ids": 624, "accepted_by_type_keys": 24, "accepted_event_count": 599, "food_event_records_total": 0, "food_event_pairs_total": 0}}
+{"checkpoint_tick": 40, "cumulative_seconds": 26.55, "window_seconds": 12.44, "accumulator_sizes": {"valid_parent_ids": 821, "accepted_by_type_keys": 24, "accepted_event_count": 796, "food_event_records_total": 0, "food_event_pairs_total": 0}}
+{"checkpoint_tick": 50, "cumulative_seconds": 34.65, "window_seconds": 8.1, "accumulator_sizes": {"valid_parent_ids": 1017, "accepted_by_type_keys": 25, "accepted_event_count": 992, "food_event_records_total": 0, "food_event_pairs_total": 0}}
+{"wall_clock_seconds": 34.68}

@@ -1,0 +1,708 @@
+{
+  "scenario": "collective_groups",
+  "seed": "living-agents-stage6",
+  "ticks_run": 150,
+  "target_ticks_at_stop": 150,
+  "truncated": false,
+  "stopped_reason": "reached_target_ticks",
+  "wall_clock_seconds": 64.47,
+  "candidate_requests_total": 20,
+  "candidate_requests_accepted": 8,
+  "candidate_requests_rejected": 12,
+  "rejected_reason_codes": {
+    "precondition.failed": 11,
+    "social_action.not_adjacent": 1
+  },
+  "distinct_accepted_ticks": [
+    43,
+    45,
+    46,
+    47,
+    49,
+    51,
+    53,
+    59
+  ],
+  "distinct_requesters": [
+    "person-007"
+  ],
+  "distinct_targets": [
+    "person-001"
+  ],
+  "distinct_actor_target_pairs_ordered": [
+    [
+      "person-007",
+      "person-001"
+    ]
+  ],
+  "distinct_actor_target_relationships_unordered": [
+    [
+      "person-001",
+      "person-007"
+    ]
+  ],
+  "total_distinct_people_across_pairs": [
+    "person-001",
+    "person-007"
+  ],
+  "max_events_from_one_requester": 8,
+  "max_events_for_one_pair": 8,
+  "requester_event_counts": {
+    "person-007": 8
+  },
+  "pair_event_counts": {
+    "person-007->person-001": 8
+  },
+  "reversed_pair_present": false,
+  "events_with_qualified_independent_association_evidence_citing_this_event": 0,
+  "events_with_proximity_evidence_only_not_citing_this_event": 0,
+  "events_with_no_third_party_evidence": 8,
+  "commitment_final_status_counts": {
+    "pending": 8
+  },
+  "commitments_evicted_via_12_cap": 0,
+  "commitments_with_any_status_change_since_creation": 0,
+  "population_spread_gate_result": false,
+  "population_spread_gate_criteria": {
+    "distinct_ticks_ge_3": true,
+    "distinct_requesters_ge_2": false,
+    "distinct_targets_ge_2": false,
+    "distinct_people_ge_3": false,
+    "no_single_requester_responsible_for_all": false,
+    "distinct_non_reversed_relationships_ge_2": false
+  },
+  "accepted_event_records": [
+    {
+      "event_id": "evt-43-871-857ab3ae",
+      "tick": 43,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-42-841-32961a27",
+        "evt-42-852-2d9443d0"
+      ],
+      "commitment_id": "commitment-c15028f399747da5",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 43,
+      "due_tick": 51,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 0,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-45-907-28c10877",
+      "tick": 45,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-44-879-52d4575b",
+        "evt-44-888-4d12c3d5"
+      ],
+      "commitment_id": "commitment-3febb7bc105ef2f7",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 45,
+      "due_tick": 53,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 1,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-46-929-7b95f512",
+      "tick": 46,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-45-907-28c10877",
+        "evt-45-910-73eabe07"
+      ],
+      "commitment_id": "commitment-167877450578231c",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 46,
+      "due_tick": 54,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 2,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-47-948-3409db8b",
+      "tick": 47,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-46-929-7b95f512",
+        "evt-46-930-d7ac8ee5"
+      ],
+      "commitment_id": "commitment-7fc8d7733d6d3f8f",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 47,
+      "due_tick": 55,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 3,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-49-985-5e6f5eb8",
+      "tick": 49,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-48-960-5d5d7ae1",
+        "evt-48-966-5ce4c03e"
+      ],
+      "commitment_id": "commitment-980a4956cd0d8965",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 49,
+      "due_tick": 57,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 4,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-51-1027-336ced33",
+      "tick": 51,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-50-1006-f8818ee4",
+        "evt-50-1011-ae7ad4d7"
+      ],
+      "commitment_id": "commitment-2466b3aa92e724b6",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 51,
+      "due_tick": 59,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 5,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-53-1067-717fc93e",
+      "tick": 53,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-52-1042-d8f740eb",
+        "evt-52-1049-9a519acb"
+      ],
+      "commitment_id": "commitment-36c7f2e2424fce4d",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 53,
+      "due_tick": 61,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 6,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    },
+    {
+      "event_id": "evt-59-1183-aa76d661",
+      "tick": 59,
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-58-1152-7079ec55",
+        "evt-58-1163-c2931c1a"
+      ],
+      "commitment_id": "commitment-4bcd3947ba05ff54",
+      "commitment_kind": "request_help",
+      "creator_id": "person-007",
+      "beneficiary_id": "person-001",
+      "created_tick": 59,
+      "due_tick": 67,
+      "status_at_creation": "pending",
+      "outstanding_pending_requests_by_actor_before_this": 7,
+      "nearby_context": [
+        {
+          "person_id": "person-000",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-002",
+          "distance_to_actor": 2,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-003",
+          "distance_to_actor": 3,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-004",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-005",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        },
+        {
+          "person_id": "person-006",
+          "distance_to_actor": 4,
+          "within_visible_range_le4": true
+        }
+      ],
+      "third_party_association_evidence": []
+    }
+  ],
+  "final_commitment_status": [
+    {
+      "commitment_id": "commitment-c15028f399747da5",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-3febb7bc105ef2f7",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-167877450578231c",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-7fc8d7733d6d3f8f",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-980a4956cd0d8965",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-2466b3aa92e724b6",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-36c7f2e2424fce4d",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    },
+    {
+      "commitment_id": "commitment-4bcd3947ba05ff54",
+      "present_in_actor_final_state": true,
+      "present_in_target_final_state": false,
+      "evicted_from_both": false,
+      "final_status_if_present": "pending",
+      "status_changed_from_creation": false
+    }
+  ],
+  "rejected_candidate_records": [
+    {
+      "status": "rejected",
+      "tick": 42,
+      "proposal_id": "prop-42-af7c7688a27d",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-41-831-456ea28c",
+        "evt-41-832-521c5bd9"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 44,
+      "proposal_id": "prop-44-93074021e974",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-43-871-857ab3ae",
+        "evt-43-873-d5112e6e"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 48,
+      "proposal_id": "prop-48-697d29517812",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-47-948-3409db8b",
+        "evt-47-949-38b14f44"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 50,
+      "proposal_id": "prop-50-ded25075fe4b",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-49-985-5e6f5eb8",
+        "evt-49-987-8957180e"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 52,
+      "proposal_id": "prop-52-b99f5cd26e62",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-51-1027-336ced33",
+        "evt-51-1033-b77e0929"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 54,
+      "proposal_id": "prop-54-c5e42f8fe727",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-53-1067-717fc93e",
+        "evt-53-1068-859f6bf4"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 55,
+      "proposal_id": "prop-55-bdfe0ca44232",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-54-1080-b132395c",
+        "evt-54-1083-0ac6412b"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 56,
+      "proposal_id": "prop-56-b2de9d7cd24e",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-55-1100-aad11262",
+        "evt-55-1106-82c09b4f"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 57,
+      "proposal_id": "prop-57-f1dbd39db349",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-56-1118-7ea01458",
+        "evt-56-1124-49b38761"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 58,
+      "proposal_id": "prop-58-f0fb6ae6c9ff",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-57-1134-0412f84f",
+        "evt-57-1147-c4c1957e"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 60,
+      "proposal_id": "prop-60-7f3a86738236",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-59-1183-aa76d661",
+        "evt-59-1184-ec2ad64e"
+      ],
+      "reason_code": "precondition.failed",
+      "reason_detail": "living_agent_eq_failed"
+    },
+    {
+      "status": "rejected",
+      "tick": 61,
+      "proposal_id": "prop-61-dbc7fc5c5d6a",
+      "actor_id": "person-007",
+      "target_id": "person-001",
+      "causal_parent_event_ids": [
+        "evt-60-1197-b5902f39",
+        "evt-60-1204-542fa6d7"
+      ],
+      "reason_code": "social_action.not_adjacent",
+      "reason_detail": "social_action.not_adjacent"
+    }
+  ]
+}

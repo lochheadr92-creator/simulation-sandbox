@@ -1,0 +1,96 @@
+{
+  "scenario": "collective_groups",
+  "seed": "living-agents-stage6",
+  "ticks": 50,
+  "truncated": false,
+  "stopped_at_tick": null,
+  "accepted_event_count": 992,
+  "accepted_by_type_full": {
+    "expire_signal": 45,
+    "flee": 5,
+    "graze": 45,
+    "lifecycle_tick": 400,
+    "living_consume": 8,
+    "living_drink": 6,
+    "living_gather": 2,
+    "living_move": 24,
+    "living_repair": 5,
+    "living_rest": 324,
+    "living_retrieve": 1,
+    "social_apologise": 1,
+    "social_cooperate": 1,
+    "social_lie": 1,
+    "social_promise": 1,
+    "social_reconcile": 1,
+    "social_repay": 1,
+    "social_request_help": 5,
+    "social_share_information": 1,
+    "social_threaten": 1,
+    "social_trade": 1,
+    "structure_wear": 20,
+    "update_association_registry": 50,
+    "update_group_shared_state": 41,
+    "weather_transition": 2
+  },
+  "food_event_candidates_checked": [
+    "create_food_interaction",
+    "expire_food_interaction",
+    "fulfil_food_interaction",
+    "give_food",
+    "invalidate_food_interaction",
+    "respond_food_interaction",
+    "social_give"
+  ],
+  "food_event_counts": {
+    "create_food_interaction": 0,
+    "expire_food_interaction": 0,
+    "fulfil_food_interaction": 0,
+    "give_food": 0,
+    "invalidate_food_interaction": 0,
+    "respond_food_interaction": 0,
+    "social_give": 0
+  },
+  "food_event_distinct_pairs": {
+    "create_food_interaction": 0,
+    "expire_food_interaction": 0,
+    "fulfil_food_interaction": 0,
+    "give_food": 0,
+    "invalidate_food_interaction": 0,
+    "respond_food_interaction": 0,
+    "social_give": 0
+  },
+  "food_event_examples": {},
+  "interaction_memory_census": {
+    "total_facts_all_persons": 0,
+    "facts_by_kind": {},
+    "persons_with_nonempty_interaction_memory": []
+  },
+  "wiring_trace": {
+    "collective_groups_enabled_domains": [
+      "weather",
+      "ecology",
+      "lifecycle",
+      "living_settlement",
+      "animal",
+      "association",
+      "group_state",
+      "group_collective",
+      "group_goal",
+      "group_norm",
+      "group_carriage"
+    ],
+    "people_domain_in_enabled_domains": false,
+    "food_interaction_proposals_imported_by": [
+      "domains.people_domain"
+    ],
+    "interaction_memory.merge_interaction_memory_called_by": [
+      "domains.people_domain"
+    ],
+    "living_settlement_domain_imports_interaction_memory": false,
+    "reciprocity_trust_consumes": "domains.interaction_memory.list_interaction_facts (kinds: helped, refused, requested, offered, witnessed_assistance)",
+    "reciprocity_trust_consumes_social_give": false
+  },
+  "survival": {
+    "alive_persons_final": 8
+  }
+}
