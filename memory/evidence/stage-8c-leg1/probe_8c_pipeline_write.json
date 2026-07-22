@@ -1,0 +1,26 @@
+{
+  "subtest1_nonactor_in_scope": {
+    "accepted": 1,
+    "rejected_reason_codes": [],
+    "actor_field_persisted": true,
+    "nonactor_field_persisted": true
+  },
+  "subtest2a_delivery_alone": {
+    "accepted": 1,
+    "rejected_reason_codes": [],
+    "beneficiary_has_SYN_COMMIT": true
+  },
+  "subtest2b_same_frame_overwrite": {
+    "accepted": 2,
+    "rejected": [],
+    "aid_accepted": true,
+    "overwrite_accepted": true,
+    "beneficiary_still_has_SYN_COMMIT_after_frame": false
+  },
+  "subtest3_out_of_scope_write": {
+    "accepted": 1,
+    "rejected_reason_codes": [],
+    "out_of_scope_field_persisted": true
+  },
+  "VERDICT": "(b) lost update: validated write persists at commit, overwritten by a later same-frame write to the same field"
+}
