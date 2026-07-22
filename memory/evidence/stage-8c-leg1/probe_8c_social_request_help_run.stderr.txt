@@ -1,0 +1,15 @@
+{"checkpoint_tick": 10, "cumulative_seconds": 2.29, "window_seconds": 2.29, "accepted_request_help_so_far": 0, "valid_parent_ids": 222}
+{"checkpoint_tick": 20, "cumulative_seconds": 5.69, "window_seconds": 3.41, "accepted_request_help_so_far": 0, "valid_parent_ids": 425}
+{"checkpoint_tick": 30, "cumulative_seconds": 9.25, "window_seconds": 3.56, "accepted_request_help_so_far": 0, "valid_parent_ids": 624}
+{"checkpoint_tick": 40, "cumulative_seconds": 13.0, "window_seconds": 3.74, "accepted_request_help_so_far": 0, "valid_parent_ids": 821}
+{"checkpoint_tick": 50, "cumulative_seconds": 17.02, "window_seconds": 4.02, "accepted_request_help_so_far": 5, "valid_parent_ids": 1017}
+{"checkpoint_tick": 60, "cumulative_seconds": 21.09, "window_seconds": 4.07, "accepted_request_help_so_far": 8, "valid_parent_ids": 1209}
+{"checkpoint_tick": 70, "cumulative_seconds": 25.37, "window_seconds": 4.27, "accepted_request_help_so_far": 8, "valid_parent_ids": 1411}
+{"checkpoint_tick": 80, "cumulative_seconds": 30.02, "window_seconds": 4.66, "accepted_request_help_so_far": 8, "valid_parent_ids": 1613}
+{"checkpoint_tick": 90, "cumulative_seconds": 34.66, "window_seconds": 4.64, "accepted_request_help_so_far": 8, "valid_parent_ids": 1808}
+{"checkpoint_tick": 100, "cumulative_seconds": 39.44, "window_seconds": 4.78, "accepted_request_help_so_far": 8, "valid_parent_ids": 2011}
+{"checkpoint_tick": 110, "cumulative_seconds": 44.24, "window_seconds": 4.8, "accepted_request_help_so_far": 8, "valid_parent_ids": 2206}
+{"checkpoint_tick": 120, "cumulative_seconds": 49.05, "window_seconds": 4.81, "accepted_request_help_so_far": 8, "valid_parent_ids": 2403}
+{"checkpoint_tick": 130, "cumulative_seconds": 53.92, "window_seconds": 4.87, "accepted_request_help_so_far": 8, "valid_parent_ids": 2601}
+{"checkpoint_tick": 140, "cumulative_seconds": 59.01, "window_seconds": 5.09, "accepted_request_help_so_far": 8, "valid_parent_ids": 2798}
+{"checkpoint_tick": 150, "cumulative_seconds": 64.47, "window_seconds": 5.47, "accepted_request_help_so_far": 8, "valid_parent_ids": 3001}
