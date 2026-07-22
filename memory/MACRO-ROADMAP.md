@@ -222,6 +222,18 @@ contract, not before.
 - Frontend baseline audit (≤ 13 kickoff) → 13B projections and Stage 15.
 - Interaction-cadence design STOP (≤ 13 close-out) → Stage 14 architecture.
 
+## Pre-flight dependency friction (Stages 9–15)
+
+The architectural break each future stage will hit, named now so it is planned into the stage's contract rather than re-invented at implementation. Two lines per stage: the **hard dependency blocker** (what must be true before the stage starts) and the **known architectural friction** (the structural break to design for in advance). Speculative until each stage's evidence-grounded contract supersedes it.
+
+- **Stage 9 (Economy).** Blocker: Stage 8 core loop closes. Friction: a schema break from Stage 7's `shared_storage` — today inventory is strictly per-person carry; Stage 9 needs storage containers, ownership records/locks, and surplus accounting. Ownership is a record, never authority; the conservation invariant means stocks must re-derive exactly from committed event history. Plan the 7→9 storage migration path now, not at 9A.
+- **Stage 10 (Institutions).** Blocker: Stage 9 close-out with the un-inerting gate resolved. Friction: the boundary-field relocation — `authority`, `law`, `punishment` are *forbidden* in culture records but become institution registries here. The forbidden-fields invariant changes meaning at this boundary and needs an explicit relocation contract (10A's first deliverable). Enforcement stays committed-consequence on records/relationships, never command automation; the survival-dominance guard extends to institutional influence.
+- **Stage 11 (Ecology/Demography).** Blocker: Stage 10 close-out (or a ratified 10-partial gate). Friction: invariant 4 ("never raise a prior stage's cap") collides with a growing population — resolve with new lifecycle registries carrying their own caps, never by raising an old cap. Lifecycle spans exceed the 1,000-tick scenario horizon, so the standing scenario decision reopens here by design.
+- **Stage 12 (Burn-In).** Blocker: Stages 9–11 complete and culture un-inerted (inert culture makes burn-in history socially hollow). Friction: the performance wall — throughput, hash cost, and storage growth at 10^5–10^6 ticks are unmeasured. The from-Stage-9 telemetry rule exists to size this before 12A, not after.
+- **Stage 13 (Legibility).** Blocker: Stage 12 history volume (significance scoring cannot be tuned on toy histories). Friction: read-model architecture — this is the first stage where projections become the primary build surface. The frontend baseline audit (parked-work register) must land by 13 kickoff.
+- **Stage 14 (Player Embodiment).** Blocker: Stage 13 legibility, and every prior system for rule-parity. Friction: **player input is non-deterministic, and the engine's entire replay proof assumes keyed-RNG determinism.** Inserting player actions without breaking replay requires a keyed player-input side-channel in the commit pipeline — inputs recorded as ordered, replayable events, never live mutations. Interaction cadence (pause-per-tick / batched intents / real-time projection over a ticking core) is architecture-shaping and gets a dedicated design STOP by the Stage 13 close-out.
+- **Stage 15 (Narrative).** Blocker: Stage 14. Friction: the LLM boundary — any generative narrative must be provably non-canonical (projection-layer only, no write-back path), proven by the truth-isolation audit. Generative-vs-templated is decided at the 15C contract, not before.
+
 ## Pre-Stage-9 readiness audit (ratified 2026-07-19)
 
 Charter and specs: `memory/READINESS-AUDIT-2026-07.md`. Governing question:
