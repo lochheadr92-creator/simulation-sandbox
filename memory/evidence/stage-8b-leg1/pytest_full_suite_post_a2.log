@@ -1,0 +1,36 @@
+...F.................................................................... [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 58%]
+........................................................................ [ 77%]
+........................................................................ [ 97%]
+..........                                                               [100%]
+=================================== FAILURES ===================================
+_____ test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head ______
+
+    @async_test
+    async def test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head():
+        db = core_db.db
+        await core_db.ensure_indexes()
+        clear_test_failure_injection()
+        run = await create_run(
+            f"stage7b-conc-{uuid.uuid4().hex[:8]}", "collective_groups",
+        )
+        await step_run(run["id"], 12)
+        before = await get_run(run["id"])
+        revision_before = head_revision_of(before)
+        registry_before = await db.entities.find_one(
+            {"run_id": run["id"], "id": GROUP_STATE_REGISTRY_ID}, {"_id": 0},
+        )
+>       assert registry_before is not None
+E       assert None is not None
+
+tests/test_concurrency.py:174: AssertionError
+=============================== warnings summary ===============================
+../../../../usr/local/lib/python3.11/dist-packages/starlette/formparsers.py:12
+  /usr/local/lib/python3.11/dist-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_concurrency.py::test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head
+1 failed, 369 passed, 4 skipped, 1 warning in 147.27s (0:02:27)

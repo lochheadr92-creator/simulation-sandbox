@@ -1,16 +1,13 @@
 # Capability Stage 8B, Leg 1 — Norm Transmission (individual carriage)
 
-Status: **PROPOSED — reopened (2026-07-20).** The five contract decisions,
-their riders, and the standing-scenario ruling recorded in "Confirmation and
-decision log" below were confirmed and remain confirmed — they are not in
-question. What is open: a classification judgment call raised by a Phase D
-verification finding (see "Phase D verification finding" below) — enabling
-`group_carriage` measurably shifts an unrelated pair of persons' interaction
-by one tick, through a mechanism unrelated to this leg's own sanctioned
-influence hook. Two readings are presented with a recommendation; **this is a
-STOP, not a closed finding — implementation code exists in the working tree,
-untouched since being written, but Phase D's remaining steps (adversarial
-review, commit, close-out) are paused until this is ruled on.**
+Status: **VERIFIED (mechanism + organic integration + Amendment-2 headroom),
+IMPLEMENTED & CLOSE-OUT COMMITTED (2026-07-24).** The five contract decisions
+and riders remain confirmed. Phase D coupling classification is **ACCEPT** as
+state-authority containment (architecture-wide same-priority behavioural
+coupling is pre-existing; not introduced by this leg — see Phase D finding and
+adversarial claim 15). Adversarial review complete; findings ledger closed.
+Gate evidence: v3 files under `memory/evidence/stage-8b-leg1/`. Close-out claims:
+`scratchpad/leg1_claims_closeout.md`. **Next frontier after user STOP: Stage 8C.**
 
 ## Disclosure — prior exposure (read before anything else)
 
@@ -272,13 +269,18 @@ carrier record is untouched.
 
 ### Formation backfill
 
-At norm-formation time (the tick the `group_norm` domain commits a
-`group_form_norm` "formed" transition), the carriage domain reads the
-triggering goal's `supporter_ids` from the (lagged, see Commit ordering)
-`group-goal-000` registry and writes one `carrier_record` per supporter, scoped
-to that norm, with `source = "formation_backfill"`, `learned_from = None`,
+When a `group_form_norm` "formed" transition is visible in the lagged frame
+(typically tick T+1 after formation at T; see Commit ordering), the carriage
+domain reads the **active** goal's `supporter_ids` from `group-goal-000` for
+that group and writes one `carrier_record` per supporter, scoped to that norm,
+with `source = "formation_backfill"`, `learned_from = None`,
 `via_event_id` = the `group_form_norm` event's id, `learned_tick` = the
-formation tick.
+**carriage advance/commit tick** (not the formation tick).
+
+**Lag assumption (adversarial P1-03 — ACCEPT):** the supporter set is the
+active goal visible at first successful backfill, not a formation-time frozen
+snapshot. Relies on adoption cadence ≫ one-tick lag. Once sealed in
+`backfilled_norm_ids`, the set is never re-synced to later re-adoptions.
 
 ### Transmission
 
@@ -961,7 +963,7 @@ eligibility, imitation-only, `TRANSMISSION_COUNT = 1`,
 confirmed. What changes is one claim's wording and two implementation
 defects found after implementation.
 
-### F1 — claim wording (eligibility vs acquisition). Ruling: FIX wording, ACCEPT behaviour.
+### F1 — claim wording (eligibility vs acquisition). Ruling: FIX wording, ACCEPT behaviour. **Applied 2026-07-24.**
 
 The close-out claim "carriage is independent of current membership" is true
 of **eligibility** and false of **acquisition**, and the unqualified form is
@@ -1164,68 +1166,67 @@ this amendment. Per protocol §3 this re-run precedes the adversarial review, so
 reviewer sees the shipping numbers — Amendment 2's implement → re-gate step runs
 before the review named in "Sequencing under this amendment," not after.
 
-## Session handoff (2026-07-21) — resume here
+### Post-amendment-2 gate re-run (2026-07-23) — VERIFIED, closes this amendment
 
-**Position.** Phase D implementation is complete and passing. The leg is
-blocked at one thing only: the protocol §3 adversarial review has never
-run. Everything else is done.
+Cloud re-run (Ubuntu 24.04 / Python 3.11.15 / Mongo 8.0.4 single-node replica set);
+all figures from the **v3** evidence files, not memory.
 
-**Committed** (branch `capability/stage-8-culture`, pushed through
-`8883b715`; later commits local):
-`3506bd2b` cache untrack · `798bb0e` hard-rail-reviewer agent ·
-`24c27435` contract PROPOSED + Phase 1 evidence · `cc4dcedf` contract
-CONFIRMED + riders + adoption-count reconciliation · `0f638818`
-commit-ordering correction · `cb91d804` doctrine (CLAUDE.md +
-ADVERSARIAL-REVIEW-PROTOCOL.md).
+- **Frozen-hash safety — PASS, byte-identical.** `living_settlement --ticks 320 --repeat 2` →
+  `final_state_hash = 84d3ad52773d95877a2de3a178a205cf96f1637c76dcf561c702fa24788c32d2`,
+  matching the recorded baseline; `group_carriage` inert there.
+- **Determinism + organic — PASS.** `collective_groups --ticks 1000 --repeat 2` →
+  repeat + replay true; new
+  `final_state_hash = b5abbfffa9e0b5b5b52da912c757b75231afb8b752658a1a76e9d91d7472368c`;
+  8A's `group_norm_summary_hash = 7487bbbcbc62d6fc6988c6ab12989facba692b72bec93198c01b8edcf2f06ae1`
+  **unchanged**; 7 active norms; `group_carry_norm` = 4; 49 backfill + 1 transmission.
+- **Suite — 369 executed passed; 4 named Docker-environment skips; 1 in-context intermittent**
+  (`test_concurrent_stage7b_steps_do_not_duplicate_shared_state_or_head`). Unrelated to
+  this amendment; tracked as **CORE-INTEGRITY-001** (provisional).
+- **Registry byte re-measure — closes the amendment.** 17,126 B vs
+  `payload_target_bytes` 24,576 B → **30.31% headroom**, clearing invariant-4's ≥20% bar
+  (matches this amendment's ~17,126 B estimate).
+- Evidence: `memory/evidence/stage-8b-leg1/harness_living_settlement_320_v3.json`,
+  `harness_collective_groups_1000_v3.json`, `probe_8b_registry_bytes_post_a2.json`,
+  `pytest_full_suite_post_a2.log`.
 
-**Uncommitted in the working tree** (deliberately — commit discipline
-forbids committing past an open review finding):
-- `backend/domains/group_carriage_contracts.py`, `group_carriage_domain.py` (new)
-- `backend/tests/test_stage8b_leg1_norm_transmission.py` (new, 23 tests)
-- modified: `core/commit_pipeline.py`, `domains/registry.py`,
-  `domains/living_settlement_domain.py`, `scenarios/collective_groups.py`,
-  `tests/test_stage7b_group_state.py`, `tests/test_stage8a_group_norm.py`
-- this contract doc's Phase D sections · `memory/evidence/stage-8b-leg1/*`
-- `backend/tools/_probe_8b_*.py` (probe scripts; `_probe_8b_coupling_discriminator.py`
-  is DEAD — written for the killed 3×1000-tick approach, never run, delete
-  before commit)
+## Adversarial review + close-out (2026-07-24) — CLOSED
 
-**Verified state.** Suite: 364 executed passed; 4 named Docker-environment
-skips; no executed test failed. Frozen `living_settlement` hash
-byte-identical. `collective_groups` repeat+replay true, 0 deaths, 49
-backfill + 1 transmission carriers, `group_carry_norm` = 4.
+**Independence:** Grok (xAI) after Codex CLI usage-limit failure. Cross-model
+automated review of the Leg 1 packet; not a human third-party audit. Full report:
+`scratchpad/leg1_adversarial_review_report.md`. Ledger:
+`memory/evidence/stage-8b-leg1/adversarial_review_ledger.md`.
 
-**The one blocker.** Protocol §3 requires a non-Anthropic reviewer. Codex
-CLI is installed but its nested reviewer subprocess fails with "No local
-provider is running". The Zen MCP server was misconfigured — the upstream
-project renamed its executable from `zen-mcp-server` to `pal-mcp-server`,
-so the configured command could never launch. **Fixed and verified
-connected 2026-07-21** (`claude mcp list` → `zen: ✔ Connected`, OpenRouter,
-27 models). MCP tools load at session start, so `mcp__zen__*` is unavailable
-in the session that fixed it.
+### Findings ledger — all closed
 
-**Next action, in a fresh session:** run the blind first pass via
-`mcp__zen__codereview` (or `challenge`/`consensus`) against the bare claims
-at `<scratchpad>/leg1_claims_bare.md`, per the AMENDED §2 — **claims only,
-no builder seeds in the first pass**. Then submit the three findings below
-as builder-seeded, tagged, and collect dispositions.
+| ID | Summary | Disposition | Close-out |
+|---|---|---|---|
+| F1 | Claim 9 eligibility vs acquisition | FIX wording / ACCEPT code | Close-out claims + F1 section above |
+| F2/F2c | Registry headroom / key slim | FIX (code) | Amendment 1 + gate |
+| F3 | `backfilled_norm_ids` eviction | FIX (code) | Amendment 1 + regression test |
+| P1-01 | Schema claim omitted `backfilled_norm_ids` | FIX | Close-out claims |
+| P1-02 | `learned_tick` ≠ formation tick | FIX | Mechanism section + close-out claims |
+| P1-03 | Backfill uses current active-goal supporters | ACCEPT | Lag assumption documented |
+| P1-05 | Zero influence firings unmeasured in packet | FIX | Close-out claim 10 |
+| P1-06 | Coupling probe framing | FIX | Design statement / Phase D ACCEPT |
+| P1-07 | Packet completeness | FIX | Contract + protocol + evidence present |
+| P1-08 | Suite 1 intermittent fail | ACCEPT | CORE-INTEGRITY-001 |
+| HR-1..4 | Hard-rail hits | ACCEPT | In-scope |
 
-**Open findings carried in** (full detail in the close-out report):
-- **F1** claim-9 wording: eligibility is carriage-only, but *acquisition*
-  via transmission requires co-membership (`derive_group_carriage_changes`
-  gates learners on `member_ids`). Disposition: FIX wording, ACCEPT
-  behaviour. Not yet applied.
-- **F2** DISPUTE — registry 26,076 B vs `payload_target_bytes` 24,576
-  (**−6.10% headroom**) vs `proposal_bytes` 32,768 (**+20.42%**). 8A's
-  precedent measures invariant-4 headroom against the *target*, under which
-  this fails. Recommended resolution (c): slim the record — `carrier_id`
-  duplicates the dict key, so `norm_id`/`person_id` are each stored twice
-  per record. Needs contract amendment + gate re-run.
-- **F3** DISPUTE — `backfilled_norm_ids` truncates lexicographically
-  (`sorted(set(...))[-16:]`) while `group_norm` compacts by
-  (active, recency); an **active** norm can therefore be evicted from the
-  backfilled set and re-backfilled against the *current* supporter set,
-  breaking one-time backfill. Unreachable at 7 norms, latent at the 16 cap.
+**Mandatory DISPUTE:** none.  
+**Optional DISPUTE retained for user:** elevate P1-03 if formation-time-exact
+supporter freeze is required.
+
+### Close-out claims (authoritative)
+
+`scratchpad/leg1_claims_closeout.md` supersedes unqualified bare-pass wording in
+`scratchpad/leg1_claims_bare.md` (historical blind-pass artifact only).
+
+### Session handoff (2026-07-21) — SUPERSEDED by close-out above
+
+Historical note only: the 2026-07-21 handoff recorded that adversarial review was
+the sole blocker and listed open F1–F3. Those items are closed in the ledger above;
+Amendment 2 post-run is VERIFIED; this close-out commit ships the remaining docs
+and v3 evidence.
 
 ## What this contract does NOT authorise
 
