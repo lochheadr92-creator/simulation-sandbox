@@ -342,6 +342,13 @@ def _carrier_record(entry: dict, source: str, tick: int) -> dict:
     untouched: ``via_event_id`` (the causal event), ``created_event_id`` /
     ``last_event_id`` (the commit event), ``learned_from`` and
     ``learned_tick`` all remain, each stored exactly once.
+
+    Leg 1 contract amendment 2 (invariant-4 headroom): no ``pending_*``
+    staging keys. Unlike ``group_norm`` (which reuses that marker on refresh
+    /expiry of an EXISTING record), carriage records are write-once, so the
+    proposal's own ``transitions`` list already identifies exactly which
+    registry keys are new this tick — ``stamp_group_carriage_provenance``
+    reads that instead of a marker embedded in the record itself.
     """
     return {
         "schema_version": GROUP_CARRIAGE_VERSION,
@@ -353,8 +360,6 @@ def _carrier_record(entry: dict, source: str, tick: int) -> dict:
         "revision": 1,
         "created_event_id": None,
         "last_event_id": None,
-        "pending_event_tick": int(tick),
-        "pending_transition": source,
     }
 
 
@@ -699,6 +704,11 @@ def validate_group_carriage_proposal(proposal: dict, entities: dict) -> str | No
         # undone by a later writer or a forged proposal.
         if {"carrier_id", "norm_id", "person_id"} & set(record):
             return REASON_CARRIER
+        # Amendment 2: no committed record may carry the post-commit staging
+        # keys — they are never written (see _carrier_record), so their
+        # presence can only mean a forged or stale record.
+        if {"pending_event_tick", "pending_transition"} & set(record):
+            return REASON_CARRIER
         if record.get("source") == SOURCE_BACKFILL and record.get("learned_from") is not None:
             return REASON_CARRIER
         if record.get("source") == SOURCE_TRANSMISSION and not record.get("learned_from"):
@@ -707,6 +717,13 @@ def validate_group_carriage_proposal(proposal: dict, entities: dict) -> str | No
 
 
 def stamp_group_carriage_provenance(proposal: dict, mutation: dict, event_id: str) -> None:
+    """Stamp created/last event ids on the carrier records this proposal just wrote.
+
+    Amendment 2: no ``pending_event_tick`` marker to scan for — carriage
+    records are write-once, so ``metadata["transitions"]`` (built by
+    ``advance_group_carriage_registry`` and carried on the proposal
+    unchanged) already lists exactly the registry keys created this tick.
+    """
     metadata = proposal.get("group_carriage_update")
     if not isinstance(metadata, dict):
         return
@@ -716,14 +733,14 @@ def stamp_group_carriage_provenance(proposal: dict, mutation: dict, event_id: st
     )
     if not isinstance(registry, dict):
         return
-    tick = int(proposal.get("requested_time", 0))
-    for record in (registry.get("carriers") or {}).values():
-        if int(record.get("pending_event_tick") or -1) == tick:
-            if record.get("created_event_id") is None:
-                record["created_event_id"] = event_id
-            record["last_event_id"] = event_id
-            record["pending_event_tick"] = None
-            record["pending_transition"] = None
+    carriers = registry.get("carriers") or {}
+    for transition in metadata.get("transitions") or []:
+        record = carriers.get(transition.get("carrier_id"))
+        if not isinstance(record, dict):
+            continue
+        if record.get("created_event_id") is None:
+            record["created_event_id"] = event_id
+        record["last_event_id"] = event_id
     metadata["accepted_event_id"] = event_id
 
 

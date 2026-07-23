@@ -206,7 +206,7 @@ def test_synthetic_transmission_fires_independent_of_organic_event():
         "schema_version": GROUP_CARRIAGE_VERSION, "group_id": GID,
         "source": SOURCE_BACKFILL, "learned_from": None, "via_event_id": "evt",
         "learned_tick": 5, "revision": 1, "created_event_id": "evt",
-        "last_event_id": "evt", "pending_event_tick": None, "pending_transition": None,
+        "last_event_id": "evt",
     }
     carriage["backfilled_norm_ids"] = [nid]
     ents = _entities(members=("p-a", "p-b"), supporters=("p-a",), carriage=carriage)
@@ -239,7 +239,7 @@ def _base_carriage_with_carrier_a():
         "schema_version": GROUP_CARRIAGE_VERSION, "group_id": GID,
         "source": SOURCE_BACKFILL, "learned_from": None, "via_event_id": "evt",
         "learned_tick": 5, "revision": 1, "created_event_id": "evt",
-        "last_event_id": "evt", "pending_event_tick": None, "pending_transition": None,
+        "last_event_id": "evt",
     }
     carriage["backfilled_norm_ids"] = [nid]
     return carriage
@@ -294,7 +294,7 @@ def test_already_carrier_is_never_re_transmitted():
         "schema_version": GROUP_CARRIAGE_VERSION, "group_id": GID,
         "source": SOURCE_TRANSMISSION, "learned_from": "p-a", "via_event_id": "evt-prior",
         "learned_tick": 15, "revision": 1, "created_event_id": "evt",
-        "last_event_id": "evt", "pending_event_tick": None, "pending_transition": None,
+        "last_event_id": "evt",
     }
     ents = _entities(members=("p-a", "p-b"), supporters=("p-a",), carriage=carriage)
     ents["p-b"] = _person("p-b", action=_qualifying_action("p-a", event_id="evt-second"))
@@ -396,7 +396,8 @@ def test_provenance_stamped_on_commit():
     rec = ents[GROUP_CARRIAGE_REGISTRY_ID]["carriers"][carrier_key(nid, "p-a")]
     assert rec["created_event_id"] == accepted[0]["id"]
     assert rec["last_event_id"] == accepted[0]["id"]
-    assert rec["pending_event_tick"] is None
+    assert "pending_event_tick" not in rec
+    assert "pending_transition" not in rec
 
 
 def test_replay_equivalence():
@@ -496,6 +497,29 @@ def test_validator_rejects_record_that_restates_key_ids():
     (key, rec), = reg["carriers"].items()
     rec["norm_id"] = _norm_id()  # re-stating a key-held id must be rejected
     assert validate_group_carriage_proposal(proposal, ents) is not None
+
+
+def test_validator_rejects_record_carrying_pending_staging_keys():
+    # Amendment 2: pending_event_tick/pending_transition are never written by
+    # _carrier_record (stamping now keys off the proposal's own `transitions`
+    # list) - a record carrying either key can only be forged or stale.
+    ents = _entities(members=("p-a", "p-b"), supporters=("p-a",))
+    proposal = build_group_carriage_proposal(ents, 11)
+    reg = proposal["mutation"]["new_entities"][GROUP_CARRIAGE_REGISTRY_ID]
+    (key, rec), = reg["carriers"].items()
+    rec["pending_event_tick"] = 11
+    assert validate_group_carriage_proposal(proposal, ents) is not None
+
+
+def test_honest_stamped_record_omits_pending_staging_keys():
+    ents = _entities(members=("p-a", "p-b"), supporters=("p-a",))
+    proposal = build_group_carriage_proposal(ents, 11)
+    accepted, rejected, _ = _commit(ents, [proposal], 11)
+    assert not rejected
+    nid = _norm_id()
+    rec = ents[GROUP_CARRIAGE_REGISTRY_ID]["carriers"][carrier_key(nid, "p-a")]
+    assert "pending_event_tick" not in rec
+    assert "pending_transition" not in rec
 
 
 def test_capacity_bound_respected():
