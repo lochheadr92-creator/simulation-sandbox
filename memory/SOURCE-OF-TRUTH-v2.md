@@ -565,6 +565,14 @@ Any data from these sources must enter only through explicit recorded influence,
 
 ## 19. Invariants
 
+> **Namespacing (F3 fix, 2026-07-25, per CORE-INTEGRITY-001 review):** items in
+> this list are citable as **SOT-19.1 … SOT-19.N**. A separate, unrelated
+> culture invariant list (C-1 … C-12) lives in CLAUDE.md / the master protocol.
+> Numbers are NOT interchangeable across the two lists; never cite a bare
+> "invariant N" without a namespace. Note also: no invariant in either list
+> forbids same-frame silent field overwrite — see
+> memory/CORE-INTEGRITY-001-lost-update.md.
+
 1. One mutation authority: only Core-accepted simulation events mutate canonical world state or simulation time.
 2. No accepted simulation event lacks deterministic identity.
 3. No accepted simulation event lacks deterministic order.

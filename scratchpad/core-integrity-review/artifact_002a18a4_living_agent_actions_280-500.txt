@@ -1,0 +1,221 @@
+  280:         plan["plan_id"] = "plan-" + canonical_hash([actor_id, tick, action_type, target_id])[:16]
+  281:     if not plan.get("goal_id"):
+  282:         plan["goal_id"] = goal_id or "goal-" + canonical_hash([actor_id, tick, action_type])[:16]
+  283:     plan.setdefault("goal", action_type.upper())
+  284:     plan.setdefault("step_index", 0)
+  285:     if goal_id:
+  286:         plan["goal_id"] = goal_id
+  287:     action = _base_action(actor_id, action_type, tick, plan, target_id)
+  288:     action["target_pos"] = copy.deepcopy(target_pos or (target or {}).get("position"))
+  289:     updates = {actor_id: {}}
+  290:     new_entities = {}
+  291:     removed_entities = []
+  292:     touched = [actor_id]
+  293:     preconditions = [
+  294:         {"entity_id": actor_id, "field": "alive", "op": "eq", "value": True},
+  295:     ]
+  296:     effects = []
+  297:     resources = _resources(actor)
+  298:     actor_update = updates[actor_id]
+  299:     transfer = None
+  300: 
+  301:     def require_target():
+  302:         if target is None:
+  303:             raise ValueError(f"{action_type} requires target_id")
+  304:         if target_id not in touched:
+  305:             touched.append(target_id)
+  306: 
+  307:     def require_adjacent():
+  308:         require_target()
+  309:         if not _same_or_adjacent(actor.get("position"), target.get("position")):
+  310:             raise ValueError(f"{action_type} target must be adjacent")
+  311: 
+  312:     def apply_tool_wear(amount=1):
+  313:         if not tool_id:
+  314:             return
+  315:         tool = entities.get(tool_id)
+  316:         if not tool or tool.get("type") != "tool":
+  317:             raise ValueError("required tool missing")
+  318:         durability = max(0, int(tool.get("durability", 0)))
+  319:         updates[tool_id] = {"durability": max(0, durability - amount)}
+  320:         touched.append(tool_id)
+  321:         preconditions.append({"entity_id": tool_id, "field": "durability", "op": "gte", "value": amount})
+  322:         action["required_tools"] = [tool_id]
+  323:         effects.append("tool_wear")
+  324: 
+  325:     if action_type == "move":
+  326:         if target_pos is None:
+  327:             raise ValueError("move requires target_pos")
+  328:         if not _same_or_adjacent(actor.get("position"), target_pos):
+  329:             raise ValueError("move is limited to one adjacent step")
+  330:         actor_update["position"] = copy.deepcopy(target_pos)
+  331:         effects.extend(["position_change", "tracks"])
+  332: 
+  333:     elif action_type == "gather":
+  334:         require_adjacent()
+  335:         field, available = _quantity(target)
+  336:         amount = min(quantity, available)
+  337:         if amount <= 0:
+  338:             raise ValueError("gather target depleted")
+  339:         new_resources = copy.deepcopy(resources)
+  340:         new_resources[resource_kind] = new_resources.get(resource_kind, 0) + amount
+  341:         _sync_legacy_resource_fields(actor_update, new_resources)
+  342:         updates[target_id] = {field: available - amount}
+  343:         preconditions.extend([
+  344:             {"entity_id": actor_id, "field": "carried_resources", "op": "eq", "value": actor.get("carried_resources", resources)},
+  345:             {"entity_id": target_id, "field": field, "op": "gte", "value": amount},
+  346:         ])
+  347:         transfer = _transfer(actor_id=target_id, target_id=actor_id, resource_kind=resource_kind, quantity=amount,
+  348:                              source_before={resource_kind: available}, target_before=resources,
+  349:                              source_field=field, target_field="carried_resources")
+  350:         apply_tool_wear()
+  351:         effects.extend(["resource_depletion", "inventory_change", "noise", "debris"])
+  352: 
+  353:     elif action_type == "carry":
+  354:         require_adjacent()
+  355:         if target.get("type") not in ("tool", "item", "resource"):
+  356:             raise ValueError("target is not carryable")
+  357:         carried = list(actor.get("carried_item_ids") or [])
+  358:         if target_id not in carried:
+  359:             carried.append(target_id)
+  360:         actor_update["carried_item_ids"] = sorted(carried)
+  361:         updates[target_id] = {"carried_by": actor_id, "position": copy.deepcopy(actor["position"])}
+  362:         effects.extend(["possession_change", "inventory_change"])
+  363: 
+  364:     elif action_type in ("store", "retrieve", "give", "take"):
+  365:         require_adjacent()
+  366:         if action_type in ("store", "retrieve", "take") and target.get("type") not in ("storage", "container"):
+  367:             raise ValueError(f"{action_type} target must be storage")
+  368:         permitted = _can_access(actor_id, target)
+  369:         if not permitted and not (action_type == "take" and allow_unauthorized):
+  370:             raise ValueError("access denied")
+  371:         action["access_violation"] = not permitted
+  372:         if action_type in ("store", "give"):
+  373:             source_id, destination_id = actor_id, target_id
+  374:             source_map = resources
+  375:             destination_map = _resources(target) if action_type == "give" else _contents(target)
+  376:             source_field = "carried_resources"
+  377:             destination_field = "carried_resources" if action_type == "give" else "contents"
+  378:         else:
+  379:             source_id, destination_id = target_id, actor_id
+  380:             source_map = _contents(target)
+  381:             destination_map = resources
+  382:             source_field, destination_field = "contents", "carried_resources"
+  383:         if source_map.get(resource_kind, 0) < quantity:
+  384:             raise ValueError("insufficient resource")
+  385:         if action_type in ("store", "retrieve", "take"):
+  386:             capacity = int(target.get("capacity", 0))
+  387:             if action_type == "store" and sum(destination_map.values()) + quantity > capacity:
+  388:                 raise ValueError("storage capacity exceeded")
+  389:         source_after = copy.deepcopy(source_map)
+  390:         destination_after = copy.deepcopy(destination_map)
+  391:         source_after[resource_kind] -= quantity
+  392:         destination_after[resource_kind] = destination_after.get(resource_kind, 0) + quantity
+  393:         if source_id == actor_id:
+  394:             _sync_legacy_resource_fields(actor_update, source_after)
+  395:         else:
+  396:             updates[source_id] = {source_field: source_after}
+  397:         if destination_id == actor_id:
+  398:             _sync_legacy_resource_fields(actor_update, destination_after)
+  399:         else:
+  400:             updates[destination_id] = {destination_field: destination_after}
+  401:             if destination_field == "carried_resources":
+  402:                 updates[destination_id]["inventory"] = destination_after.get("wood", 0)
+  403:                 updates[destination_id]["food_inventory"] = destination_after.get("food", 0)
+  404:         preconditions.extend([
+  405:             {"entity_id": source_id, "field": source_field, "op": "eq", "value": source_map},
+  406:             {"entity_id": destination_id, "field": destination_field, "op": "eq", "value": destination_map},
+  407:         ])
+  408:         transfer = _transfer(
+  409:             actor_id=source_id, target_id=destination_id, resource_kind=resource_kind,
+  410:             quantity=quantity, source_before=source_map, target_before=destination_map,
+  411:             source_field=source_field, target_field=destination_field,
+  412:         )
+  413:         effects.extend(["resource_change", "inventory_change", "ownership_or_possession_change"])
+  414: 
+  415:     elif action_type == "consume":
+  416:         if resources.get(resource_kind, 0) < quantity:
+  417:             raise ValueError("nothing consumable carried")
+  418:         after = copy.deepcopy(resources)
+  419:         after[resource_kind] -= quantity
+  420:         _sync_legacy_resource_fields(actor_update, after)
+  421:         actor_update["hunger"] = max(0, int(actor.get("hunger", 0)) - 400 * quantity)
+  422:         preconditions.append({"entity_id": actor_id, "field": "carried_resources", "op": "eq", "value": actor.get("carried_resources", resources)})
+  423:         effects.extend(["inventory_change", "internal_state_change"])
+  424: 
+  425:     elif action_type == "drink":
+  426:         if target_id:
+  427:             require_adjacent()
+  428:             if target.get("type") != "water_source":
+  429:                 raise ValueError("drink target must be a water source")
+  430:         actor_update["thirst"] = 0
+  431:         effects.append("internal_state_change")
+  432: 
+  433:     elif action_type == "rest":
+  434:         actor_update["energy"] = min(1000, int(actor.get("energy", 0)) + 80)
+  435:         effects.append("internal_state_change")
+  436: 
+  437:     elif action_type == "use_tool":
+  438:         apply_tool_wear()
+  439:         effects.append("tool_use")
+  440: 
+  441:     elif action_type == "construct":
+  442:         if resources.get("wood", 0) < quantity:
+  443:             raise ValueError("insufficient construction material")
+  444:         after = copy.deepcopy(resources)
+  445:         after["wood"] -= quantity
+  446:         _sync_legacy_resource_fields(actor_update, after)
+  447:         structure_id = "structure-" + canonical_hash([actor_id, tick, target_pos, quantity])[:16]
+  448:         new_entities[structure_id] = {
+  449:             "type": "structure", "schema_version": "structure-v1",
+  450:             "structure_kind": "shelter", "position": copy.deepcopy(target_pos or actor["position"]),
+  451:             "condition": 1000, "max_condition": 1000, "owner_id": actor_id,
+  452:             "access": "private", "affordances": default_affordances({"type": "structure"}),
+  453:         }
+  454:         touched.append(structure_id)
+  455:         effects.extend(["resource_change", "structure_created", "debris", "noise"])
+  456: 
+  457:     elif action_type in ("repair", "damage"):
+  458:         require_adjacent()
+  459:         condition = int(target.get("condition", target.get("health", 0)))
+  460:         field = "condition" if "condition" in target else "health"
+  461:         delta = 120 if action_type == "repair" else -120
+  462:         if action_type == "repair":
+  463:             if resources.get("wood", 0) < quantity:
+  464:                 raise ValueError("repair material unavailable")
+  465:             after = copy.deepcopy(resources)
+  466:             after["wood"] -= quantity
+  467:             _sync_legacy_resource_fields(actor_update, after)
+  468:         updates[target_id] = {field: max(0, min(int(target.get("max_condition", 1000)), condition + delta))}
+  469:         preconditions.append({"entity_id": target_id, "field": field, "op": "eq", "value": condition})
+  470:         apply_tool_wear()
+  471:         effects.extend(["condition_change", "tool_wear", "noise", "debris"])
+  472: 
+  473:     elif action_type in ("open", "access"):
+  474:         require_adjacent()
+  475:         if not _can_access(actor_id, target):
+  476:             raise ValueError("access denied")
+  477:         updates[target_id] = {"open": True}
+  478:         effects.append("access_change")
+  479: 
+  480:     elif action_type == "help":
+  481:         require_adjacent()
+  482:         if target.get("type") != "person" or not target.get("alive", True):
+  483:             raise ValueError("help target must be living person")
+  484:         updates[target_id] = {
+  485:             "health": min(1000, int(target.get("health", 1000)) + 50),
+  486:             "energy": min(1000, int(target.get("energy", 0)) + 40),
+  487:         }
+  488:         actor_update["energy"] = max(0, int(actor.get("energy", 0)) - 20)
+  489:         action["participants"] = [target_id]
+  490:         effects.extend(["health_change", "social_signal"])
+  491: 
+  492:     elif action_type in ("warn", "request", "refuse"):
+  493:         if target_id:
+  494:             require_adjacent()
+  495:             action["participants"] = [target_id]
+  496:         effects.extend(["new_knowledge_signal", "social_signal"])
+  497: 
+  498:     action["physical_effects"] = sorted(set(effects))
+  499:     if transfer:
+  500:         action["resource_transfer"] = transfer

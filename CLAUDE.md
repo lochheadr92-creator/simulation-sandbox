@@ -41,6 +41,12 @@ is the index, not the brain dump. Keep it under 150 lines.
 
 ## Invariants (verbatim from the master protocol)
 
+> **Namespacing (F3 fix, 2026-07-25, per CORE-INTEGRITY-001 review):** items below
+> are the CULTURE invariant list, citable as **C-1 … C-12**. A separate, unrelated
+> numbered list exists at SOURCE-OF-TRUTH-v2.md §19, citable as **SOT-19.N**.
+> Numbers are NOT interchangeable across the two lists; never cite a bare
+> "invariant N" without a namespace.
+
 1. Core alone writes truth; culture domains propose over pinned frames.
 2. Determinism: repeat + replay + resume; keyed RNG; no wall-clock, no
    iteration-order dependence, no probabilities-as-culture.

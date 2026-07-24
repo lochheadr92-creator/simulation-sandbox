@@ -5,12 +5,37 @@ DEFERRED.** User ruling at the post-8B-close-out STOP: F1/F2/F3 stand as verifie
 findings; no remediation inside any culture leg (per §7, repairing F1 changes
 which writes survive → moves the frozen `living_settlement` 320 hash and the
 `collective_groups` baseline, so repair requires its own separately authorized
-core-integrity stage with an explicit re-baseline). Until then: culture legs
-design around the exposure — new state lives in single-owner Category-2
-registries (§6: not the exposed surface); any person-entity write a leg proposes
-must carry field-level eq guards and integrated churn-test coverage for the
-same-frame overwrite class (§9); and per F3, directives must qualify bare
-invariant numbers (culture list vs SOURCE-OF-TRUTH §19).
+core-integrity stage with an explicit re-baseline). Until then, the interim
+containment discipline applies — **reclassified 2026-07-25 (review finding
+IND-C10, ruling by Ryan): this is necessary interim discipline, NOT sufficient
+containment; residual risk register P10-1..10 in
+`scratchpad/core-integrity-review/adversarial_review_report.md`:**
+
+1. New state lives in single-owner Category-2 registries (§6: not the exposed
+   surface).
+2. Any person-entity write a leg proposes must carry field-level eq guards —
+   eq on EVERY top-level key the mutation writes, not merely some eq
+   (P10-4/P10-9) — plus integrated churn-test coverage for the same-frame
+   overwrite class (§9).
+3. Every leg's churn matrix must include at minimum: a non-actor
+   `living_agent` overwrite, a death+HELP `health` collision, and an
+   out-of-scope write attempt (P10-6).
+4. Legs must keep `entity_updates` ⊆ `touched_scope` as a leg-level rule even
+   though the pipeline does not enforce it (F2, P10-7).
+5. No two legs/domains may write the same person field (dual-write ban,
+   P10-2).
+6. "Field-level" means top-level entity key; a writer with nested-path partial
+   intent must eq-guard the whole key and handle merge explicitly (P10-5).
+7. Per F3, directives must qualify invariant numbers with a namespace
+   (C-N culture list vs SOT-19.N).
+
+**Independent adversarial review: RAN 2026-07-25 (reviewer: Grok/xAI,
+cross-vendor; independence accepted).** Report + findings ledger + Ryan's
+rulings: `scratchpad/core-integrity-review/adversarial_review_report.md`.
+Probe re-runs 2026-07-25 semantically identical to committed evidence
+(IND-JSON closed); packet copies identical to `memory/evidence/stage-8c-leg1/`
+(IND-PATH closed). The stage7a/7b concurrency intermittency is scoped OUT of
+this finding → `memory/CORE-INTEGRITY-002-CONCURRENCY-CAS.md`.
 
 Original status (historical): PROPOSED — findings only. No remediation proposed;
 repair is separately authorized after disposition. Sealed Stage 6 / core / frozen
@@ -197,11 +222,19 @@ state). [VERIFIED]
 **Consequence, stated plainly:** because the ordering — and therefore *which* write
 survives each collision — is deterministic, the lost-update outcomes are baked into
 the committed state and its hashes. **All frozen baselines and green determinism
-results encode this defect.** Repairing F1 (merging sub-dicts, rejecting conflicting
-writes, or adding guards) would change which writes survive → change committed state
-→ **necessarily move the frozen `living_settlement` 320 hash and the
-`collective_groups` baseline.** Remediation therefore requires an authorized
-re-baseline, and cannot be done inside a culture leg.
+results encode this defect.** *(Wording corrected 2026-07-25 per review finding
+IND-C8 — the original "necessarily move the frozen hashes" was an overclaim.)*
+Repairs that alter which writes survive currently exercised collisions (e.g.
+merging sub-dicts, rejecting conflicting writes) — or that change
+ordering-relevant proposal content, since preconditions feed `content_hash`
+and thus commit order — **will move the affected frozen baselines** (the
+`living_settlement` 320 hash and/or the `collective_groups` baseline).
+Scope-only fixes (e.g. enforcing `touched_scope` on scenarios that never emit
+out-of-scope keys) **may be hash-stable**. Whether a given repair moves a
+baseline is an empirical question: prototype the fix on a throwaway branch and
+re-hash the frozen scenarios. Remediation therefore requires a **measured-hash
+gate** — an authorized re-baseline wherever post-repair hash ≠ frozen — and
+cannot be done inside a culture leg.
 
 ---
 

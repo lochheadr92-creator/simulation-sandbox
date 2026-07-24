@@ -1,0 +1,271 @@
+  480:         if f"{pos['x']},{pos['y']}" not in known_tiles:
+  481:             unknown.append(pos)
+  482:     if unknown:
+  483:         candidates.append(_candidate("EXPLORE", "move", 180, target_pos=unknown[0]))
+  484:     candidates.append(_candidate("REST", "rest", 60))
+  485:     return candidates[:LIMITS.candidate_goals_per_decision]
+  486: 
+  487: 
+  488: def _replace_living_preconditions(proposal: dict, canonical_entities: dict) -> None:
+  489:     for condition in proposal.get("preconditions") or []:
+  490:         if condition.get("field") == "living_agent" and condition.get("entity_id") in canonical_entities:
+  491:             condition["value"] = canonical_entities[condition["entity_id"]].get("living_agent")
+  492: 
+  493: 
+  494: class LivingSettlementDomain(DomainEngine):
+  495:     engine_id = "living_settlement"
+  496:     engine_version = "1.0.0"
+  497:     engine_priority = 10
+  498:     phase = "agent"
+  499: 
+  500:     def select_due_ids(self, entities: dict, tick: int) -> list:
+  501:         return [
+  502:             entity_id for entity_id, entity in sorted(entities.items())
+  503:             if entity.get("type") == "person" and entity.get("alive", True)
+  504:             and entity.get("stage6_role")
+  505:         ]
+  506: 
+  507:     def activate(self, frame):
+  508:         proposals = []
+  509:         diagnostics = {}
+  510:         tick = frame.simulation_time
+  511:         night = getattr(frame, "night", False)
+  512:         weather = frame.entities.get("weather-000")
+  513:         for entity_id in sorted(frame.due_entity_ids):
+  514:             entity = frame.entities.get(entity_id)
+  515:             if not entity or not entity.get("alive", True):
+  516:                 continue
+  517:             knowledge = _compat_knowledge(entity.get("knowledge") or empty_knowledge())
+  518:             delta = perceive_living(
+  519:                 entity_id, entity, frame.entities, frame.terrain, tick,
+  520:                 night=night, weather=weather,
+  521:             )
+  522:             knowledge, changed, learned = merge_knowledge(knowledge, delta, observer_id=entity_id)
+  523:             knowledge, obs_changed, obs_learned = merge_observations_into_knowledge(
+  524:                 knowledge, delta.get("observations") or [],
+  525:             )
+  526:             changed = changed or obs_changed
+  527:             learned = list(learned) + list(obs_learned)
+  528:             state = compat_living_agent_state(entity.get("living_agent"), entity_id, tick, frame.rng)
+  529:             state, knowledge, social_changes, social_knowledge_changed = apply_observed_social_information(
+  530:                 state, knowledge, observer_id=entity_id,
+  531:                 observations=delta.get("observations") or [], tick=tick,
+  532:             )
+  533:             changed = changed or social_knowledge_changed
+  534:             state, commitment_changes = advance_commitment_deadlines(state, owner_id=entity_id, tick=tick)
+  535:             state = derive_internal_pressures(
+  536:                 entity, state, knowledge, delta, tick, night=night, weather=weather,
+  537:             )
+  538:             state, perceived_memories = merge_meaningful_memories(
+  539:                 state, actor_id=entity_id, tick=tick,
+  540:                 observations=delta.get("observations") or [], learned=learned,
+  541:             )
+  542:             state = refresh_wants(state, entity_id, tick)
+  543:             base_candidates = build_settlement_candidates(entity_id, entity, state, knowledge, delta, tick)
+  544:             candidates = score_goal_candidates(
+  545:                 base_candidates, actor_id=entity_id, state=state,
+  546:                 knowledge=knowledge, tick=tick,
+  547:             )
+  548:             # Read-only Stage 7D goal + Stage 8A norm nudges are applied AFTER
+  549:             # scoring so their survival-dominance guard compares final score_total
+  550:             # (the scorer injects survival urgency); both remain inert without their
+  551:             # registries, preserving the frozen Stage 6 hash.
+  552:             candidates = _apply_group_goal_influence(candidates, entity_id, frame.entities, tick)
+  553:             candidates = _apply_group_norm_influence(candidates, entity_id, frame.entities, tick)
+  554:             selected = select_goal(candidates)
+  555:             desired_action = selected["direct_action_type"]
+  556:             target_id = selected.get("target_entity_id")
+  557:             target_pos = copy.deepcopy(selected.get("target_pos"))
+  558:             prior_plan = entity.get("plan") or {}
+  559:             decision_kind = "new_goal"
+  560:             paused_plan = copy.deepcopy(entity.get("paused_living_plan"))
+  561:             if selected.get("continuation"):
+  562:                 decision_kind = "plan_continuation"
+  563:             elif selected.get("resumption"):
+  564:                 decision_kind = "resumption"
+  565:                 paused_plan = None
+  566:             elif prior_plan.get("status") == "active" and prior_plan.get("goal") != selected.get("goal"):
+  567:                 decision_kind = "critical_interrupt" if selected.get("goal") in SURVIVAL_GOALS else "replan"
+  568:                 if decision_kind == "critical_interrupt":
+  569:                     paused_plan = copy.deepcopy(prior_plan)
+  570: 
+  571:             actual_action = desired_action
+  572:             actual_target_id = target_id
+  573:             actual_target_pos = target_pos
+  574:             steps = [desired_action.upper()]
+  575:             plan_status = "active"
+  576:             if target_id and target_pos:
+  577:                 distance = abs(entity["position"]["x"] - target_pos["x"]) + abs(entity["position"]["y"] - target_pos["y"])
+  578:                 if distance > 1:
+  579:                     route = find_path(entity["position"], target_pos, frame.terrain, ARRIVAL_ADJACENT)
+  580:                     if route:
+  581:                         actual_action = "move"
+  582:                         actual_target_id = None
+  583:                         actual_target_pos = route[0]
+  584:                         steps = ["MOVE_TO_TARGET", desired_action.upper()]
+  585:                     else:
+  586:                         actual_action = "rest"
+  587:                         actual_target_id = None
+  588:                         actual_target_pos = None
+  589:                         steps = ["REPLAN", "REST"]
+  590:                         plan_status = "abandoned"
+  591:                         decision_kind = "failed_plan_replan"
+  592: 
+  593:             plan_seed = {
+  594:                 "goal": selected["goal"], "goal_id": selected["goal_id"],
+  595:                 "steps": steps, "step_index": 0, "status": plan_status,
+  596:                 "created_tick": tick,
+  597:                 "replan_of": prior_plan.get("plan_id") if decision_kind in ("replan", "failed_plan_replan") else None,
+  598:             }
+  599:             if selected.get("continuation") and prior_plan.get("plan_id"):
+  600:                 plan_seed["plan_id"] = prior_plan["plan_id"]
+  601:                 plan_seed["created_tick"] = prior_plan.get("created_tick", tick)
+  602:             plan = compat_plan(plan_seed, actor_id=entity_id, tick=tick)
+  603:             plan = form_structured_plan(
+  604:                 plan, actor_id=entity_id, tick=tick, selected=selected,
+  605:                 context={"required_tools": [selected["tool_id"]] if selected.get("tool_id") else []},
+  606:                 replan_of=plan.get("replan_of"),
+  607:             )
+  608:             plan["intent"] = {
+  609:                 "goal": selected["goal"], "action_type": desired_action,
+  610:                 "target_id": target_id, "target_pos": target_pos,
+  611:                 "tool_id": selected.get("tool_id"),
+  612:                 "resource_kind": selected.get("resource_kind", "food"),
+  613:                 "allow_unauthorized": bool(selected.get("allow_unauthorized")),
+  614:                 "message": copy.deepcopy(selected.get("message")),
+  615:             }
+  616: 
+  617:             working_entities = dict(frame.entities)
+  618:             working_actor = copy.deepcopy(entity)
+  619:             working_actor["living_agent"] = state
+  620:             working_actor["knowledge"] = knowledge
+  621:             working_entities[entity_id] = working_actor
+  622:             failure_reason = None
+  623:             try:
+  624:                 if actual_action in SOCIAL_DIRECT_ACTIONS:
+  625:                     proposal = build_social_action_proposal(
+  626:                         working_entities,
+  627:                         actor_id=entity_id,
+  628:                         action_type=actual_action,
+  629:                         tick=tick,
+  630:                         target_id=actual_target_id,
+  631:                         plan=plan,
+  632:                         message=selected.get("message"),
+  633:                         obligation=selected.get("obligation"),
+  634:                         due_tick=selected.get("due_tick"),
+  635:                     )
+  636:                 else:
+  637:                     proposal = build_physical_action_proposal(
+  638:                         working_entities,
+  639:                         actor_id=entity_id,
+  640:                         action_type=actual_action,
+  641:                         tick=tick,
+  642:                         target_id=actual_target_id,
+  643:                         target_pos=actual_target_pos,
+  644:                         resource_kind=selected.get("resource_kind", "food"),
+  645:                         quantity=1,
+  646:                         tool_id=selected.get("tool_id"),
+  647:                         plan=plan,
+  648:                         goal_id=selected.get("goal_id"),
+  649:                         allow_unauthorized=bool(selected.get("allow_unauthorized")),
+  650:                         message=selected.get("message"),
+  651:                     )
+  652:             except ValueError as exc:
+  653:                 failure_reason = str(exc)
+  654:                 decision_kind = "failed_plan_replan"
+  655:                 plan["status"] = "abandoned"
+  656:                 plan["failure_reason"] = str(exc)
+  657:                 fallback_plan = copy.deepcopy(plan)
+  658:                 fallback_plan["steps"] = ["REST"]
+  659:                 fallback_plan["step_records"] = []
+  660:                 proposal = build_physical_action_proposal(
+  661:                     working_entities, actor_id=entity_id, action_type="rest",
+  662:                     tick=tick, plan=fallback_plan, goal_id=selected.get("goal_id"),
+  663:                 )
+  664:                 proposal["explanation"] = f"plan failed ({exc}); deterministic fallback rest"
+  665: 
+  666:             _replace_living_preconditions(proposal, frame.entities)
+  667:             proposal["proposer_engine_id"] = self.engine_id
+  668:             proposal["proposer_engine_version"] = self.engine_version
+  669:             actor_update = proposal["mutation"]["entity_updates"].setdefault(entity_id, {})
+  670:             action = actor_update.get("action") or {}
+  671:             executed_action = action.get("type", actual_action)
+  672:             actor_after = {**entity, **actor_update}
+  673:             actor_after["hunger"] = min(1000, int(actor_after.get("hunger", entity.get("hunger", 0))) + 8)
+  674:             actor_after["thirst"] = 0 if executed_action == "drink" else min(
+  675:                 1000, int(actor_after.get("thirst", entity.get("thirst", 0))) + 10,
+  676:             )
+  677:             actor_after["energy"] = max(0, int(actor_after.get("energy", entity.get("energy", 0))) - 5)
+  678:             actor_update.update({
+  679:                 "hunger": actor_after["hunger"], "thirst": actor_after["thirst"],
+  680:                 "energy": actor_after["energy"], "knowledge": knowledge,
+  681:                 "paused_living_plan": paused_plan,
+  682:             })
+  683:             if decision_kind == "critical_interrupt":
+  684:                 action["interrupted_plan_id"] = prior_plan.get("plan_id")
+  685:                 action["interruption_reason"] = "critical_survival_pressure"
+  686:             if executed_action == "move":
+  687:                 plan["status"] = "active"
+  688:             elif plan.get("status") != "abandoned":
+  689:                 plan["status"] = "completed"
+  690:                 plan["step_index"] = len(plan.get("steps") or [])
+  691:                 for record in plan.get("step_records") or []:
+  692:                     record["status"] = "completed"
+  693:                     record["last_updated_tick"] = tick
+  694:             actor_update["plan"] = plan
+  695:             action_counts = dict(entity.get("living_action_counts") or {})
+  696:             action_counts[executed_action] = min(9999, action_counts.get(executed_action, 0) + 1)
+  697:             actor_update["living_action_counts"] = {
+  698:                 key: action_counts[key] for key in sorted(action_counts)[:32]
+  699:             }
+  700:             if failure_reason:
+  701:                 failed_counts = dict(entity.get("living_failed_goal_counts") or {})
+  702:                 failed_counts[selected["goal"]] = min(
+  703:                     9999, int(failed_counts.get(selected["goal"], 0)) + 1,
+  704:                 )
+  705:                 actor_update["living_failed_goal_counts"] = {
+  706:                     key: failed_counts[key] for key in sorted(failed_counts)[:16]
+  707:                 }
+  708: 
+  709:             resulting_state = actor_update.get("living_agent") or state
+  710:             resulting_state = derive_internal_pressures(
+  711:                 actor_after, resulting_state, knowledge, delta, tick,
+  712:                 night=night, weather=weather,
+  713:             )
+  714:             resulting_state, action_memories = merge_meaningful_memories(
+  715:                 resulting_state, actor_id=entity_id, tick=tick,
+  716:                 action_result={"action": action},
+  717:             )
+  718:             resulting_state = refresh_wants(resulting_state, entity_id, tick)
+  719:             receipt = build_decision_receipt(
+  720:                 actor_id=entity_id, tick=tick, state=resulting_state,
+  721:                 knowledge=knowledge, candidates=candidates, selected=selected,
+  722:                 plan=plan, decision_kind=decision_kind,
+  723:             )
+  724:             resulting_state = record_decision(resulting_state, receipt, plan)
+  725:             links = list(resulting_state.get("causal_links") or [])
+  726:             links.append({
+  727:                 "link_type": "action", "tick": tick,
+  728:                 "selected_goal_id": selected.get("goal_id"),
+  729:                 "plan_id": plan.get("plan_id"), "action_id": action.get("action_id"),
+  730:                 "proposal_id": None, "accepted_event_id": None,
+  731:                 "consequences": list((proposal.get("living_action") or {}).get("physical_effects") or []),
+  732:             })
+  733:             resulting_state["causal_links"] = links[-LIMITS.causal_links_retained:]
+  734:             actor_update["living_agent"] = resulting_state
+  735:             actor_update["action"] = action
+  736:             proposal["living_action"] = {
+  737:                 **proposal["living_action"],
+  738:                 "plan_id": plan.get("plan_id"),
+  739:                 "causal_goal_id": selected.get("goal_id"),
+  740:             }
+  741:             proposal["explanation"] = (
+  742:                 f"{decision_kind}: selected {selected['goal']} -> {executed_action}; "
+  743:                 f"effects={proposal['living_action'].get('physical_effects', [])}"
+  744:             )
+  745:             proposals.append(proposal)
+  746:             diagnostics[entity_id] = {
+  747:                 "selected_goal": selected["goal"], "goal_id": selected.get("goal_id"),
+  748:                 "plan_id": plan.get("plan_id"), "decision_kind": decision_kind,
+  749:                 "candidates": candidates, "decision_receipt": receipt,
+  750:                 "perception": {"version": delta.get("living_perception_version"),

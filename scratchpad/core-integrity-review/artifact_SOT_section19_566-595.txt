@@ -1,0 +1,30 @@
+  566: ## 19. Invariants
+  567: 
+  568: 1. One mutation authority: only Core-accepted simulation events mutate canonical world state or simulation time.
+  569: 2. No accepted simulation event lacks deterministic identity.
+  570: 3. No accepted simulation event lacks deterministic order.
+  571: 4. No state-changing import occurs without accepted simulation events.
+  572: 5. No non-genesis durable consequence lacks causal provenance.
+  573: 6. No external influence affects truth unless normalized, recorded, validated, accepted, and replayed from record.
+  574: 7. No domain engine writes canonical storage.
+  575: 8. No proposal is world truth before acceptance.
+  576: 9. No rejected proposal mutates world state.
+  577: 10. No receipt exists without Core authorization.
+  578: 11. No receipt replaces accepted events inside the recent replay horizon.
+  579: 12. No checkpoint is valid without source event/admin ranges and hashes.
+  580: 13. No projection is valid without rebuild provenance.
+  581: 14. No projection introduces noncanonical facts.
+  582: 15. No projection is the sole causal origin of a proposal.
+  583: 16. No administrative record lacks deterministic effective boundary when replay-relevant.
+  584: 17. No administrative record retroactively changes accepted record meaning.
+  585: 18. No canonical hash depends on storage metadata.
+  586: 19. No replay depends on external services.
+  587: 20. No schema migration silently strengthens legacy or old records.
+  588: 21. No branch/fork rewrites parent lineage.
+  589: 22. No compression erases required causal anchors.
+  590: 23. No storage purge occurs outside explicit Core policy.
+  591: 24. No current state is accepted if its post-state hash cannot be reproduced.
+  592: 25. No bounded-growth policy may hide truth loss as optimization.
+  593: 
+  594: ---
+  595: 
