@@ -42,6 +42,7 @@ GOAL_PRESSURES = {
     "TAKE_FOOD": ("hunger", "safety"),
     "RETRIEVE_FOOD": ("hunger",),
     "GATHER_FOOD": ("hunger",),
+    "TEND_STRUCTURE": ("upkeep",),  # Layer C Variety Leg 1: memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md
 }
 
 WANT_GOALS = {

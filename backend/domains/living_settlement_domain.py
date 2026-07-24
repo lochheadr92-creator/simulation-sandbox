@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import copy
 
+from core.constants import (
+    STRUCTURE_TEND_CONDITION_CEILING,
+    STRUCTURE_TEND_CONDITION_FLOOR,
+    TEND_STRUCTURE_BASE_SCORE,
+)
 from core.navigation import ARRIVAL_ADJACENT, find_path
 from domains.base import DomainEngine, DomainOutput
 from domains.living_agent_actions import build_physical_action_proposal
@@ -470,6 +475,28 @@ def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowl
             "TAKE_FOOD", "retrieve", 2800,
             target_id="storage-private", target_pos=_pos(storages["storage-private"]),
             resource_kind="food", risk=120,
+        ))
+
+    # Layer C, Variety Leg 1 (memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md):
+    # any role, no wood/tool cost. Disjoint from REPAIR_SHELTER's condition<750
+    # band above by construction -- the two never target the same shelter in
+    # the same state. Deliberately generated LAST, immediately before the
+    # EXPLORE/REST fallbacks it's designed to compete with: candidates are
+    # truncated to LIMITS.candidate_goals_per_decision in append order before
+    # scoring, so inserting this earlier risked silently starving rarer,
+    # role-specific candidates (e.g. WARN_DANGER) for busy actors instead of
+    # only ever contending with the two generic fallbacks.
+    mildly_worn = [
+        (shelter_id, obs) for shelter_id, obs in sorted(shelters.items())
+        if STRUCTURE_TEND_CONDITION_FLOOR <= int(
+            (obs.get("properties") or {}).get("condition", STRUCTURE_TEND_CONDITION_CEILING)
+        ) < STRUCTURE_TEND_CONDITION_CEILING
+    ]
+    if mildly_worn:
+        target_id, obs = mildly_worn[0]
+        candidates.append(_candidate(
+            "TEND_STRUCTURE", "tend", TEND_STRUCTURE_BASE_SCORE,
+            target_id=target_id, target_pos=_pos(obs),
         ))
 
     # Deterministic bounded local exploration/fallback.

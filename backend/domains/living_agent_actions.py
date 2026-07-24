@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import copy
 
+from core.constants import STRUCTURE_TEND_RESTORE_AMOUNT
 from core.hashing import canonical_hash
 from domains.living_agent_contracts import (
     ACTION_SCHEMA_VERSION,
@@ -470,6 +471,22 @@ def build_physical_action_proposal(
         apply_tool_wear()
         effects.extend(["condition_change", "tool_wear", "noise", "debris"])
 
+    elif action_type == "tend":
+        # Layer C, Variety Leg 1 (memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md):
+        # light maintenance available to any role, no wood/tool cost, smaller
+        # restore than repair. The candidate step already restricts tend to
+        # the disjoint mild-wear band (repair owns condition < 750); this
+        # executor does not re-check the band, matching how repair's executor
+        # doesn't re-check its own condition<750 trigger either.
+        require_adjacent()
+        condition = int(target.get("condition", target.get("health", 0)))
+        field = "condition" if "condition" in target else "health"
+        updates[target_id] = {
+            field: max(0, min(int(target.get("max_condition", 1000)), condition + STRUCTURE_TEND_RESTORE_AMOUNT)),
+        }
+        preconditions.append({"entity_id": target_id, "field": field, "op": "eq", "value": condition})
+        effects.extend(["condition_change", "noise"])
+
     elif action_type in ("open", "access"):
         require_adjacent()
         if not _can_access(actor_id, target):
@@ -509,7 +526,7 @@ def build_physical_action_proposal(
     signal_kind = None
     if action_type == "move":
         signal_kind = "tracks"
-    elif action_type in ("gather", "construct", "repair", "damage", "use_tool"):
+    elif action_type in ("gather", "construct", "repair", "damage", "use_tool", "tend"):
         signal_kind = "noise"
     elif action_type in ("warn", "request", "refuse", "help", "give", "take"):
         signal_kind = "speech" if action_type in ("warn", "request", "refuse") else "social"

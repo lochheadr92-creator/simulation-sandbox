@@ -39,6 +39,7 @@ PRESSURE_KINDS = (
     "attachment",
     "fear",
     "perceived_obligation",
+    "upkeep",  # Layer C Variety Leg 1: memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md
 )
 
 TRAIT_KINDS = (
@@ -56,6 +57,7 @@ PHYSICAL_ACTION_TYPES = frozenset({
     "move", "gather", "carry", "store", "retrieve", "consume", "drink",
     "rest", "use_tool", "construct", "repair", "damage", "open", "access",
     "give", "take", "help", "warn", "request", "refuse",
+    "tend",  # Layer C Variety Leg 1: memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md
 })
 
 SOCIAL_ACTION_TYPES = frozenset({
