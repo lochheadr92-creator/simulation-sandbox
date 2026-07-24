@@ -794,7 +794,7 @@ completion. Authority split: **CAPABILITY_ROADMAP.md** is authoritative for
 capability sequencing; **this file** is authoritative for Core/persistence/
 replay/transaction mechanics and technical-phase status.
 
-**Current frontier:** Stage 7C committed and **mechanism-verified** (15 focused
+**Historical frontier note** *(current frontier is in `FRONTIER.md`)* **:** Stage 7C committed and **mechanism-verified** (15 focused
 tests + a 1,000-tick `collective_groups` run: persistence/replay, integrated
 6→7C determinism, projection safety all green). Its one unmet gate — organic
 emergence — is **deferred as Stage 9-blocked** (agents have no surplus to store,

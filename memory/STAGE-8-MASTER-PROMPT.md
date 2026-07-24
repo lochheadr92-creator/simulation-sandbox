@@ -1,3 +1,9 @@
+> **⚠ SUPERSEDED — disposable execution aid, not authority (2026-07-24).**
+> Replaced by `THE-SPINE.md` + `FRONTIER.md` + `AGENT_WORKFLOW.md`. Retained for
+> reference only; do not follow its session ritual or frontier.
+
+---
+
 # TASK: Deliver Capability Stage 8 (Culture) — core culture loop, Legs 8A → 8D, hard stop at the Stage 9 boundary
 
 Mode: greenfield-addition legs inside a live deterministic kernel, executed **gate-and-stop** — one leg at a time, each ending in a full acceptance gate, an adversarial review, and a STOP for explicit user confirmation before the next leg begins. You never run ahead.

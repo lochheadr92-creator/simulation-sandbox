@@ -1,3 +1,9 @@
+> **⚠ SUPERSEDED — disposable execution aid, not authority (2026-07-24).**
+> Replaced by `THE-SPINE.md` + `FRONTIER.md` + `AGENT_WORKFLOW.md`. Retained for
+> reference only; do not follow its session ritual or frontier.
+
+---
+
 > **SUPERSEDED** — this prompt is superseded by `memory/STAGE-8-CONTINUATION-PROMPT.md`, which governs the 8B→9 arc. Kept for historical reference only; do not follow it directly.
 
 # TASK: Stage 8B — Norm Transmission (individual carriage, one taught/imitated pathway): contract-first, gate-and-stop

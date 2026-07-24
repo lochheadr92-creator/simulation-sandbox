@@ -1,3 +1,9 @@
+> **⚠ SUPERSEDED — disposable execution aid, not authority (2026-07-24).**
+> Replaced by `THE-SPINE.md` + `FRONTIER.md` + `AGENT_WORKFLOW.md`. Retained for
+> reference only; do not follow its session ritual or frontier.
+
+---
+
 # TASK: Deliver the remainder of Capability Stage 8 (Culture) — Leg 0 (post-8A amendments) → 8B → 8C → 8D → close-out — hard stop at the Stage 9 boundary
 
 Mode: greenfield-addition legs inside the live deterministic kernel, executed **gate-and-stop** — one leg at a time; each leg ends in a full acceptance gate, an adversarial review, and a STOP for explicit user confirmation before the next begins. This prompt supersedes `memory/STAGE-8B-TO-9-PROMPT.md` where they differ; the master protocol in `memory/STAGE-8-MASTER-PROMPT.md` (invariants, hard stops, verification discipline) applies verbatim except where this prompt updates it with post-8A facts. You never run ahead, and you never cross into Stage 9.

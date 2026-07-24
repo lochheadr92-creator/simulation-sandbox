@@ -1,14 +1,15 @@
 # simulation-sandbox — standing rules (always in force)
 
 Deterministic simulation kernel. Core owns truth; domains are proposal-only.
-Current arc: Capability Stage 8 (Culture), gate-and-stop.
+Current arc: Behaviour Enrichment — Layer C (Individual Agency), gate-and-stop.
+**Authority: `THE-SPINE.md` (map) + `FRONTIER.md` (current task) + `ARCHITECTURE-SPINE.md` (rules).** The `memory/` roadmaps (CAPABILITY_ROADMAP / ROADMAP / MACRO-ROADMAP / DOMAIN_MAPPING) are demoted historical archive — never take the frontier from them.
 Detailed instructions live in `memory/` and are read per-session — this file
 is the index, not the brain dump. Keep it under 150 lines.
 
 ## Session start (every session, before acting)
 
 1. `git log --oneline -10` and `git status`.
-2. Read `AGENT_WORKFLOW.md` and the active leg's contract doc.
+2. Read `THE-SPINE.md` + `FRONTIER.md` (current authority), then `AGENT_WORKFLOW.md` and the active leg's contract.
 3. Restate your position in one paragraph. Then act.
 
 ## STOP discipline

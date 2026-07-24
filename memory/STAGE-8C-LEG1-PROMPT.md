@@ -1,3 +1,9 @@
+> **⚠ SUPERSEDED — disposable execution aid, not authority (2026-07-24).**
+> Replaced by `THE-SPINE.md` + `FRONTIER.md` + `AGENT_WORKFLOW.md`. Retained for
+> reference only; do not follow its session ritual or frontier.
+
+---
+
 > **SUPERSEDED 2026-07-22.** This directive is historical. Its Phase 0 was
 > executed as commit 3c6a8a1b. Its fast-lane methodology (defer adversarial
 > review / contract doc / byte-headroom) is overridden by Invariant 12 v2,

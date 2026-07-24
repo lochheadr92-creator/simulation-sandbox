@@ -3,8 +3,7 @@
 **Status: PROPOSED (2026-07-19) — uncommitted draft, user review pending.**
 
 Authority: this is a **planning lens over `CAPABILITY_ROADMAP.md`**. Item
-lists, stage status, the taxonomies, and **the single frontier pointer** live
-there — this document never carries the frontier and never redefines an item
+lists, stage status, and the taxonomies live there (archived); **the frontier lives in `FRONTIER.md`**. This document never carries the frontier and never redefines an item
 list. Process authority: `EXECUTION-PROTOCOL.md`. If this document disagrees
 with the roadmap, the roadmap wins and this file is amended.
 

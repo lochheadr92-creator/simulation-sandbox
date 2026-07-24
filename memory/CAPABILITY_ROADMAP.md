@@ -668,8 +668,7 @@ Every deferred gate item, in one place. A row here is the decision reference; th
 
 **Frontier:** Stages 6, 7A, 7B, 7B.1, 7C (mechanism-verified; organic emergence Stage-9-blocked), and 7D are implemented and committed. Stage 8A is Implemented (v1, mechanism-verified); its gate-5 organic firing is Deferred — scenario-dynamics-blocked (register above).
 
-**The single frontier is: Stage 8C — next leg selection (after the Leg A
-deferral).** Stage 8B Leg 1 (Norm Transmission / individual carriage) is
+**Frontier: see `FRONTIER.md`.** *(Historical: as of 2026-07-24 the frontier moved to Layer C — Behaviour Enrichment. Do not take a frontier from this archived file.)* Stage 8B Leg 1 (Norm Transmission / individual carriage) is
 **VERIFIED and close-out committed (2026-07-24)** — see
 [`CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md`](CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md)
 and `memory/evidence/stage-8b-leg1/`. 8B made norm carriage per-individual and

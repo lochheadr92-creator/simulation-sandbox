@@ -12,7 +12,7 @@ Superseded by this file: the per-leg execution prompts (`STAGE-8-MASTER-PROMPT.m
 ## Session start (every session, before acting)
 
 1. `git log --oneline -10` and `git status`.
-2. Read `CLAUDE.md` and the active leg's contract doc.
+2. Read `THE-SPINE.md` + `FRONTIER.md` + `CLAUDE.md`, and the active leg's contract.
 3. Restate your position in one paragraph (branch, what's committed, what's uncommitted, the one open blocker). Then act.
 
 ## The leg loop (gate-and-stop)
@@ -56,4 +56,4 @@ If context runs low mid-phase, write a "Session handoff" note into the leg contr
 
 ## Documentation load
 
-Maintain only: the roadmap frontier; the active leg's contract; source-of-truth updates when behaviour actually changes; one compact close-out per leg. No new planning, readiness-audit, taxonomy, adoption-report, reconciliation, or duplicated continuation-prompt docs unless the user explicitly requests them. Constants live beside the code with a one-line comment naming the evidence that set them.
+Maintain only: the frontier (`FRONTIER.md`); the active leg's contract; source-of-truth updates when behaviour actually changes; one compact close-out per leg. No new planning, readiness-audit, taxonomy, adoption-report, reconciliation, or duplicated continuation-prompt docs unless the user explicitly requests them. Constants live beside the code with a one-line comment naming the evidence that set them.
