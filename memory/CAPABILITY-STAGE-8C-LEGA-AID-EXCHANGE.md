@@ -14,8 +14,8 @@ the same wall as Stage 7C. Register rows: `CAPABILITY_ROADMAP.md` §Global
 deferral register; `MACRO-ROADMAP.md` §Deferral ledger. What Stage 9 revives:
 the full v2 build (A1 priority-5 relocation with the recording fix proven,
 A2 keep-one guard, A3 constant 3334, 4 wiring points, 33 tests, both probes),
-preserved as `scratchpad/lega_v2_full.patch` + `scratchpad/LEGA_V2_CLOUD_FINDING.md`
-on the canonical machine.
+committed as [`memory/evidence/stage-8c-lega/lega_v2_full.patch`](evidence/stage-8c-lega/lega_v2_full.patch)
+(the cloud finding note's content is captured in the attempt-2 record below).
 
 Original status (historical): CONFIRMED (2026-07-24) — user approval;
 implementation authorized, phase-gated per EXECUTION-PROTOCOL. Riders
@@ -359,9 +359,11 @@ attempt-1 run evidence is void for v2 purposes). Non-goals (D8) unchanged.
 
 Built per the ratified amendment 1 (A1 `engine_priority = 5` phase "agent",
 A2 carried-food ≥ 2 keep-one guard, A3 RESPOND_AID 3334, A5 fresh gate) by a
-parallel cloud session; delivered as a 4-patch series
-(`scratchpad/lega_v2_full.patch`) with the finding note
-(`scratchpad/LEGA_V2_CLOUD_FINDING.md`). Reproduced on the canonical machine
+parallel cloud session; delivered as a 4-patch series — committed as evidence
+at [`memory/evidence/stage-8c-lega/lega_v2_full.patch`](evidence/stage-8c-lega/lega_v2_full.patch)
+(patch 1/4 docs, 2/4 v1 implementation, 3/4 spent calibration, 4/4 the A1+A2
+v2 amendments) — with the finding note (`scratchpad/LEGA_V2_CLOUD_FINDING.md`,
+canonical machine; content captured in this record). Reproduced on the canonical machine
 2026-07-24 by applying the backend patches to the working tree at `12b034a8`
 (never committed), running the gate, then reverse-applying — tracked diff
 empty afterwards. Deterministic kernel: canonical reproduction matched the
