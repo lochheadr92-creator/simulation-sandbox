@@ -1,9 +1,17 @@
 # Capability Stage 8C, Leg A — Aid Exchange (delivery, response, completion)
 
-**Status: PROPOSED — awaiting user confirmation (with riders) before any
-implementation.** Drafted 2026-07-24 under the authority granted by the ratified
-Phase 1 pre-registration (`STAGE-8C-PHASE1-PREREGISTRATION.md`, RATIFIED
-2026-07-24). No production code exists for this leg.
+**Status: CONFIRMED (2026-07-24) — user approval; implementation authorized,
+phase-gated per EXECUTION-PROTOCOL.** Riders resolved at confirmation: **D3**
+`respond_aid` candidate priority = **3100 by citation** of the legacy
+RESPOND_HELP constant (sealed provenance, not a new number); **D6** registry
+`engine_priority` = **85** (next culture-ladder slot). All other decisions
+confirmed as proposed. The D5 ordering analysis remains a blocking
+implementation-time task, and N/K remain calibration GAPs — confirmation does
+not fill them.
+
+Drafted 2026-07-24 under the authority granted by the ratified Phase 1
+pre-registration (`STAGE-8C-PHASE1-PREREGISTRATION.md`, RATIFIED 2026-07-24).
+No production code exists for this leg at confirmation.
 
 - **Branch:** `capability/stage-8c-phase1-aid-exchange` (rebased onto 8B Leg 1
   close-out `1c78b9df`; base tip at drafting `8b0d23b2`).
