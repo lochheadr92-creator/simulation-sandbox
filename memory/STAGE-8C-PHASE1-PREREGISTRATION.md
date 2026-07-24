@@ -1,10 +1,22 @@
 # Stage 8C Phase 1 — Aid-Exchange Pre-registration
 
-**Status: PROPOSED — not ratified. Ratification is the user's act.**
-Leg A remains unauthorized. This document pre-registers (per Invariant 12(b)/(c))
-the organic-reachability acceptance gates, run length, and threshold-provenance
-rules for a future aid-exchange norm. It is measurement + planning only; it is
-**not** the Leg A contract and contains no production-code design.
+**Status: RATIFIED (2026-07-24) — user approval at the post-close-out STOP.**
+Ratified as proposed, including: the organic acceptance-gate set **exactly
+{G1, G2, G3}** (§6) with **N and K remaining declared GAPs** to be filled once at
+the probe-build calibration (FIX 3 no-anchor rule binding); the §12 conflict
+disposition — FIX 2's "single dyad / scenario geometry / reopen standing
+scenario" premise is acknowledged **falsified by the Phase B evidence**, the
+≥2-dyad criterion stays an observation (not a gate), and `collective_groups`
+stands as the vehicle; and **Leg A is authorized for contract drafting** (the
+contract itself is a separate PROPOSED→confirm act — see
+`CAPABILITY-STAGE-8C-LEGA-AID-EXCHANGE.md`). CORE-INTEGRITY-001 was dispositioned
+at the same STOP (ACCEPTED as recorded, remediation deferred — see that doc).
+
+Original pre-ratification framing (historical): this document pre-registers (per
+Invariant 12(b)/(c)) the organic-reachability acceptance gates, run length, and
+threshold-provenance rules for a future aid-exchange norm. It is measurement +
+planning only; it is **not** the Leg A contract and contains no production-code
+design.
 
 ---
 

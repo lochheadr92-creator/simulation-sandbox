@@ -1,7 +1,20 @@
 # CORE-INTEGRITY-001 — Silent same-frame lost update
 
-**Status: PROPOSED — findings only. No remediation proposed; repair is
-separately authorized after disposition. Sealed Stage 6 / core / frozen hashes.**
+**Status: DISPOSITIONED (2026-07-24) — findings ACCEPTED as recorded; remediation
+DEFERRED.** User ruling at the post-8B-close-out STOP: F1/F2/F3 stand as verified
+findings; no remediation inside any culture leg (per §7, repairing F1 changes
+which writes survive → moves the frozen `living_settlement` 320 hash and the
+`collective_groups` baseline, so repair requires its own separately authorized
+core-integrity stage with an explicit re-baseline). Until then: culture legs
+design around the exposure — new state lives in single-owner Category-2
+registries (§6: not the exposed surface); any person-entity write a leg proposes
+must carry field-level eq guards and integrated churn-test coverage for the
+same-frame overwrite class (§9); and per F3, directives must qualify bare
+invariant numbers (culture list vs SOURCE-OF-TRUTH §19).
+
+Original status (historical): PROPOSED — findings only. No remediation proposed;
+repair is separately authorized after disposition. Sealed Stage 6 / core / frozen
+hashes.
 
 - **Date:** 2026-07-22 · **Branch:** `capability/stage-8c-phase1-aid-exchange`
   · **Base SHA:** `002a18a4`.
