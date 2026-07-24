@@ -196,6 +196,141 @@ T(500) ≈ 372s, and the response-side probe ran 20% under model) [CITED].
 
 ---
 
-*End of Leg A contract proposal (PROPOSED). Confirmation with riders is the
-user's act; implementation starts only after that confirmation, phase-gated per
-EXECUTION-PROTOCOL.*
+---
+
+## Implementation attempt 1 (2026-07-24) — gate FAILED; disposition at STOP
+
+Cloud clone build (Ubuntu/Py3.11/Mongo 8.0.4 rs0), never applied to canonical
+mainline; full patch preserved (delivered 2026-07-24, `lega_implementation.patch`,
+1,769 lines). All figures VERIFIED from pasted run output.
+
+**Built per contract:** `aid_exchange_contracts.py` (684 lines) +
+`aid_exchange_domain.py` + 30 focused tests + the four wiring points +
+the D3 additive candidate. Focused tests 30/30; full suite **400 passed /
+4 skipped / 0 failed** (Mongo parity, concurrency clean); frozen
+`living_settlement` 320 hash **byte-identical** (`84d3ad52…c32d2`) with all
+new code present; `collective_groups` determinism repeat+replay TRUE
+(1000-tick hash with aid enabled: `79ba1f94…0f56` — never a baseline).
+
+**Calibration (the single 12(b) allowance) — SPENT, user-authorized at a STOP:**
+RESPOND_AID priority 3100 → **3334** = 3100 (rider D3 citation) + 233 (max
+measured RESPOND_HELP score advantage; 350-tick diagnostic probe
+`_probe_8c_lega_completion_diag`: 23/23 shadowed decisions, gap 74–233) + 1.
+Reading conflict recorded: pre-reg §6 wording can be read as reserving the
+allowance for the G2-N measurement; ruled at the STOP that N/K-filling is
+pre-registered GAP-filling, the allowance is the one post-failure adjustment.
+
+**Calibration effect — VERIFIED organic:** RESPOND_AID selected (ticks 45–46);
+**1 accepted `social_give`** (tick 46, person-001 → person-007, inside the
+44–52 due window). The full request → respond → deliver arc fired for the
+first time.
+
+**Gate result (probe `_probe_8c_lega_gate_metrics`, 1000 ticks):**
+- **G1 FAIL — completed_exchange_count = 0.** The physically delivered give was
+  never recorded: completion detection reads the responder's committed
+  `action` at T+1, but the priority-85 validator re-derives against mid-frame
+  mutated entities (CI-001 §7 seam, inherited from the carriage template), and
+  the responder's next action overwrites the give first →
+  `aid_exchange.metadata_mismatch` ×13. One-frame detection window, lost every
+  time; requests then expire (5 opened / 5 expired / 0 completed). Same seam
+  undercounts opens (5 vs 44 accepted requests).
+- **Interference FAIL — 1 death.** person-007 dies tick 153; counterfactual
+  run without aid_exchange: 0 deaths (VERIFIED, not root-caused). Material
+  aid redistributes food under scarcity; the giver's loss propagates. The
+  unconditional 0-deaths constraint is in structural tension with material
+  aid — a design finding, not a tuning miss.
+- **Invariant-4 PASS:** peak registry 1,730 B vs 24,576 B target →
+  **92.96% headroom**.
+- G3: 0 completion episodes (distribution empty). N and K remain GAPs —
+  never derived, since no completion distribution exists.
+
+**Prescribed disposition (ratified pre-reg + spent-calibration rider):**
+G1 failure after the calibration ⇒ **rollback of the capability from
+mainline**. Mainline was never touched — rollback = do not apply the patch;
+this record and the preserved patch + probes are the attempt's evidence.
+
+**Redesign findings for any Leg A v2 (contract-amendment territory, not
+calibration):** (1) completion detection must not depend on the volatile
+accepted-action field surviving into mid-frame validation — the recording
+evidence needs a durable carrier (this is CORE-INTEGRITY-001-adjacent seam
+behaviour, shipped identically in group_carriage, where it merely rate-limits
+rare transmissions rather than zeroing the gate); (2) a giver-protection
+guard (e.g. give only when carried food ≥ 2) with measured provenance is the
+candidate answer to the aid-caused death; (3) the pre-reg's "RESPOND_HELP
+structurally inert" finding is ordering-contingent and falsified once a new
+domain shifts collision winners — delivery sometimes persists and RESPOND_HELP
+fires (it shadowed RESPOND_AID at equal priority pre-calibration).
+
+**RULED at the STOP (2026-07-24): ROLLBACK + RECORD.** The user upheld the
+ratified rule. Attempt 1 is closed: mainline untouched, patch + probe evidence
+preserved, this record is the durable memory. Leg A returns to design; any v2
+proceeds only as a ratified contract amendment carrying the two findings
+(durable completion evidence; giver-protection guard). The Stage 8C frontier
+is unchanged — next 8C action is the v2 amendment, at the user's initiative.
+
+*End of attempt-1 record.*
+
+---
+
+## Contract amendment 1 — Leg A v2 (2026-07-24)
+
+**Status: RATIFIED (2026-07-24) — user approval ("as proposed"). Ratified in
+full (A1–A5), including the A4 ruling: v2 is granted its own single
+evidence-based calibration allowance under Invariant 12(b) [culture list];
+attempt-1's spent allowance carries no debt forward.** Drafted at the user's
+"next leg" direction after the attempt-1 rollback. Amends the CONFIRMED
+contract; everything not amended here stands as confirmed. Implementation of v2
+is authorized, phase-gated per EXECUTION-PROTOCOL; no production code exists at
+ratification.
+
+**A1 — Observation-window relocation (supersedes rider D6; the durable-evidence
+fix).** `aid_exchange` moves from `engine_priority = 85` to **`engine_priority
+= 5`, phase "agent"**. Grounds, from committed code read this session:
+`run_commit_frame` is a **single sorted validate-and-apply pass** (one
+`for proposal in ordered:` loop; order `(requested_time, PHASE_RANK,
+engine_priority, content_hash)`), and validators re-derive against
+progressively-mutated entities (CORE-INTEGRITY-001 §7). At 85, every
+person-action evidence field is overwritten by living_settlement (priority 10)
+before the aid validator runs — the attempt-1 gate-killer (`metadata_mismatch`
+×13; opens undercounted 5 of 44). At 5, the aid proposal validates after the
+environment phase (ecology 0, lifecycle 1) but **before any agent-phase person
+writer** (living 10, animal 20), so the validation state for `action` fields is
+identical to the frozen frame the domain derived from — byte-exact
+re-derivation becomes structurally guaranteed, not collision-lucky. Residual,
+documented: a same-frame death (environment phase, writes `action`) can void
+one detection deterministically — clean reject, no retry, acceptable. Slot 5 is
+unoccupied; implementation ships a test asserting the ordering property
+(aid validates before any person-action mutation in-frame). The culture-ladder
+rationale that placed 85 (pin-upstream-registries) does not apply: this
+domain's upstream evidence is person actions, not later-priority registries.
+Note for the record: `group_carriage` (86) shares this seam for its
+transmission trigger and survives only when the actor's same-frame proposal
+happens to reject — sealed, out of scope here, flagged for a future
+core-integrity follow-up.
+
+**A2 — Giver-protection guard (the death fix).** The RESPOND_AID candidate
+requires **carried food ≥ 2** (gives 1, always keeps ≥ 1). Provenance: the
+attempt-1 measured aid-caused death (tick 153; counterfactually absent without
+aid — VERIFIED), plus the structural finding that material aid moves survival
+risk onto the giver. The threshold is the minimal keep-one rule, not a tuned
+number. The v2 gate re-verifies the unconditional 0-deaths constraint on the
+full 1000-tick run.
+
+**A3 — Constants carried forward as ratified.** RESPOND_AID priority **3334**
+enters v2 as a contract constant with its attempt-1 derivation (3100 rider
+citation + 233 max measured shadow gap + 1) — recorded evidence, not a
+fresh-calibration spend.
+
+**A4 — Fresh calibration allowance — RULED: GRANTED (2026-07-24).** v2 is a new
+pre-registered build under invariant 12(b) [culture list] with its **own single
+evidence-based calibration allowance**; attempt-1's spent allowance does not
+carry debt forward. The user upheld this reading ("as proposed") at
+ratification; the alternative (zero allowance → straight to rollback on any gate
+failure) was declined.
+
+**A5 — Gates unchanged, evidence reset.** G1/G2/G3 exactly as ratified; N and
+K remain calibration GAPs; interference baseline and the 0-deaths constraint
+unchanged; every standard-template item re-runs fresh on the v2 tree (all
+attempt-1 run evidence is void for v2 purposes). Non-goals (D8) unchanged.
+
+*End of amendment 1 (RATIFIED 2026-07-24).*
