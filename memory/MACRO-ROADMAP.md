@@ -260,6 +260,7 @@ W1 runs read-only in parallel with the 8B probes.
 |---|---|---|---|---|---|
 | 7C organic collective emergence | 7C | Stage-9-blocked | 9B | reliable surplus from canonical world pressure | open |
 | 8A gate-5 organic influence firing | 8A | scenario-dynamics-blocked | standing scenario decision (8B) / Stage 9 un-inerting gate | influence window co-occurs with an active-norm window in an organic run | open |
+| 8C Leg A aid-exchange organic completion (G1) | 8C Leg A | Stage-9-blocked | 9B | reliable food surplus so a responder holds carried food ≥ 2 at request time (v2 build preserved; revives at the proven A1 design) | open |
 | Generational knowledge transfer | 8B (expected) | demography-blocked (11) | 11A | in-horizon births (probe evidence) | expected |
 | Myths, rituals, symbolic objects, naming conventions, beliefs-as-lore | Stage 8 close-out (expected) | content stage | **UNASSIGNED — decision required** (candidates: fold into 12/13 as an era-content pass, or declare an explicit content stage) | ratified content-pass scope decision | open gap |
 | Religion | 8D non-goal | — | **UNASSIGNED — no stage owns it** (candidates: a 10-adjacent institutions leg, the content stage, or an explicit out-of-scope ruling) | user ruling | open gap |

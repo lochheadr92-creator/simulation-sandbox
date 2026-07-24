@@ -309,7 +309,7 @@ Stage 7D adds proposal-only group goals (e.g. `maintain_shared_shelter`) that re
 
 # Capability Stage 8 - Culture, Norms, Beliefs, and Knowledge Transmission
 
-**Status: Partially complete — core-culture-loop delivery in progress, gate-and-stop by leg.** Leg 8A **Emergent Norms** is Implemented (v1, mechanism-verified) and committed; its organic influence-firing gate is **Deferred — scenario-dynamics-blocked** (see Global deferral register). Leg 8B Leg 1 **Norm Transmission** is VERIFIED and close-out committed (2026-07-24). Legs 8C (plurality / enforcement) → 8D (divergence / diffusion / conflict / event-change) follow, each spec'd from measured evidence and confirmed at a STOP. The Stage 8 item list below is graded at the Stage 8 close-out audit (Implemented / Deferred-Stage-9-blocked / Deferred-content-stage); **the stage is not marked complete because the core loop exists.** Hard boundary: nothing that requires Stage 9 surplus/economy. **Verification evidence:** see [`CAPABILITY-STAGE-8A-EMERGENT-NORMS.md`](CAPABILITY-STAGE-8A-EMERGENT-NORMS.md), [`CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md`](CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md), and the active leg contract.
+**Status: Partially complete — core-culture-loop delivery in progress, gate-and-stop by leg.** Leg 8A **Emergent Norms** is Implemented (v1, mechanism-verified) and committed; its organic influence-firing gate is **Deferred — scenario-dynamics-blocked** (see Global deferral register). Leg 8B Leg 1 **Norm Transmission** is VERIFIED and close-out committed (2026-07-24). Stage 8C's first leg, **Leg A Aid Exchange**, is **Deferred — Stage-9-blocked** (two gated attempts, 2026-07-24; G1 unreachable under scenario scarcity — see Global deferral register and the leg contract; no Leg A code committed). Legs 8C (plurality / enforcement) → 8D (divergence / diffusion / conflict / event-change) follow, each spec'd from measured evidence and confirmed at a STOP. The Stage 8 item list below is graded at the Stage 8 close-out audit (Implemented / Deferred-Stage-9-blocked / Deferred-content-stage); **the stage is not marked complete because the core loop exists.** Hard boundary: nothing that requires Stage 9 surplus/economy. **Verification evidence:** see [`CAPABILITY-STAGE-8A-EMERGENT-NORMS.md`](CAPABILITY-STAGE-8A-EMERGENT-NORMS.md), [`CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md`](CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md), and the active leg contract.
 
 ## Goal
 
@@ -653,6 +653,7 @@ Every deferred gate item, in one place. A row here is the decision reference; th
 |---|---|---|---|
 | 7C organic collective emergence | Stage-9-blocked | Reliable resource surplus so `shared_storage` facts form (Stage 9 economy). Planner-tuning route tested and rejected. | Not blocking: 7C mechanism verified; not on the critical path. Re-gate at Stage 9. |
 | 8A gate-5 organic influence firing | scenario-dynamics-blocked | A `collective_groups`-family scenario where a repair-candidate window and a norm-active window co-occur (repairs cease ~tick 236; norms active 377+; disjoint by construction). No threshold was lowered. | Does not block 8B transmission mechanics. Resolved by the ruled purpose-built culture scenario. |
+| 8C Leg A aid-exchange organic completion (G1) | Stage-9-blocked | A reliable food surplus so a responder holds carried food ≥ 2 at request time (measured: sole responder holds exactly 1 for the whole window; ≥1 re-creates the aid-caused death, ≥2 never fires — no calibration target). Full v2 build preserved; revival re-enters at the proven A1 design. See `CAPABILITY-STAGE-8C-LEGA-AID-EXCHANGE.md` attempt-2 record. | Does not block the next 8C leg. Re-gate at Stage 9 alongside 7C. |
 | Generational knowledge transfer | demography-blocked (Stage 11) | In-horizon births (probe evidence). Expected at 8B; lands at Stage 11 (11A) if the horizon shows no births. | Does not block the 8B taught/imitated pathway. |
 | Myths, rituals, symbolic objects, naming conventions, beliefs-as-lore | content stage | A ratified content-authoring pass. **Landing stage UNASSIGNED — decision required** (fold into 12/13, or an explicit content stage). | Out of the Stage 8 core-loop scope; does not block 8B–8D mechanics. |
 | Stage 9 economy (whole stage) | (hard sequence boundary, not a taxonomy deferral) | Stage 8 core loop closes. | Hard stop: no production/surplus/ownership/trade/currency until then. Also gates 7C's re-gate. |
@@ -667,14 +668,19 @@ Every deferred gate item, in one place. A row here is the decision reference; th
 
 **Frontier:** Stages 6, 7A, 7B, 7B.1, 7C (mechanism-verified; organic emergence Stage-9-blocked), and 7D are implemented and committed. Stage 8A is Implemented (v1, mechanism-verified); its gate-5 organic firing is Deferred — scenario-dynamics-blocked (register above).
 
-**The single frontier is: Stage 8C (next culture leg after 8B Leg 1).** Stage 8B
-Leg 1 (Norm Transmission / individual carriage) is **VERIFIED and close-out
-committed (2026-07-24)** — see
+**The single frontier is: Stage 8C — next leg selection (after the Leg A
+deferral).** Stage 8B Leg 1 (Norm Transmission / individual carriage) is
+**VERIFIED and close-out committed (2026-07-24)** — see
 [`CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md`](CAPABILITY-STAGE-8B-LEG1-NORM-TRANSMISSION.md)
 and `memory/evidence/stage-8b-leg1/`. 8B made norm carriage per-individual and
 observable (formation backfill + imitation via `social_request_help`) so culture
-can outlive originators under carriage-only eligibility. Further 8B/8C/8D items
-remain gate-and-stop; do not start 8C until the user STOP after this close-out.
+can outlive originators under carriage-only eligibility. Stage 8C's first leg
+(**Leg A Aid Exchange**) ran two gated implementation attempts on 2026-07-24 and
+is **Deferred — Stage-9-blocked** (register above; contract:
+[`CAPABILITY-STAGE-8C-LEGA-AID-EXCHANGE.md`](CAPABILITY-STAGE-8C-LEGA-AID-EXCHANGE.md));
+no Leg A code is committed. The next 8C leg (plurality / enforcement family) is
+spec'd from measured evidence and confirmed at a STOP, at the user's
+initiative — gate-and-stop discipline unchanged.
 
 In parallel, the technical **5A2** live-transaction gate (transaction-capable Mongo) remains unexercised. **Stage 9 (Economy)** stays on the critical path for 7C's organic emergence (surplus-blocked) but is out of bounds until Stage 8's core loop closes.
 

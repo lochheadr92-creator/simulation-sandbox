@@ -1,7 +1,25 @@
 # Capability Stage 8C, Leg A — Aid Exchange (delivery, response, completion)
 
-**Status: CONFIRMED (2026-07-24) — user approval; implementation authorized,
-phase-gated per EXECUTION-PROTOCOL.** Riders resolved at confirmation: **D3**
+**Status: DEFERRED — Stage-9-blocked (ruled at STOP, 2026-07-24).** Two
+implementation attempts ran the pre-registered post-build gate (Invariant
+12(b), culture list); both failed G1 and were rolled back per the ratified
+rule — attempt 1 on the observation-window recording defect (fixed by
+amendment A1), attempt 2 on measured scarcity: no agent holds carried food ≥ 2
+at request time, so the A2-guarded RESPOND_AID candidate can never fire, and
+no calibration threads the ≥1-death / ≥2-starves pincer (see the attempt-2
+record below). **No Leg A code is committed; the branch carries docs and
+evidence only.** Concrete Stage 9 dependency: a reliable food surplus so a
+responder can afford the minimum give (carried food ≥ 2 at request time) —
+the same wall as Stage 7C. Register rows: `CAPABILITY_ROADMAP.md` §Global
+deferral register; `MACRO-ROADMAP.md` §Deferral ledger. What Stage 9 revives:
+the full v2 build (A1 priority-5 relocation with the recording fix proven,
+A2 keep-one guard, A3 constant 3334, 4 wiring points, 33 tests, both probes),
+preserved as `scratchpad/lega_v2_full.patch` + `scratchpad/LEGA_V2_CLOUD_FINDING.md`
+on the canonical machine.
+
+Original status (historical): CONFIRMED (2026-07-24) — user approval;
+implementation authorized, phase-gated per EXECUTION-PROTOCOL. Riders
+resolved at confirmation: **D3**
 `respond_aid` candidate priority = **3100 by citation** of the legacy
 RESPOND_HELP constant (sealed provenance, not a new number); **D6** registry
 `engine_priority` = **85** (next culture-ladder slot). All other decisions
@@ -334,3 +352,66 @@ unchanged; every standard-template item re-runs fresh on the v2 tree (all
 attempt-1 run evidence is void for v2 purposes). Non-goals (D8) unchanged.
 
 *End of amendment 1 (RATIFIED 2026-07-24).*
+
+---
+
+## Implementation attempt 2 — v2 (2026-07-24) — G1 FAILED; DEFERRED at STOP
+
+Built per the ratified amendment 1 (A1 `engine_priority = 5` phase "agent",
+A2 carried-food ≥ 2 keep-one guard, A3 RESPOND_AID 3334, A5 fresh gate) by a
+parallel cloud session; delivered as a 4-patch series
+(`scratchpad/lega_v2_full.patch`) with the finding note
+(`scratchpad/LEGA_V2_CLOUD_FINDING.md`). Reproduced on the canonical machine
+2026-07-24 by applying the backend patches to the working tree at `12b034a8`
+(never committed), running the gate, then reverse-applying — tracked diff
+empty afterwards. Deterministic kernel: canonical reproduction matched the
+cloud run number-for-number (headroom to two decimals).
+
+**What the build proved (VERIFIED, canonical run output):**
+
+- **A1 fixed the attempt-1 recording defect.** Request opens 20/20 detected
+  (attempt 1: 5 of 44); completion recording survives same-frame overwrite in
+  the churn fixture. The observation-window relocation is sound and is the
+  design to revive at Stage 9.
+- **Focused tests 33/33 pass** (incl. the A1 ordering-property test and the
+  A2 keep-one boundary pair: absent at food=1, present at food=2).
+- Frozen `living_settlement` 320 hash byte-identical; `collective_groups`
+  repeat+replay true; registry headroom **75.64%** (peak 5,986 B) —
+  invariant-4 (culture list) PASS. [cloud-verified; headroom reproduced
+  canonically]
+- **A2 held the unconditional constraint: 0 deaths, 8 alive** (attempt 1's
+  aid-caused death does not recur).
+
+**Gate result (canonical, 1000 ticks, wall 922.32s):**
+
+```
+G1 FAIL — final_completed_exchange_count = 0
+requests: 20 opened → 20 expired → 0 completed
+respond_aid_selections = 0; social_give_accepted = 0
+episode_count = 0  (G3 empty; N and K underivable — no completion distribution)
+deaths 0 / alive 8; headroom 75.64%
+```
+
+**Root cause (VERIFIED, diag probe in the patch):** the only agent ever asked
+(person-001, responder to every person-007 request) holds **exactly carried
+food = 1** for the entire request window — adjacent, requester visible, itself
+unpressured. A2 requires ≥ 2. person-000 holds 0. The two food=2 genesis
+endowments are consumed before requests begin (~tick 44). No agent reaches
+food ≥ 2 at request time.
+
+**Why the A4 calibration allowance was not spent:** there is no legal target.
+Threshold food ≥ 1 re-creates the attempt-1 aid-caused death (measured);
+food ≥ 2 never fires (measured); the give amount is already the minimum (1);
+N/K cannot be derived from an empty distribution. Lowering thresholds to
+manufacture a firing is forbidden (protocol §On missing data). The allowance
+lapses unspent with the deferral.
+
+**RULED at the STOP (2026-07-24): DEFERRED — Stage-9-blocked.** Rollback per
+the ratified rule: canonical mainline never carried the code; the working-tree
+application was reverse-applied (tracked diff empty). Evidence preserved:
+patch + finding note (scratchpad, canonical machine), canonical gate/test
+outputs pasted here. Revival at Stage 9 re-enters at the v2 design — the
+mechanism is fully proven except for an economy in which anyone can afford
+to give.
+
+*End of attempt-2 record. End of Leg A (deferred).*
