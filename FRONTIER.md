@@ -50,10 +50,19 @@ Gate shape (magnitude measured, not pre-picked; Invariant 12(b)) — ALL GREEN:
     vacuous false_belief_count >= 0 net; demonstrated to fail under an induced
     regression and pass restored
 
-Next: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) — Layer A
-      kernel infra, hash-neutral per-tick validation cost fix. Queued, not yet
-      authorized or started; needs its own contract-confirmation STOP before
-      implementation. No active Layer C behaviour leg is open right now.
+Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) —
+      Stage 1 Discovery complete (2026-07-25, read-only, no code changed).
+      Original hypothesis (causal-parent-set rebuild in Core's
+      commit_pipeline.py) FALSIFIED by profiling: run_commit_frame is only
+      ~17% of profiled runtime. Actual dominant cost (~75%) is copy.deepcopy,
+      reached through living_settlement_domain.py's per-agent activate() call
+      graph -- living_agent_cognition.py / living_agent_social.py functions
+      each doing a wholesale copy.deepcopy(state) of the full per-agent
+      canonical state. This moves the touch-surface from Layer A (Core) to
+      Layer C (domain code) -- a different risk profile requiring
+      re-authorization before any Stage 2 code. STOP delivered with findings
+      and options; awaiting direction. No active Layer C *behaviour* leg is
+      open (this is infra, not a behaviour leg).
 
 Blocked / parked:
   - Aid Exchange ............... DEFERRED — needs Layer F-A (material surplus)
