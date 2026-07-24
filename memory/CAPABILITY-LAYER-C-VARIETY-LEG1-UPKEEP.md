@@ -1,11 +1,13 @@
 # Layer C, Variety Leg 1 — Upkeep Drive
 
-**Status: AUTHORIZED (2026-07-25).** Contract confirmed by Ryan with 5 explicit
-conditions (recorded below); implementation proceeds against this doc.
+**Status: VERIFIED — CLOSED (2026-07-25).** Contract confirmed by Ryan with 5
+explicit conditions (recorded below); implemented, gated, adversarially
+reviewed (Grok/xAI, cross-vendor), findings resolved per Ryan's rulings, and
+committed. See §10 for the close-out record.
 Owner of docs: cloud session · Implements: terminal session (this branch).
 
 Frontier: `FRONTIER.md` — Layer C (Individual Agency), Behaviour Enrichment,
-Active leg: Variety Leg 1 — Upkeep drive.
+Closed leg: Variety Leg 1 — Upkeep drive. Next queued: CORE-PERF-01.
 
 ---
 
@@ -217,40 +219,134 @@ works.
 |---|---|---|---|---|---|---|---|
 | `tend` (physical action) | `living_settlement_domain` | existing generic physical-action validator (same path as `repair`) | `shelter.condition += delta` (capped at `max_condition`) | prior accepted event for the actor | terminal, single-tick | event log / entity inspector (shelter condition) | standard living_action replay handler (same as `repair`) |
 
-## 6. Acceptance gate
+## 6. Acceptance gate (REVISED shape — `scratchpad/UPKEEP-GATE-REVISED.md`, 2026-07-24; results below)
 
-**Condition (Decision 5, REVISED) — split direction vs. magnitude:**
-- **Direction, gated on BOTH scenarios**: rest fraction strictly decreases vs
-  the measured baselines (68.7% `living_settlement`, 90.7%
-  `collective_groups`). Cheap, binary; catches a broken drive in the smaller,
-  confound-free scenario too.
-- **Magnitude, the formal pre-registered organic-reachability gate,
-  `collective_groups` only**: `TEND_STRUCTURE`/`tend` fires organically by
-  **>=N distinct actors across >=M distinct shelters** — N, M measured from a
-  post-build probe on `collective_groups` (not pre-picked). `repair`'s
-  existing ~9-count must not collapse to 0 (would indicate cannibalisation,
-  not addition).
-- `living_settlement`'s own magnitude (how far rest fell, how many `tend`
-  firings, etc.) is **not** a second independently-thresholded gate — it
-  becomes the causal-diff evidence for the re-baseline STOP below.
+**Why revised:** the original 1000-tick x 2-scenario x 3-run shape (repeat +
+resume with full event capture) went multi-hour and was stopped. Upkeep
+saturates by ~tick 80 (every idle tick is spent tending once a shelter is in
+band), so a long horizon proves nothing extra. Right-sized per the
+proportionality doctrine: horizon **H = 250 ticks** for all organic runs,
+**no event capture** (counts come from a live per-tick tally —
+`tools/_probe_layer_c_upkeep_gate.py` — never an accumulated event list, so
+cost stays flat regardless of tick count), **two seeds**
+(`living-agents-stage6` + `living-agents-stage6-alt`). Gate **direction is
+unchanged** — this is a horizon/shape revise, not a weakening. The single
+320-tick `living_settlement` run is kept, but only for the frozen-hash
+re-baseline, not for repeat/resume.
 
-Full gate:
-1. Rest fraction direction check, both scenarios (above).
-2. `TEND_STRUCTURE` organic-reachability magnitude gate, `collective_groups`
-   only (above); `repair` count non-collapse on both.
-3. 0 deaths regression, both scenarios.
-4. Determinism: repeat + replay + resume byte-equality, both scenarios.
-5. Frozen `living_settlement` 320-tick hash change is **expected** —
-   re-baseline only at a follow-up STOP with an explained causal diff (old
-   hash `84d3ad52773d95877a2de3a178a205cf96f1637c76dcf561c702fa24788c32d2`
-   cited verbatim; `living_settlement`'s direction-check result and magnitude
-   are the supporting evidence for that diff), never a bare re-hash.
-6. Full regression suite green (honest phrasing, no unqualified "green" while
-   exclusions exist).
-7. Survival never suppressed — structural guarantee (score band strictly
-   below all survival-triggered candidates) plus one integration test with an
-   actor simultaneously eligible for both `TEND_STRUCTURE` and an active
-   survival candidate, asserting survival wins.
+### Gate items and results (all VERIFIED — evidence in `memory/evidence/layer-c-leg1/`)
+
+1. **Mechanism — Tier A fixtures** (`backend/tests/test_layer_c_upkeep.py`,
+   16 tests, all pass): candidate generation gated correctly (any role, band
+   `750<=condition<1000`), outscores REST / loses to survival, an accepted
+   `tend` discharges the drive (severity measurably lower afterward), no
+   double-apply with `repair`/`REPAIR_SHELTER` (disjoint-band proof +
+   same-tick wear-vs-tend churn test), **the Stage 7D nudge is inert for
+   `TEND_STRUCTURE` even under a fully active, matching, valid registry**
+   (`test_stage7d_nudge_is_inert_for_tend_structure_even_with_an_active_
+   matching_goal` — the companion `REPAIR_SHELTER` candidate in the same call
+   *does* get boosted, proving the registry setup was genuinely live, not
+   inert-by-omission), forged-field rejection for both the `PRESSURE_KINDS`
+   and `PHYSICAL_ACTION_TYPES` additive touches.
+
+2. **Organic rest-decrease — the headline.** `collective_groups`, H=250, seed
+   `living-agents-stage6`:
+   - `BEHAVIOUR-BASELINE-001@250` re-measured (no-upkeep, stashed
+     implementation): rest **89.5%** (1769/1976).
+   - With upkeep: rest **40.9%** (638/1560) — strictly below baseline.
+   - `tend` fired by **N=8** distinct actors (all of them) across **M=2**
+     distinct shelters (both of them).
+   - **0 deaths, 8 alive.** `repair` count 5 (nonzero — not cannibalised;
+     plausibly *lower* than baseline's 9 because proactive tending keeps
+     shelters from crossing into `repair`'s `<750` band as often — a
+     positive emergent interaction between the two mechanisms, not a
+     suppression bug).
+   - Action-type diversity: 17 -> 19 distinct types. Mix genuinely **broadened**,
+     not just reshuffled: Shannon entropy of `actions_by_type` rises **0.75 ->
+     2.31 bits** (adversarial review Focus A / finding F-01). Rest's ~49pp drop
+     splits across `tend` (+19.8pp) *and* a larger `move`/social expansion
+     (move 3.8%->24.9%, cooperate 0.1%->4.0%, repay 0.1%->2.3%,
+     request_help 0.4%->2.3%); residual rest+tend is still 60.7% combined —
+     cite the full distribution/entropy here, not rest% alone.
+
+3. **`living_settlement` — direction check + re-baseline.**
+   - Direction, H=250, seed `living-agents-stage6`: baseline rest **73.3%**
+     (789/1077) -> with-upkeep **32.1%** (351/1093). N=8, M=2, 0 deaths.
+     Shannon entropy of `actions_by_type` rises **1.52 -> 2.46 bits**
+     (finding F-01) — same broadening pattern as `collective_groups` above.
+   - Re-baseline, single 320-tick run, seed `living-agents-stage6`: **new
+     hash `897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`**
+     (old, frozen: `84d3ad52773d95877a2de3a178a205cf96f1637c76dcf561c702fa24788
+     c32d2`). **Full causal diff** (adversarial review finding F-06 — the
+     original write-up listed rest/tend/repair only and omitted the largest
+     non-tend shift; corrected here with the complete action-count delta,
+     old 320 -> new 320, sourced directly from
+     `memory/evidence/stage-8b-leg1/harness_living_settlement_320_v3.json` and
+     `memory/evidence/layer-c-leg1/upkeep_living_settlement_320_frozen_rebaseline.json`):
+
+     | action | old 320 | new 320 |
+     |---|---:|---:|
+     | rest | 789 (68.7%) | 351 (29.9%) |
+     | tend | 0 | 244 (20.8%) |
+     | repair | 9 | 4 |
+     | move | 62 | **304** |
+     | request_help | 182 | 141 |
+     | cooperate | 28 | 37 |
+     | repay | 28 | 36 |
+
+     The largest single shift is **not** `tend` — it is `move` (62 -> 304, a
+     4.9x increase), followed by the social actions (`cooperate` +9, `repay`
+     +8) and the `request_help` drop (-41). All other action types (`consume`,
+     `drink`, `gather`, `apologise`, `lie`, `promise`, `reconcile`, `retrieve`,
+     `share_information`, `store`, `threaten`, `trade`) are unchanged or within
+     +/-2 (verified directly from both evidence files, not estimated).
+     `repeat_matches: true`, `replay_matches_final_entities: true` (both read
+     directly from the rebaseline evidence file). Same domains, same schema
+     versions, same genesis — the causal chain's *structure* is unchanged; its
+     *distribution* broadened well beyond rest/tend/repair, as the table above
+     shows. **Re-baseline AUTHORISED** (Ryan, 2026-07-25, conditional on this
+     write-up being complete — see "Rulings" in
+     `scratchpad/upkeep_adversarial_review_ledger.md`) on that basis.
+   - Note: `rest` and `tend` counts are byte-identical between the H=250 and
+     the 320-tick run on this seed (351/244 both times) — the marginal 70
+     ticks are dominated entirely by an accumulating social-debt cascade
+     (`request_help` 80->141, `repay` 31->36) that outscores both REST and
+     `TEND_STRUCTURE` for that whole window; not a bug, just where this
+     particular seed's late game goes.
+
+4. **Determinism.** repeat + replay + resume (`--repeat 2 --resume-at
+   <H/2>`), H=250, both scenarios, primary seed: **all `True`**
+   (`repeat_matches`, `replay_matches_final_entities`, `resume_matches` on
+   both `living_settlement` and `collective_groups`).
+
+5. **Robustness (multi-seed).** `collective_groups`, H=250, alternate seed
+   `living-agents-stage6-alt`: baseline rest **88.9%** (1764/1984) ->
+   with-upkeep **47.2%** (795/1685). N=8, M=2, 0 deaths. Rest-decrease result
+   holds under the alternate seed.
+
+6. **Regression.** Re-measured at close-out (adversarial review finding F-05 —
+   the original 338 figure was builder-asserted, not backed by a saved log;
+   evidence now saved at
+   `memory/evidence/layer-c-leg1/full_suite_closeout.txt`): **339 executed
+   passed** (336 pre-existing + the 2 original Tier-A additions + the 1 new
+   dedicated false-belief test added for F-04), **4 known pre-existing skips**
+   (Docker live-server env only) excluded from execution, **0 executed test
+   failed**; 5 known `MONGO_URL`-env collection failures excluded from
+   execution (pre-existing environment gap, confirmed unrelated: none of those
+   5 files import anything this leg touches; `test_concurrency.py`'s flake is
+   separately classified under `CORE-INTEGRITY-001`, not a fail).
+7. **Survival never suppressed** — structural guarantee (score band strictly
+   below all survival-triggered candidates) plus
+   `test_tend_never_outranks_an_active_survival_candidate`.
+
+### Out of scope / logged, not fixed here
+
+- **O(n²)-shaped per-tick engine cost** (rising with accumulated registry
+  state; ~1s/tick at the high end during the original 1000-tick attempt) is a
+  **pre-existing performance item**, not introduced by this leg. Logged here
+  as a telemetry note for a future core-perf leg; **not touched in Leg 1**.
+- 1000-tick horizons are not a gate for this leg. A long-horizon confirmation
+  run is optional and never a blocker.
 
 ## 7. Non-goals for this leg
 
@@ -284,12 +380,165 @@ Full gate:
   additive-only; called out explicitly (§4 Decision 3) rather than silently
   done.
 
+## 9. Implementation notes (as-built deviations, found during verification)
+
+- **A second additive schema touch, not just `PRESSURE_KINDS`**: `tend` also
+  had to be added to `PHYSICAL_ACTION_TYPES`
+  (`living_agent_contracts.py`) — the generic physical-action validator
+  (`build_physical_action_proposal` and `validate_living_action_proposal`)
+  rejects any `action_type` outside that frozenset. Additive-only, same
+  treatment as `PRESSURE_KINDS`; not called out in the original contract
+  because it wasn't discovered until wiring the action executor. Covered by
+  `test_unsupported_physical_action_still_rejected_with_tend_present`.
+- **Candidate generation order matters, not just presence**:
+  `build_settlement_candidates` truncates to
+  `LIMITS.candidate_goals_per_decision` (16) in **append order**, before
+  scoring. Inserting `TEND_STRUCTURE` right after `REPAIR_SHELTER` (as
+  originally drafted) silently starved rarer, later-declared candidates
+  (`WARN_DANGER`, `SHARE_RUMOUR`, `VERIFY_INFORMATION`, `TRADE_RESOURCES`,
+  `THREATEN`, `TAKE_FOOD`) for busy actors — caught by
+  `test_stage6e_living_settlement.py`'s required-action-vocabulary assertion
+  (a scout's `warn` never fired). Fixed by generating `TEND_STRUCTURE` last,
+  immediately before the `EXPLORE`/`REST` fallback block, so it only ever
+  contends with the two fallbacks it's designed to compete with.
+- **`TEND_STRUCTURE_BASE_SCORE` revised from an initial 400 down to 120**
+  (between `REST`'s 60 and `EXPLORE`'s 180, not above both). A shelter sits in
+  the tend band almost continuously in these scenarios, so scoring above
+  `EXPLORE` made tending a permanently-preferred absorbing loop that starved
+  map exploration — traced directly: with the scout's `WARN_DANGER` selected
+  from tick 1, it got interrupted by a higher-priority `REPAY_DEBT` at tick 3
+  (pre-existing, unrelated to this leg), and on the ORIGINAL 400-score build
+  never returned to wandering afterward (permanently ping-ponging between the
+  two genesis shelters instead), so it never re-perceived the animal+person
+  needed to re-trigger `WARN_DANGER`. At 120, `EXPLORE` wins whenever there is
+  still unknown adjacent ground, `TEND_STRUCTURE` only wins once exploration
+  is locally exhausted. Both orderings are within the contract's "below
+  survival, above rest" latitude — this is a placement choice within that
+  band, not a rail change. Covered by
+  `test_tend_beats_rest_fallback_when_no_survival_pressure_present` and
+  `test_explore_still_wins_over_tend_when_unknown_ground_is_adjacent`.
+- **A second, non-hash re-baseline-shaped consequence**:
+  `test_stage6e_living_settlement.py::test_integrated_camp_closes_the_living_
+  agent_loop_and_replays` pins a deterministic 30-tick trace (seed
+  `stage6-integrated`) and asserts `false_belief_count >= 1`. This project has
+  hit this exact class of issue before on this same test (see its own
+  existing comment on the `commitment_statuses` assertion, from the Stage 6
+  Liveness Pass). Verified directly (not guessed): `false_belief_count` is 0
+  at 30, 40, 50, and 60 ticks post-leg (was >=1 pre-leg at 30) — not a timing
+  margin, a genuine shift in which agent reaches the genesis false-rumour
+  signal (expires tick 4) before this run's idle-time behaviour changed. No
+  other test in the suite covers false-belief detection, so the assertion was
+  loosened (`>= 0`) with an explanatory comment rather than deleted or
+  papered over with an extended tick count. `reported_claim_count >= 1`
+  (the provenance mechanism itself) still holds and is unchanged.
+- **Net effect**: these are exactly the kind of causal, verified behavioural
+  shifts the contract's "frozen hash WILL move" clause anticipated, just
+  surfacing in two additional artifacts (a candidate-order bug that was a
+  real defect and needed fixing outright, and one narrative-timing test
+  assertion that needed loosening) beyond the single hash explicitly named up
+  front. Flagged here and in the close-out rather than silently absorbed.
+
 ## Session handoff
 
 Contract authorized this session (2026-07-25) with all 5 conditions
-incorporated above. Implementation, tests, and the full gate are in progress
-in the same session on worktree branch `worktree-typed-painting-marshmallow`
+incorporated above. Worktree branch `worktree-typed-painting-marshmallow`
 (fast-forwarded to `capability/stage-8c-phase1-aid-exchange` tip `d5d80a43`).
-If context runs low before the gate + adversarial review complete, the next
-session should resume from the task list on this branch rather than
-re-deriving the design.
+Nothing committed yet past the contract-confirmation commit `b58e60d2` — the
+implementation is uncommitted on purpose pending your STOP sign-off below.
+
+**Done, this session — gate is GREEN:**
+- Implementation complete (§4 mechanism, §9 as-built notes): `upkeep`
+  pressure kind, `TEND_STRUCTURE` goal, `tend` action, disjoint wear bands,
+  `TEND_STRUCTURE_BASE_SCORE` calibrated to 120 after a real
+  candidate-starvation bug and an absorbing-loop finding, both fixed and
+  documented in §9.
+- Focused tests: `backend/tests/test_layer_c_upkeep.py`, **16 tests, all
+  pass** (14 original + 2 added for the revised gate's Tier-A requirements:
+  discharge-after-tend, Stage 7D nudge inertness under a live registry).
+- The full revised acceptance gate (§6) is measured and **green** on every
+  item: rest-decrease and N=8/M=2 organic-reachability (adversarial review
+  finding F-03 — actual coverage shape, corrected here: `collective_groups`
+  ran **both** seeds `living-agents-stage6` + `living-agents-stage6-alt`;
+  `living_settlement` ran **seed1 only**, `living-agents-stage6` — the alt
+  seed was never independently run on `living_settlement` for either metric,
+  so "both scenarios, both seeds" as originally stated overstated the
+  coverage), 0 deaths, full determinism (repeat+replay+resume, both
+  scenarios, primary seed), the frozen-hash re-baseline with an explained
+  causal diff (§6 item 3, full action delta), full regression suite (see
+  §6 item 6 for the exact counts sourced from the F-05 evidence log).
+  Evidence: `memory/evidence/layer-c-leg1/*.json`.
+- `backend/tools/_probe_layer_c_upkeep_gate.py` consolidated to one script
+  (the two spent timing-diagnostic scripts that found the O(n²) cost were
+  deleted, not committed — their finding is logged in §6's "out of scope"
+  note).
+- `test_stage6e_living_settlement.py` needed one targeted, documented
+  loosening (§9) — verified causally, not guessed.
+
+**At the time this session ended:** adversarial review had not yet run, and
+nothing was committed past `b58e60d2` per AGENT_WORKFLOW ("never self-review" +
+"nothing committed past... an open review finding"). Both are now resolved —
+see §10.
+
+## 10. Close-out (adversarial review resolved, 2026-07-25)
+
+**Review:** Grok 4.5 (xAI) — cross-vendor independent of the Anthropic
+implementer session (Codex path unavailable, quota exhausted to Jul 29; brief
+authorised Grok as substitute). Full findings ledger, pass-1-blind +
+pass-2-builder-seeded procedure, and Ryan's rulings:
+`scratchpad/upkeep_adversarial_review_ledger.md`.
+
+**Findings and disposition (all resolved):**
+- **F-04** (vacuous `false_belief_count >= 0` net) — **FIXED.** The assertion
+  in `test_integrated_camp_closes_the_living_agent_loop_and_replays` is kept
+  (documents the trace-timing shift, `>= 0` cannot regress-catch) but a new
+  dedicated test, `test_false_belief_detection_flags_a_known_deceptive_report`
+  in the same file, replaces it as the real net: it self-verifies a genesis
+  false-rumour fixture (`stage6-information` seed, tick 1) produces a genuine
+  canonical/claimed mismatch, then asserts `false_belief_count` catches it.
+  Demonstrated to fail under a temporary induced regression (short-circuiting
+  the harness's false-belief loop) and pass once reverted; the harness file
+  itself carries zero net diff from that verification.
+- **F-05** (suite counts builder-asserted, not evidenced) — **FIXED.**
+  Full suite re-run at close-out, log saved:
+  `memory/evidence/layer-c-leg1/full_suite_closeout.txt`. Result: 339
+  executed passed (the 338 previously claimed plus the 1 new F-04 test), 4
+  known pre-existing skips excluded, 5 known `MONGO_URL`-env collection
+  failures excluded, 0 executed test failed. See §6 item 6.
+- **F-03** (organic-reachability claim overstated seed coverage) — **FIXED.**
+  The individual per-scenario gate items in §6 (2, 3, 5) were already
+  correctly single-seed-scoped and never themselves claimed "both scenarios,
+  both seeds" — the overstatement lived only in the session-handoff summary
+  above and in `FRONTIER.md`'s gate-shape bullet, both now corrected:
+  `collective_groups` ran both seeds; `living_settlement` ran seed1 only
+  (`living-agents-stage6`) for every metric — direction, organic-reachability,
+  and the frozen-hash re-baseline. No run on `living_settlement`'s alt seed
+  exists in the evidence package.
+- **F-06** (re-baseline causal diff omitted move/social shifts) — **FIXED.**
+  §6 item 3 now carries the full 7-action delta table (rest, tend, repair,
+  move, request_help, cooperate, repay) instead of rest/tend/repair only, and
+  no longer claims "nothing else in the causal chain changed."
+- **F-01** (variety claim needs entropy/full distribution, not rest% alone) —
+  **ACCEPT**, wording addressed: §6 items 2/3 and `FRONTIER.md` now cite
+  Shannon entropy (0.75->2.31 bits `collective_groups`; 1.52->2.46 bits
+  `living_settlement`) alongside the distribution table, not rest% in
+  isolation.
+- **F-02** (repair 9->4 attribution plausible, not trajectory-proven) —
+  **ACCEPT** as ruled; no code or wording change required, mechanism argument
+  and nonzero residual repair count stand as originally written.
+
+**Re-baseline:** authorised by Ryan (2026-07-25) conditional on the F-06
+write-up above being complete. Applied: frozen `living_settlement` 320-tick
+hash moves from `84d3ad52773d95877a2de3a178a205cf96f1637c76dcf561c702fa24788c32d2`
+to `897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`, updated
+in `CLAUDE.md`, `memory/CAPABILITY-DOCTRINE.md`, and
+`.claude/agents/hard-rail-reviewer.md`'s tripwire.
+
+**Commit series:** F-04 test fix, F-05 evidence log, this contract's wording
+fixes + close-out, `FRONTIER.md` move, and the `CORE-PERF-01` queued-next
+pointer ship together per AGENT_WORKFLOW's "same commit series" rule. Exact
+commit list is in the STOP report delivered alongside this close-out.
+
+**Next:** no active Layer C behaviour leg. `CORE-PERF-01` (Layer A kernel
+infra, hash-neutral) is queued next per `memory/CORE-PERF-01-TICK-VALIDATION-COST.md`
+and `FRONTIER.md` — not authorised, not started; needs its own
+contract-confirmation STOP before implementation.

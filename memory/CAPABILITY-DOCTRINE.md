@@ -24,7 +24,8 @@ Historical design documents are retired individually through the Retirement Rule
 
 ### Regression baselines
 
-- `living_settlement`: `84d3ad52…c32d2`
+- `living_settlement`: `897f3f7f…3c5ab` (re-baselined 2026-07-25, authorised at
+  the Layer C Variety Leg 1 close-out; prior baseline `84d3ad52…c32d2`)
 - `collective_groups`: `659a27f3…920342`
 
 Regression baselines never change without explicit user authorisation at a STOP.

@@ -32,7 +32,10 @@ is the index, not the brain dump. Keep it under 150 lines.
   trade, currency; unblocking 7C; institutions/governance (10); demography
   (11); player surfaces (14/15); LLM-generated canonical state.
 - Change the frozen `living_settlement` 320-tick hash
-  (`84d3ad52…c32d2`) — re-baseline requires explicit authorisation.
+  (`897f3f7f…3c5ab`, re-baselined 2026-07-25 from `84d3ad52…c32d2` at the
+  Layer C Variety Leg 1 close-out — see
+  `memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md` §6 item 3 for the causal
+  diff) — re-baseline requires explicit authorisation.
 - Touch Stage 7A–7D / 8A schemas, caps, priorities, constants — extend via new
   registries, schema-version bumps, new hooks only.
 - Destructive git: reset/checkout/clean/stash-drop on the working tree,
