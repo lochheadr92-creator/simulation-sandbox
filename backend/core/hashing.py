@@ -20,6 +20,14 @@ def canonical_hash(obj) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
 
 
+def hash_canonical_json_string(json_string: str) -> str:
+    """sha256 of an already-built canonical JSON string. CORE-PERF-01 Slice B:
+    lets a caller hash a spliced/cached JSON string (see
+    core.mutations.spliced_snapshot_json) the same way canonical_hash would
+    have hashed the equivalent object, without re-serializing it."""
+    return hashlib.sha256(json_string.encode("utf-8")).hexdigest()
+
+
 def canonical_byte_composition(
     obj,
     classify_path: Callable[[tuple, object, bool], str | None],
