@@ -32,6 +32,16 @@ async def ensure_indexes():
         [("run_id", 1), ("simulation_time", 1), ("order_index", 1)],
         name="ix_run_event_boundary",
     )
+    # Integrity fix (KIMI review, 2026-07-25): order_index is the global,
+    # monotonic per-run event sequence -- no two accepted events in the same
+    # run may ever share one. Nothing previously enforced this at the
+    # storage layer (the index above is non-unique, query-only), so a racy
+    # writer computing next_order_index without CAS (the intervention
+    # endpoint, api/routes.py) could silently interleave a colliding
+    # order_index into the canonical sequence.
+    await db.accepted_events.create_index(
+        [("run_id", 1), ("order_index", 1)], unique=True, name="uq_run_order_index",
+    )
     await db.commit_frames.create_index(
         [("run_id", 1), ("tick", 1)], unique=True, name="uq_run_frame_tick",
     )
