@@ -1,0 +1,13 @@
+post-resume window: ticks 126-250
+social-builder action hits: 88
+   (126, 'evt-126-2672-264f1913', 'repay')
+   (127, 'evt-127-2693-61315615', 'request_help')
+   (128, 'evt-128-2714-1f4e1a8e', 'request_help')
+   (129, 'evt-129-2730-049b53a0', 'cooperate')
+   (130, 'evt-130-2753-34edfbb7', 'repay')
+   (131, 'evt-131-2770-0280672f', 'request_help')
+   (132, 'evt-132-2788-100dc7d5', 'request_help')
+   (133, 'evt-133-2805-0de63620', 'request_help')
+   (134, 'evt-134-2822-382af391', 'request_help')
+   (135, 'evt-135-2842-5164daf6', 'request_help')
+failure-fallback-rest hits: 0

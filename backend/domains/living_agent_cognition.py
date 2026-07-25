@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import copy
 
+from core.constants import (
+    STRUCTURE_TEND_CONDITION_CEILING,
+    STRUCTURE_TEND_CONDITION_FLOOR,
+    UPKEEP_IDLE_TAIL_TICKS,
+)
 from core.geometry import manhattan
 from core.hashing import canonical_hash
 from domains.living_agent_contracts import (
@@ -407,7 +412,10 @@ def derive_internal_pressures(
     weather: dict | None = None,
 ) -> dict:
     """Derive all required pressures from canonical state and owned knowledge."""
-    out = copy.deepcopy(state)
+    # CORE-PERF-01 Slice A: shallow copy is sufficient -- this function only
+    # ever replaces the top-level "pressures"/"last_updated_tick" keys below,
+    # never mutates any other subtree in place.
+    out = dict(state)
     prior_pressures = state.get("pressures") or {}
     visible_people = len((perception_delta or {}).get("person_sightings") or {})
     visible_dangers = len((perception_delta or {}).get("danger_sightings") or {})
@@ -429,6 +437,33 @@ def derive_internal_pressures(
         + _bounded((weather or {}).get("exposure", 0))
     )
     known_tiles = len(knowledge.get("known_tiles") or [])
+
+    # Layer C, Variety Leg 1 (memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md):
+    # upkeep builds from two independent signals -- a visible shelter in the
+    # tend band (mirrors REPAIR_SHELTER's own condition read, no new
+    # observation plumbing) and a REST streak read from the already-pinned,
+    # already-canonical decision_history tail (no new field, fixed tail
+    # length). Formula/weights are a structural placement, not a picked
+    # magnitude -- see the contract's score-band discussion.
+    worn_shelter_conditions = [
+        int((obs.get("properties") or {}).get("condition", STRUCTURE_TEND_CONDITION_CEILING))
+        for obs in (perception_delta or {}).get("observations") or []
+        if obs.get("observation_type") == "shelter"
+        and STRUCTURE_TEND_CONDITION_FLOOR <= int(
+            (obs.get("properties") or {}).get("condition", STRUCTURE_TEND_CONDITION_CEILING)
+        ) < STRUCTURE_TEND_CONDITION_CEILING
+    ]
+    worn_shelter_term = (
+        STRUCTURE_TEND_CONDITION_CEILING - min(worn_shelter_conditions)
+        if worn_shelter_conditions else 0
+    )
+    idle_streak = 0
+    for record in reversed((state.get("decision_history") or [])[-UPKEEP_IDLE_TAIL_TICKS:]):
+        if record.get("selected_goal") != "REST":
+            break
+        idle_streak += 1
+    idle_streak_term = idle_streak * (1000 // UPKEEP_IDLE_TAIL_TICKS)
+
     raw = {
         "thirst": (_bounded(entity.get("thirst", 0)), "canonical:thirst"),
         "hunger": (_bounded(entity.get("hunger", 0)), "canonical:hunger"),
@@ -456,6 +491,7 @@ def derive_internal_pressures(
         "attachment": (_bounded(520 - positive_relations * 130), "owned:relationships"),
         "fear": (_bounded(visible_dangers * 260 + feared_relations * 100 + threat_memories * 40), "perceived_or_remembered:threat"),
         "perceived_obligation": (_bounded(active_commitments * 190), "owned:commitments"),
+        "upkeep": (_bounded(worn_shelter_term + idle_streak_term), "derived:worn_shelter_and_rest_streak"),
     }
 
     tolerance_bias = {
@@ -502,8 +538,12 @@ def _want_id(actor_id: str, want_type: str, target_id: str | None) -> str:
 
 def refresh_wants(state: dict, actor_id: str, tick: int) -> dict:
     """Persist desired outcomes distinct from immediate pressure responses."""
-    out = copy.deepcopy(state)
-    wants = copy.deepcopy(state.get("wants") or {})
+    # CORE-PERF-01 Slice A: shallow copies -- every write below either
+    # replaces a want record wholesale (line ~578) or, for the dormant-flip
+    # (was in-place mutation), uses copy-on-write so no shared record from
+    # `state` is ever mutated in place.
+    out = dict(state)
+    wants = dict(state.get("wants") or {})
     generated = []
     p = state.get("pressures") or {}
     relationships = state.get("relationships") or {}
@@ -560,8 +600,9 @@ def refresh_wants(state: dict, actor_id: str, tick: int) -> dict:
 
     for want_id in sorted(set(wants) - active_ids):
         if wants[want_id].get("status") == "active":
-            wants[want_id]["status"] = "dormant"
-            wants[want_id]["last_updated_tick"] = int(tick)
+            wants[want_id] = {
+                **wants[want_id], "status": "dormant", "last_updated_tick": int(tick),
+            }
 
     ranked = sorted(
         wants.items(),
@@ -668,8 +709,11 @@ def merge_meaningful_memories(
     action_result: dict | None = None,
 ) -> tuple[dict, list[dict]]:
     """Consolidate meaningful experience and enforce deterministic retention."""
-    out = copy.deepcopy(state)
-    memories = copy.deepcopy(state.get("memories") or {})
+    # CORE-PERF-01 Slice A: shallow copies -- _upsert_memory always replaces a
+    # memory record wholesale, never mutates one in place; the decay loop
+    # below (was in-place mutation) uses copy-on-write instead.
+    out = dict(state)
+    memories = dict(state.get("memories") or {})
     learned_subjects = {
         item.get("subject") for item in (learned or []) if item.get("subject")
     }
@@ -749,7 +793,10 @@ def merge_meaningful_memories(
             continue
         age = max(0, int(tick) - int(memory.get("last_recalled_tick", tick)))
         if age and age % 10 == 0:
-            memory["confidence"] = _bounded(memory.get("confidence", 0) - memory.get("decay_rate", 2) * 5)
+            memories[memory_id] = {
+                **memory,
+                "confidence": _bounded(memory.get("confidence", 0) - memory.get("decay_rate", 2) * 5),
+            }
     out["memories"] = _trim_memories(memories, tick)
     return out, updated
 

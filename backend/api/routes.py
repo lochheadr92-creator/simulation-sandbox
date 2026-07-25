@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from core.db import db
 from core.constants import time_phase, RECENT_HORIZON_TICKS
 from core.commit_pipeline import run_commit_frame
+from core.hashing import canonical_hash
 from core.interventions import build_intervention_proposal
 from core.run_service import (
     create_run, get_run, list_runs, load_entities, save_entities_delta,
@@ -483,19 +484,62 @@ async def api_submit_intervention(run_id: str, body: InterventionRequest):
     if rejected:
         await db.rejected_proposals.insert_many([dict(r) for r in rejected])
     await save_entities_delta(run_id, entities, touched)
-    await db.kernel_runs.update_one({"id": run_id}, {"$set": {
-        "last_state_hash": ending_hash, "next_order_index": next_order,
-    }})
+
+    # Integrity fix (KIMI review, 2026-07-25): CAS on next_order_index. The
+    # filter only matches if it still equals the value read at the top of
+    # this request (`run["next_order_index"]`, passed as the order_index
+    # base to run_commit_frame above) -- a concurrent tick-commit or another
+    # intervention advancing it in between must not be silently overwritten
+    # (this endpoint previously had no CAS at all here). Does not achieve
+    # the same full multi-document atomicity as the real transactional
+    # pipeline (core/storage/frame_transaction.py::commit_frame_atomically)
+    # -- the accepted_events/rejected_proposals/entities writes above are
+    # not rolled back if this specific check fails -- but it closes the
+    # specific defect named (a silent, racy next_order_index overwrite) and
+    # is backstopped by core/db.py's new uq_run_order_index unique index.
+    kernel_runs_result = await db.kernel_runs.update_one(
+        {"id": run_id, "next_order_index": run["next_order_index"]},
+        {"$set": {"last_state_hash": ending_hash, "next_order_index": next_order}},
+    )
+    if kernel_runs_result.matched_count == 0:
+        raise HTTPException(409, {
+            "error_code": "CONCURRENT_MODIFICATION",
+            "detail": f"run {run_id} changed concurrently (next_order_index no "
+                      "longer matches the value read for this intervention); "
+                      "retry the intervention",
+        })
+
+    # Integrity fix (KIMI review, 2026-07-25): recompute a content-derived
+    # frame_identity_hash for this write instead of leaving it stale/
+    # omitted (the prior code $set the frame's ending_state_hash and $push'd
+    # event ids without ever touching frame_identity_hash at all). Narrower
+    # than PrecomputedFrame.compute_identity() (core/storage/frame_
+    # transaction.py) -- that formula folds in expected_head_revision and
+    # hash_policy_version, which this ad-hoc intervention path does not
+    # track -- but it is still a genuine fingerprint of this write's own
+    # content, and it is scoped by tick so it cannot collide with another
+    # tick's identity hash under core.db's uq_run_frame_identity unique
+    # index (partial, only for string-typed frame_identity_hash values).
+    accepted_event_ids = [e["id"] for e in accepted]
+    rejected_proposal_ids = [r["id"] for r in rejected]
+    frame_identity_hash = canonical_hash({
+        "run_id": run_id,
+        "tick": run["current_tick"],
+        "ending_state_hash": ending_hash,
+        "accepted_event_ids": accepted_event_ids,
+        "rejected_proposal_ids": rejected_proposal_ids,
+        "next_order_index": next_order,
+    })
     # Keep the commit_frame's ending_state_hash for this tick in sync so that
     # replay/determinism verification sees the post-intervention hash too.
     await db.commit_frames.update_one(
         {"run_id": run_id, "tick": run["current_tick"]},
-        {"$set": {"ending_state_hash": ending_hash},
+        {"$set": {"ending_state_hash": ending_hash, "frame_identity_hash": frame_identity_hash},
          "$setOnInsert": {"id": f"{run_id}-frame-{run['current_tick']}", "starting_state_hash": None,
                            "tick": run["current_tick"]},
          "$push": {
-             "accepted_event_ids": {"$each": [e["id"] for e in accepted]},
-             "rejected_proposal_ids": {"$each": [r["id"] for r in rejected]},
+             "accepted_event_ids": {"$each": accepted_event_ids},
+             "rejected_proposal_ids": {"$each": rejected_proposal_ids},
          }},
         upsert=True,
     )

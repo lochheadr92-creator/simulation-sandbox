@@ -64,11 +64,21 @@ def run_living_agent_harness(
     capture_events: bool = False,
     scenario_id: str = "living_settlement",
     resume_at_tick: int | None = None,
+    debug_assert_fragment_cache: bool = False,
 ) -> dict:
     """Run a living-agent scenario and return deterministic trace evidence.
 
     ``run_id`` is intentionally excluded from canonical trace hashes so two
     independent runs with the same seed can be compared directly.
+
+    CORE-PERF-01 Slice B: an entity-JSON fragment cache (see
+    ``core.mutations.spliced_snapshot_json``) is always used for the per-
+    event canonical hash -- it is a derived, non-canonical performance aid
+    that is verified byte-identical to the un-cached computation by
+    construction. ``debug_assert_fragment_cache=True`` additionally proves
+    that byte-identity on every single accepted event of this run (used for
+    the gate, not normal use -- it defeats the optimization's purpose by
+    doing both computations).
     """
     if ticks < 0:
         raise ValueError("ticks must be non-negative")
@@ -89,6 +99,7 @@ def run_living_agent_harness(
     accepted_event_count = len(genesis)
     rejected_proposal_count = len(genesis_rejected)
     valid_parent_ids = {event["id"] for event in genesis}
+    entity_json_cache: dict = {}
     event_hashes = [_event_hash(event) for event in genesis]
     frame_hashes = [
         genesis[-1]["post_state_hash"]
@@ -168,6 +179,8 @@ def run_living_agent_harness(
             lineage_key,
             scenario.enabled_domains,
             valid_causal_parent_event_ids=valid_parent_ids,
+            entity_json_cache=entity_json_cache,
+            debug_assert_fragment_cache=debug_assert_fragment_cache,
         )
         accepted_event_count += len(accepted)
         rejected_proposal_count += len(rejected)
@@ -610,12 +623,19 @@ def main(argv=None) -> int:
     parser.add_argument("--ticks", type=int, default=320)
     parser.add_argument("--repeat", type=int, default=1)
     parser.add_argument("--resume-at", type=int)
+    parser.add_argument(
+        "--debug-assert-fragment-cache", action="store_true",
+        help="CORE-PERF-01 Slice B: verify the fragment-cache splice against "
+             "the direct canonical_json computation on every accepted event. "
+             "Gate/verification use only -- doubles the hashing cost.",
+    )
     args = parser.parse_args(argv)
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
     baseline = run_living_agent_harness(
         args.seed, ticks=args.ticks, run_id="living-agent-harness-1",
         scenario_id=args.scenario,
+        debug_assert_fragment_cache=args.debug_assert_fragment_cache,
     )
     repeat_matches = True
     for index in range(2, args.repeat + 1):
@@ -623,6 +643,7 @@ def main(argv=None) -> int:
             args.seed, ticks=args.ticks, run_id=f"living-agent-harness-{index}",
             scenario_id=args.scenario,
             resume_at_tick=args.resume_at,
+            debug_assert_fragment_cache=args.debug_assert_fragment_cache,
         )
         repeat_matches = repeat_matches and all((
             baseline["event_hashes"] == repeated["event_hashes"],

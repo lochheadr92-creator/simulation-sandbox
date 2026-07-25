@@ -51,7 +51,19 @@ def test_integrated_camp_closes_the_living_agent_loop_and_replays():
     assert summary["weather_conditions"] == ["rain"]
 
     assert summary["reported_claim_count"] >= 1
-    assert summary["false_belief_count"] >= 1
+    # After Layer C Variety Leg 1 (memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md,
+    # the upkeep drive), idle-time agents now often tend a mildly worn shelter
+    # instead of resting/wandering -- the same class of deterministic-trace
+    # perturbation the Stage 6 Liveness Pass note below already documents.
+    # Verified directly (see the leg's close-out) that this shifts which agent
+    # reaches the genesis false rumour (expires tick 4) before the window ends,
+    # so false_belief_count no longer reliably lands >=1 in this specific
+    # 30-tick trace; confirmed at 30/40/50/60 ticks, so it is not a timing
+    # margin issue. This assertion is intentionally trace-agnostic -- the
+    # dedicated, non-vacuous false-belief net now lives in
+    # test_false_belief_detection_flags_a_known_deceptive_report below (adversarial
+    # review finding F-04, memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md).
+    assert summary["false_belief_count"] >= 0
     assert summary["deceptive_claim_count"] == 0
     assert summary["contradicted_claim_count"] >= 1
     assert summary["final_relationship_count"] > 8
@@ -139,6 +151,43 @@ def test_reported_false_information_is_selective_and_not_truth_leaking():
             and fact.get("provenance_kind") == "reported"
         ]
         assert not claims
+
+
+def test_false_belief_detection_flags_a_known_deceptive_report():
+    """Dedicated, non-vacuous net for false-belief detection (adversarial review
+    finding F-04, memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md): the loosened
+    `false_belief_count >= 0` assertion above cannot fail, so it no longer catches
+    a regression in this counter. This test reuses the same stage6-information
+    genesis fixture as test_reported_false_information_is_selective_and_not_truth_
+    leaking above: the scenario's genesis `signal-false-rumour` tells person-000/
+    002/006 that storage-private is public+open, which the test self-verifies
+    mismatches the canonical private+closed storage-private entity -- a real,
+    controlled false belief this counter must catch every run. It resolves at
+    tick 1, before any leg's idle-time behaviour change can alter which agent
+    reaches it, so unlike the 30-tick integrated trace above it is not
+    sensitive to that class of drift.
+    """
+    result = run_living_agent_harness("stage6-information", ticks=1)
+
+    canonical = result["entities"]["storage-private"]
+    assert canonical["access"] == "private"
+    assert canonical["open"] is False
+
+    mismatched_recipients = 0
+    for person_id in ("person-000", "person-002", "person-006"):
+        claims = [
+            fact
+            for fact in result["entities"][person_id]["knowledge"]["facts"].values()
+            if fact.get("subject") == "storage-private"
+            and fact.get("provenance_kind") == "reported"
+        ]
+        assert claims
+        assert claims[0]["properties"]["access"] == "public"
+        assert claims[0]["properties"]["access"] != canonical["access"]
+        mismatched_recipients += 1
+
+    assert mismatched_recipients == 3
+    assert result["summary"]["false_belief_count"] >= mismatched_recipients
 
 
 def test_storm_warning_signal_receives_accepted_event_provenance():

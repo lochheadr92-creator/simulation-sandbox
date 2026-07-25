@@ -82,8 +82,12 @@ def apply_relationship_consequence(
     source_event_id: str | None,
 ) -> tuple[dict, dict, bool]:
     """Apply one believed/perceived event, idempotent by accepted event id."""
-    out = copy.deepcopy(state)
-    relationships = copy.deepcopy(out.get("relationships") or {})
+    # CORE-PERF-01 Slice A: shallow copies for `out`/`relationships` -- the
+    # only per-key write is `relationships[subject_id] = relation` (a whole-
+    # record replacement) below, and `relation` itself stays an independently
+    # owned deep copy (kept as-is) before any in-place mutation of it.
+    out = dict(state)
+    relationships = dict(out.get("relationships") or {})
     relation = copy.deepcopy(relationships.get(subject_id) or empty_relationship(subject_id, tick))
     if relation.get("schema_version") != RELATIONSHIP_SCHEMA_VERSION:
         raise ValueError(f"unsupported relationship schema: {relation.get('schema_version')}")
@@ -168,8 +172,10 @@ def make_commitment(
 
 
 def _put_commitment(state: dict, commitment: dict) -> dict:
-    out = copy.deepcopy(state)
-    commitments = copy.deepcopy(out.get("commitments") or {})
+    # CORE-PERF-01 Slice A: shallow copies -- the only write is a whole-record
+    # replacement below.
+    out = dict(state)
+    commitments = dict(out.get("commitments") or {})
     commitments[commitment["commitment_id"]] = copy.deepcopy(commitment)
     ranked = sorted(
         commitments.items(),
@@ -181,18 +187,25 @@ def _put_commitment(state: dict, commitment: dict) -> dict:
 
 
 def advance_commitment_deadlines(state: dict, *, owner_id: str, tick: int) -> tuple[dict, list[dict]]:
-    out = copy.deepcopy(state)
+    # CORE-PERF-01 Slice A: shallow copies -- the broken-commitment update
+    # below (was in-place mutation) uses copy-on-write so no shared record
+    # from `state` is ever mutated in place.
+    out = dict(state)
     consequences = []
-    commitments = copy.deepcopy(out.get("commitments") or {})
+    commitments = dict(out.get("commitments") or {})
     for commitment_id, commitment in sorted(commitments.items()):
         due_tick = commitment.get("due_tick")
         if commitment.get("status") != "active" or due_tick is None or int(tick) <= int(due_tick):
             continue
-        commitment["status"] = "broken"
-        commitment["failed_tick"] = int(tick)
-        commitment["last_changed_tick"] = int(tick)
-        commitment["last_event_id"] = None
-        commitment["reliability_effect"] = -180
+        commitment = {
+            **commitment,
+            "status": "broken",
+            "failed_tick": int(tick),
+            "last_changed_tick": int(tick),
+            "last_event_id": None,
+            "reliability_effect": -180,
+        }
+        commitments[commitment_id] = commitment
         consequences.append({
             "kind": "broken_promise",
             "commitment_id": commitment_id,
@@ -597,7 +610,10 @@ def apply_observed_social_information(
     tick: int,
 ) -> tuple[dict, dict, list[dict], bool]:
     """Apply only causally perceived signal consequences for this observer."""
-    out_state = copy.deepcopy(state)
+    # CORE-PERF-01 Slice A: shallow copy -- out_state is only ever reassigned
+    # wholesale via apply_relationship_consequence() below, never mutated
+    # in place directly in this function.
+    out_state = dict(state)
     out_knowledge = _compat_knowledge(knowledge)
     consequences = []
     knowledge_changed = False

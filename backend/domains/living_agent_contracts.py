@@ -39,6 +39,7 @@ PRESSURE_KINDS = (
     "attachment",
     "fear",
     "perceived_obligation",
+    "upkeep",  # Layer C Variety Leg 1: memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md
 )
 
 TRAIT_KINDS = (
@@ -56,6 +57,7 @@ PHYSICAL_ACTION_TYPES = frozenset({
     "move", "gather", "carry", "store", "retrieve", "consume", "drink",
     "rest", "use_tool", "construct", "repair", "damage", "open", "access",
     "give", "take", "help", "warn", "request", "refuse",
+    "tend",  # Layer C Variety Leg 1: memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md
 })
 
 SOCIAL_ACTION_TYPES = frozenset({
@@ -233,6 +235,42 @@ def compat_living_agent_state(existing: dict | None, entity_id: str, tick: int, 
 
     state = empty_living_agent_state(entity_id, existing.get("created_tick", tick), rng)
     supplied_traits = existing.get("traits")
+    if rng is not None:
+        # Integrity guard (KIMI review, 2026-07-25): `existing` truthy means
+        # this entity already has committed living_agent state, so its
+        # traits should already be fully committed too -- seeded_traits()
+        # was only meant to be reached once, on the entity's true first
+        # derivation (the `not existing` branch above). seeded_traits()'s
+        # RNG stream is keyed only by entity_id, not tick
+        # (core/rng.py::DeterministicRNG.stream caches the stream object per
+        # name and keeps advancing it on every call), so if this branch is
+        # ever reached again with incomplete/missing committed traits --
+        # e.g. a first-tick proposal that got rejected, or TRAIT_KINDS
+        # growing to add a dimension existing committed entities don't have
+        # -- the freshly-drawn value the line above already computed would
+        # depend on how many times this entity's stream happened to be
+        # touched before now, not just (seed, entity_id): non-reproducible,
+        # and not caught by repeat/replay/resume because it is still
+        # perfectly self-consistent once committed. Not reachable in any
+        # shipped scenario today (verified: every shipped scenario's genesis
+        # persons commit full traits on their true first tick). Refuse
+        # loudly instead of silently committing a non-reproducible value.
+        # Scoped to rng is not None: that's the only case
+        # empty_living_agent_state above actually touched the stateful
+        # stream (seeded_traits) rather than the stateless, hash-based
+        # default_traits fallback -- rng is None callers have no
+        # reproducibility risk here at all, so they keep their exact prior
+        # (lenient) behaviour, unchanged below.
+        if not isinstance(supplied_traits, dict) or any(
+            name not in supplied_traits for name in TRAIT_KINDS
+        ):
+            raise LivingAgentCompatibilityError(
+                f"entity {entity_id} has existing living_agent state but "
+                "incomplete or missing committed traits -- refusing to "
+                "silently fall back to the tick-less seeded_traits() RNG "
+                "stream, which would produce a non-reproducible value this "
+                "far from the entity's true first derivation"
+            )
     if isinstance(supplied_traits, dict):
         if supplied_traits.get("schema_version") not in (None, LIVING_AGENT_SCHEMA_VERSION):
             raise LivingAgentCompatibilityError(

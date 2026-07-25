@@ -1,30 +1,52 @@
 # Current Frontier
 
 **The only file that declares the current task.** (History is archived in
-`CAPABILITY_ROADMAP.md` — not authoritative for current state; individual legs in
-their contracts; this owns "what now".)
+`CAPABILITY_ROADMAP.md` — not authoritative for current state; full detail for
+each closed leg lives in its own contract doc; this file owns "what now" and
+stays lean by design — see `AGENT_WORKFLOW.md`'s documentation-load rule.)
 
 ```
-Layer:          C — Individual Agency
+Layer:          C — Individual Agency (behaviour) + A — Kernel (infra, one-off)
 Capability:     Behaviour Enrichment  (variety → social density → individuality → memory)
-Active leg:     Variety Leg 1 — Upkeep drive
-Status:         CONTRACT (discovery done; contract to be written)
-Scenario:       living_settlement (baseline) + collective_groups (organic)
-Owner of docs:  cloud session    ·    Implements: terminal session
 
-Player outcome: agents spend visibly less time resting and maintain worn
-                structures on their own initiative.
+Active leg:     NONE. Both most-recent legs closed 2026-07-25.
 
-Primary metric: rest fraction falls from BEHAVIOUR-BASELINE-001 and the action
-                mix broadens (more distinct actions firing repeatedly).
+Closed leg:     Variety Leg 1 — Upkeep drive
+Status:         VERIFIED — CLOSED (2026-07-25). Full detail, gate results,
+                adversarial review (Grok/xAI), and findings ledger:
+                memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md.
+Headline:       Agents rest less, tend worn structures on their own initiative.
+                Rest fraction falls (living_settlement 73.3%->32.1% seed1;
+                collective_groups 89.5%->40.9% / 88.9%->47.2% alt seed); action
+                mix broadens (Shannon entropy 0.75->2.31 / 1.52->2.46 bits).
+                Frozen living_settlement hash moved (re-baseline authorised):
+                84d3ad52...c32d2 -> 897f3f7f...3c5ab.
 
-Gate shape (magnitude measured, not pre-picked; Invariant 12(b)):
-  - rest fraction strictly decreases vs baseline
-  - Upkeep fires organically by ≥N distinct actors across ≥M structures (N,M from probe)
-  - 0 deaths regression; survival never suppressed
-  - determinism holds: repeat + replay + resume equality
-  - frozen living_settlement hash change is EXPECTED → authorised re-baseline at
-    STOP, with an explained (causal) diff, not a bare re-hash
+Closed leg:     CORE-PERF-01 — per-tick validation cost (O(n^2) -> O(n))
+Status:         VERIFIED — CLOSED (2026-07-25). Layer A infra, hash-neutral,
+                queued behind the Upkeep leg per its own doc. Full detail,
+                mechanism, and gate results: memory/CORE-PERF-01-TICK-
+                VALIDATION-COST.md.
+Headline:       Two slices, both hash-neutral (frozen living_settlement +
+                collective_groups hashes byte-identical throughout, proven
+                with debug-assert-mode on every accepted event for Slice B).
+                Slice A (Layer C copy-ownership refactor): ~1.22x-1.51x.
+                Slice B (Core fragment-cached hashing): ~1.47x-2.12x,
+                increasing with horizon. Full suite green throughout, no
+                executed failure at any step.
+Deferred follow-ups (not blocking, not started): thread the Slice B cache
+                into core/run_service.py / core/replay_service.py; a fixture
+                test for merge_observations_into_knowledge / merge_knowledge_
+                claim's deepcopy sites (same safe pattern as Slice A, never
+                explicitly cleared).
+
+Next (per THE-SPINE.md's stated order, not yet started): Layer C — social
+                density, the next item after variety in the behaviour-
+                enrichment sequence (variety -> social density ->
+                individuality -> memory). Needs its own probe + contract
+                phase (Invariant 12(v2)) before any implementation — this is
+                a new leg-loop start, not a continuation of either closed leg
+                above.
 
 Blocked / parked:
   - Aid Exchange ............... DEFERRED — needs Layer F-A (material surplus)

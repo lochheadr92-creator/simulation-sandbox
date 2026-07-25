@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import copy
 
+from core.constants import (
+    STRUCTURE_TEND_CONDITION_CEILING,
+    STRUCTURE_TEND_CONDITION_FLOOR,
+    TEND_STRUCTURE_BASE_SCORE,
+)
 from core.navigation import ARRIVAL_ADJACENT, find_path
 from domains.base import DomainEngine, DomainOutput
 from domains.living_agent_actions import build_physical_action_proposal
@@ -472,6 +477,28 @@ def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowl
             resource_kind="food", risk=120,
         ))
 
+    # Layer C, Variety Leg 1 (memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md):
+    # any role, no wood/tool cost. Disjoint from REPAIR_SHELTER's condition<750
+    # band above by construction -- the two never target the same shelter in
+    # the same state. Deliberately generated LAST, immediately before the
+    # EXPLORE/REST fallbacks it's designed to compete with: candidates are
+    # truncated to LIMITS.candidate_goals_per_decision in append order before
+    # scoring, so inserting this earlier risked silently starving rarer,
+    # role-specific candidates (e.g. WARN_DANGER) for busy actors instead of
+    # only ever contending with the two generic fallbacks.
+    mildly_worn = [
+        (shelter_id, obs) for shelter_id, obs in sorted(shelters.items())
+        if STRUCTURE_TEND_CONDITION_FLOOR <= int(
+            (obs.get("properties") or {}).get("condition", STRUCTURE_TEND_CONDITION_CEILING)
+        ) < STRUCTURE_TEND_CONDITION_CEILING
+    ]
+    if mildly_worn:
+        target_id, obs = mildly_worn[0]
+        candidates.append(_candidate(
+            "TEND_STRUCTURE", "tend", TEND_STRUCTURE_BASE_SCORE,
+            target_id=target_id, target_pos=_pos(obs),
+        ))
+
     # Deterministic bounded local exploration/fallback.
     unknown = []
     known_tiles = set(knowledge.get("known_tiles") or [])
@@ -615,7 +642,15 @@ class LivingSettlementDomain(DomainEngine):
             }
 
             working_entities = dict(frame.entities)
-            working_actor = copy.deepcopy(entity)
+            # CORE-PERF-01 Slice A: deep-copy every field except living_agent/
+            # knowledge, which get overwritten on the next two lines anyway --
+            # deep-copying them first (as before) only to immediately discard
+            # the copy was pure waste. Every other field is still fully
+            # independently owned, unchanged from before.
+            working_actor = {
+                key: copy.deepcopy(value) for key, value in entity.items()
+                if key not in ("living_agent", "knowledge")
+            }
             working_actor["living_agent"] = state
             working_actor["knowledge"] = knowledge
             working_entities[entity_id] = working_actor
@@ -706,7 +741,14 @@ class LivingSettlementDomain(DomainEngine):
                     key: failed_counts[key] for key in sorted(failed_counts)[:16]
                 }
 
-            resulting_state = actor_update.get("living_agent") or state
+            # CORE-PERF-01 Slice A -- mandatory alias-break: actor_update may
+            # alias `state` itself (some builders copy working_actor's
+            # living_agent straight into the mutation payload). Under the
+            # shallow-copy-plus-copy-on-write regime the rest of this chain
+            # now uses, that alias is no longer broken incidentally by a
+            # wholesale deepcopy inside derive_internal_pressures -- it must
+            # be broken explicitly here instead.
+            resulting_state = copy.deepcopy(actor_update.get("living_agent") or state)
             resulting_state = derive_internal_pressures(
                 actor_after, resulting_state, knowledge, delta, tick,
                 night=night, weather=weather,

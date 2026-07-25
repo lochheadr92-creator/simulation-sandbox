@@ -61,6 +61,27 @@ STRUCTURE_WEAR_BASE = 4               # base condition lost per wear step (gentl
 STRUCTURE_WEAR_WEATHER_DIVISOR = 60   # extra wear = weather exposure // this (storms wear more)
 STRUCTURE_WEAR_MIN_CONDITION = 0      # condition floor (never below this)
 
+# --- Layer C, Variety Leg 1: upkeep drive (memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md) ---
+# tend (any role) and repair (role=="builder", living_settlement_domain.py) use
+# disjoint condition bands so the two never target the same shelter in the same
+# state. Repair's own trigger stays the existing inline `750` (unmodified, sealed
+# Stage 6 code); this constant duplicates that value intentionally, documented
+# here as the shared band edge rather than refactoring the sealed line.
+STRUCTURE_TEND_CONDITION_FLOOR = 750     # tend band: condition in [FLOOR, ceiling); repair owns condition < FLOOR
+STRUCTURE_TEND_CONDITION_CEILING = 1000  # tend band upper bound (matches the codebase's fixed max_condition convention)
+STRUCTURE_TEND_RESTORE_AMOUNT = 40       # condition gained per tend action (smaller than repair's +120: light maintenance, no wood/tool cost)
+UPKEEP_IDLE_TAIL_TICKS = 5               # trailing decision_history entries checked for a REST streak (bounded by LIMITS.decision_receipts_retained=12)
+# Base score placed between the two existing fallback tiers, not above both:
+# EXPLORE's fallback (180) must still win while there is unknown ground nearby,
+# so upkeep doesn't starve map exploration once a shelter is in the tend band
+# (a shelter is in-band almost continuously, so a score above 180 made tend a
+# permanently-preferred absorbing loop -- observed empirically via
+# test_stage6e_living_settlement.py's scout losing visual contact with its
+# WARN_DANGER target because it stopped wandering; see the leg contract's
+# risk log). 120 sits strictly between REST (60) and EXPLORE (180), and well
+# below the lowest survival-triggered base (1200).
+TEND_STRUCTURE_BASE_SCORE = 120
+
 # --- Phase 5B: giver-owned food transfer ---
 FOOD_TRANSFER_QUANTITY = 1        # this phase permits exactly one meat unit per transfer
 FOOD_TRANSFER_SURPLUS = 2         # giver retains one unit after a transfer

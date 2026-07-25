@@ -28,7 +28,10 @@ or already-authorized — flagging is not blocking, the human decides.
    `backend/tests/test_stage6e_living_settlement.py`,
    `test_stage7a_associations.py`, `test_stage7b_group_state.py`,
    `test_stage7d_group_goal.py`, `test_stage8a_group_norm.py`, or any file
-   containing the string `84d3ad52` or the hash's tail `c32d2`.
+   containing the string `897f3f7f` or the hash's tail `3c5ab` (the current
+   frozen `living_settlement` hash, re-baselined 2026-07-25 at the Layer C
+   Variety Leg 1 close-out; the prior frozen value `84d3ad52`/`c32d2` is
+   superseded and no longer itself a tripwire).
 3. **Schema/cap/priority locks.** Direct edits to existing Stage 7A-7D/8A
    schema fields, caps, or priority constants (as opposed to additive new
    registries, schema-version bumps, or new hooks). You cannot always tell

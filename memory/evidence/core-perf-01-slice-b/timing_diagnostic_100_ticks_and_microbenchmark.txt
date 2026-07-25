@@ -1,0 +1,5 @@
+WITH cache: 62.199s over 100 ticks, 622.0 ms/tick avg, final cache_size=36, entity_count=36
+WITHOUT cache: 91.604s over 100 ticks, 916.0 ms/tick avg
+ratio (nocache/withcache): 1.473x
+direct canonical_hash(snapshot_for_hash(...)): 24129.7us avg over 200 calls
+cached spliced_snapshot_json + hash (fully warm cache): 5961.0us avg over 200 calls

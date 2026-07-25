@@ -58,6 +58,48 @@ def test_unknown_canonical_schema_fails_closed():
         compat_living_agent_state({"schema_version": "future-v99"}, "person-001", 2)
 
 
+def test_seeded_traits_stream_is_stateful_across_calls_not_a_pure_function():
+    """Demonstrates the actual risk the guard below exists for: seeded_traits'
+    RNG stream is keyed only by entity_id (domains/living_agent_contracts.py),
+    and core.rng.DeterministicRNG.stream caches + keeps advancing the same
+    stream object across calls -- so calling it twice for the same entity on
+    the same rng instance does NOT reproduce the first draw."""
+    rng = DeterministicRNG("stage6-seed")
+    first = empty_living_agent_state("person-001", 0, rng)
+    second = empty_living_agent_state("person-001", 0, rng)
+    assert first["traits"] != second["traits"]
+
+
+def test_reaching_seeded_traits_with_incomplete_committed_traits_fails_closed():
+    """KIMI review, 2026-07-25: an entity with existing living_agent state
+    but missing/incomplete committed traits must not silently reseed from
+    the tick-less, already-advanced RNG stream -- that value would depend on
+    how many times this entity's stream happened to be touched before now,
+    not just (seed, entity_id): non-reproducible, and not reachable in any
+    shipped scenario today (every shipped scenario's genesis persons commit
+    full traits on their true first tick)."""
+    incomplete = empty_living_agent_state("person-001", 0)  # rng=None: default_traits, complete
+    del incomplete["traits"]["risk_tolerance"]
+    with pytest.raises(LivingAgentCompatibilityError, match="incomplete or missing committed traits"):
+        compat_living_agent_state(incomplete, "person-001", 2, DeterministicRNG("stage6-seed"))
+
+    missing_entirely = empty_living_agent_state("person-001", 0)
+    del missing_entirely["traits"]
+    with pytest.raises(LivingAgentCompatibilityError, match="incomplete or missing committed traits"):
+        compat_living_agent_state(missing_entirely, "person-001", 2, DeterministicRNG("stage6-seed"))
+
+
+def test_incomplete_traits_still_lenient_when_rng_is_none():
+    """The guard is scoped to rng is not None (the only case with an actual
+    reproducibility risk): rng=None callers use the stateless, hash-based
+    default_traits fallback, so they keep their exact prior (lenient)
+    behaviour -- this must NOT start raising."""
+    incomplete = empty_living_agent_state("person-001", 0)
+    del incomplete["traits"]["risk_tolerance"]
+    normalized = compat_living_agent_state(incomplete, "person-001", 2)
+    assert "risk_tolerance" in normalized["traits"]  # backfilled from default_traits, not an error
+
+
 def test_legacy_plan_and_action_upgrade_without_losing_existing_fields():
     plan = compat_plan(
         {"goal": "SEEK_WATER", "steps": ["TRAVEL_WATER", "DRINK"], "step_index": 1, "status": "active"},

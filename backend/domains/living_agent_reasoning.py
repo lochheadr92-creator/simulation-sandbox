@@ -42,6 +42,7 @@ GOAL_PRESSURES = {
     "TAKE_FOOD": ("hunger", "safety"),
     "RETRIEVE_FOOD": ("hunger",),
     "GATHER_FOOD": ("hunger",),
+    "TEND_STRUCTURE": ("upkeep",),  # Layer C Variety Leg 1: memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md
 }
 
 WANT_GOALS = {
@@ -348,7 +349,10 @@ def build_decision_receipt(
 
 
 def record_decision(state: dict, receipt: dict, plan: dict) -> dict:
-    out = copy.deepcopy(state)
+    # CORE-PERF-01 Slice A: shallow copy -- decision_history/causal_links are
+    # append-only list rebuilds below (existing entries never mutated in
+    # place); the receipt itself keeps its own defensive deepcopy.
+    out = dict(state)
     prior = list(out.get("decision_history") or [])
     prior = [row for row in prior if row.get("receipt_id") != receipt.get("receipt_id")]
     # Canonical history is deliberately compact.  The current receipt retains

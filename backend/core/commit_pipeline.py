@@ -14,8 +14,13 @@ resolve naturally and deterministically: the first proposal in order wins,
 and the second's precondition fails against the now-updated state -
 producing a genuine, inspectable rejection with a stable reason code.
 """
-from core.hashing import canonical_hash
-from core.mutations import apply_mutation, snapshot_for_hash
+from core.hashing import canonical_hash, hash_canonical_json_string
+from core.mutations import (
+    apply_mutation,
+    invalidate_entity_json_cache,
+    snapshot_for_hash,
+    spliced_snapshot_json,
+)
 from core.constants import CRITICAL_THRESHOLD, FOOD_TRANSFER_QUANTITY, FOOD_TRANSFER_SURPLUS
 from core.food_interaction import (
     PROPOSAL_CREATE,
@@ -305,9 +310,26 @@ def _stamp_new_entity_provenance(mutation: dict, event_id: str) -> None:
             new_entity["source_event_id"] = event_id
 
 
-def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int) -> dict:
+def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int,
+            rejected: list) -> dict:
+    # Integrity fix (KIMI review, 2026-07-25): the id has no order_index or
+    # sequence component, so two structurally identical proposals rejected
+    # in the same frame (same tick, content_hash prefix, entity_id) produced
+    # byte-identical ids. uq_run_rejection_id (core/db.py) is a unique index
+    # on (run_id, id), so the second insert fails, the frame aborts, and a
+    # retry reproduces the identical collision -- wedging the run
+    # permanently. Disambiguate ONLY on an actual collision (checked against
+    # this frame's own rejections so far) so the common, non-colliding case
+    # keeps its existing id exactly as before.
+    base_id = f"rej-{tick}-{proposal['content_hash'][:10]}-{proposal['entity_id']}"
+    existing_ids = {row["id"] for row in rejected}
+    rejection_id = base_id
+    suffix = 2
+    while rejection_id in existing_ids:
+        rejection_id = f"{base_id}-{suffix}"
+        suffix += 1
     return {
-        "id": f"rej-{tick}-{proposal['content_hash'][:10]}-{proposal['entity_id']}",
+        "id": rejection_id,
         "proposal_id": proposal["proposal_id"],
         "proposal_snapshot": proposal,
         "rejection_stage": stage,
@@ -320,10 +342,23 @@ def _reject(proposal: dict, stage: str, reason_code: str, detail: str, tick: int
 
 def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_key: str,
                       run_id: str, order_index_start: int, frame_id: str,
-                      valid_causal_parent_event_ids: set | None = None):
+                      valid_causal_parent_event_ids: set | None = None,
+                      entity_json_cache: dict | None = None,
+                      debug_assert_fragment_cache: bool = False):
     """Runs one deterministic commit frame. Mutates `entities` in place.
 
     Returns (accepted_events, rejected_proposals, next_order_index).
+
+    CORE-PERF-01 Slice B: `entity_json_cache`, when provided, is a caller-
+    owned dict (persisted and reused across ticks, same pattern as
+    `valid_causal_parent_event_ids`) that this function mutates in place to
+    avoid re-serializing the whole world for every accepted proposal's
+    canonical hash. `None` (the default) preserves the exact prior behaviour
+    -- every existing caller that doesn't pass it is unaffected.
+    `debug_assert_fragment_cache=True` additionally computes the hash the
+    slow way on every accepted event and raises if it disagrees with the
+    cached-splice result; used during the gate, never in normal runs (it
+    defeats the optimization's purpose by doing both).
     """
     all_proposals = []
     seq = 0
@@ -341,24 +376,24 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
     for proposal in ordered:
         scope_err = check_scope_exists(proposal, entities)
         if scope_err:
-            rejected.append(_reject(proposal, "initial_validation", "precondition.entity_missing", scope_err, tick))
+            rejected.append(_reject(proposal, "initial_validation", "precondition.entity_missing", scope_err, tick, rejected))
             continue
 
         interaction_err = validate_food_interaction(proposal, entities, tick)
         if interaction_err:
-            rejected.append(_reject(proposal, "initial_validation", interaction_err, interaction_err, tick))
+            rejected.append(_reject(proposal, "initial_validation", interaction_err, interaction_err, tick, rejected))
             continue
 
         transfer_err = validate_food_transfer(proposal, entities)
         if transfer_err:
-            rejected.append(_reject(proposal, "initial_validation", transfer_err, transfer_err, tick))
+            rejected.append(_reject(proposal, "initial_validation", transfer_err, transfer_err, tick, rejected))
             continue
 
         living_action_err = validate_living_action_proposal(proposal, entities)
         if living_action_err:
             rejected.append(_reject(
                 proposal, "initial_validation", living_action_err,
-                living_action_err, tick,
+                living_action_err, tick, rejected,
             ))
             continue
 
@@ -366,7 +401,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if social_action_err:
             rejected.append(_reject(
                 proposal, "initial_validation", social_action_err,
-                social_action_err, tick,
+                social_action_err, tick, rejected,
             ))
             continue
 
@@ -374,7 +409,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if association_err:
             rejected.append(_reject(
                 proposal, "initial_validation", association_err,
-                association_err, tick,
+                association_err, tick, rejected,
             ))
             continue
 
@@ -382,7 +417,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if group_state_err:
             rejected.append(_reject(
                 proposal, "initial_validation", group_state_err,
-                group_state_err, tick,
+                group_state_err, tick, rejected,
             ))
             continue
 
@@ -390,7 +425,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if collective_err:
             rejected.append(_reject(
                 proposal, "initial_validation", collective_err,
-                collective_err, tick,
+                collective_err, tick, rejected,
             ))
             continue
 
@@ -398,7 +433,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if group_goal_err:
             rejected.append(_reject(
                 proposal, "initial_validation", group_goal_err,
-                group_goal_err, tick,
+                group_goal_err, tick, rejected,
             ))
             continue
 
@@ -406,7 +441,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if group_norm_err:
             rejected.append(_reject(
                 proposal, "initial_validation", group_norm_err,
-                group_norm_err, tick,
+                group_norm_err, tick, rejected,
             ))
             continue
 
@@ -414,7 +449,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         if group_carriage_err:
             rejected.append(_reject(
                 proposal, "initial_validation", group_carriage_err,
-                group_carriage_err, tick,
+                group_carriage_err, tick, rejected,
             ))
             continue
 
@@ -423,7 +458,7 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             if not causal_parents:
                 rejected.append(_reject(
                     proposal, "initial_validation", "causality.missing_parent",
-                    "non-exogenous proposal without causal parent", tick,
+                    "non-exogenous proposal without causal parent", tick, rejected,
                 ))
                 continue
             if valid_causal_parent_event_ids is not None:
@@ -434,14 +469,14 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
                     rejected.append(_reject(
                         proposal, "initial_validation", "causality.invalid_parent",
                         f"causal parent not present in accepted stream or validated anchor: {invalid}",
-                        tick,
+                        tick, rejected,
                     ))
                     continue
 
         precond_err = evaluate_preconditions(proposal.get("preconditions", []), entities)
         if precond_err:
             reason_code = "conflict.resource_contention" if "claimed_tick" in precond_err else "precondition.failed"
-            rejected.append(_reject(proposal, "commit_revalidation", reason_code, precond_err, tick))
+            rejected.append(_reject(proposal, "commit_revalidation", reason_code, precond_err, tick, rejected))
             continue
 
         event_id = f"evt-{tick}-{order_index}-{proposal['content_hash'][:8]}"
@@ -460,7 +495,20 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         stamp_group_carriage_provenance(proposal, mutation, event_id)
 
         apply_mutation(entities, mutation)
-        post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
+        if entity_json_cache is None:
+            post_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
+        else:
+            invalidate_entity_json_cache(entity_json_cache, mutation)
+            spliced_json = spliced_snapshot_json(entities, tick, lineage_key, entity_json_cache)
+            post_hash = hash_canonical_json_string(spliced_json)
+            if debug_assert_fragment_cache:
+                direct_hash = canonical_hash(snapshot_for_hash(entities, tick, lineage_key))
+                if post_hash != direct_hash:
+                    raise AssertionError(
+                        "CORE-PERF-01 Slice B: fragment-cache splice diverged from "
+                        f"direct canonical_json at tick {tick}, order_index {order_index}: "
+                        f"{post_hash} != {direct_hash}"
+                    )
 
         accepted_events.append({
             "id": event_id,
