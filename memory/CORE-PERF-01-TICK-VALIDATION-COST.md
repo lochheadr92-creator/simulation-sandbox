@@ -1,26 +1,27 @@
 # CORE-PERF-01 — Per-tick validation cost (O(n²) → O(n))
 
-**Status: Slice A VERIFIED-CLOSED (2026-07-25, Ryan's ruling); Slice B
-VERIFIED (2026-07-25), awaiting Ryan's close-out ruling.** Slice A:
-hash-neutral at 250 and 500 ticks (~1.22x / ~1.51x measured speed-up),
-fallback-rest path closed with a verified-to-have-teeth fixture test. Slice
-B: hash-neutral with debug-assert-mode proving byte-equality on every single
-accepted event across both full gate runs (zero mismatches), ~1.47x-2.12x
-measured speed-up (controlled, back-to-back methodology; ratio increasing
-with horizon exactly as the mechanism predicts), 7 new property tests
-including a direct proof that cache invalidation is load-bearing.
-Authorization: "A then B — do the safe one first, prove nothing breaks
-(every hash must come out identical), then do the big one with full safety
-checks" (Ryan, 2026-07-25). Touch-surface is two independent slices: Slice A
-— Layer C (`living_settlement_domain.py` / `living_agent_cognition.py` /
+**Status: VERIFIED-CLOSED (2026-07-25) — leg complete.** Both slices
+VERIFIED-CLOSED per Ryan's rulings. Slice A: hash-neutral at 250 and 500
+ticks (~1.22x / ~1.51x measured speed-up), fallback-rest path closed with a
+verified-to-have-teeth fixture test. Slice B: hash-neutral with
+debug-assert-mode proving byte-equality on every single accepted event
+across both full gate runs (zero mismatches), ~1.47x-2.12x measured
+speed-up (controlled, back-to-back methodology; ratio increasing with
+horizon exactly as the mechanism predicts), 7 new property tests including
+a direct proof that cache invalidation is load-bearing. Ryan's ruling on
+Slice B's close-out STOP: "approved," no conditions. Authorization: "A then
+B — do the safe one first, prove nothing breaks (every hash must come out
+identical), then do the big one with full safety checks" (Ryan,
+2026-07-25). Touch-surface was two independent slices: Slice A — Layer C
+(`living_settlement_domain.py` / `living_agent_cognition.py` /
 `living_agent_social.py` / `living_agent_reasoning.py`, single-boundary-copy
 ownership refactor) — **VERIFIED-CLOSED, see "Slice A results" below**;
 Slice B — Layer A/Core (`commit_pipeline.py` / `core/mutations.py` /
 `core/hashing.py` / `core/kernel.py` / `tools/living_agent_harness.py`,
-fragment-cached world-snapshot serialization) — **VERIFIED, see "Slice B
-results" below, awaiting close-out ruling**. Owner of this contract:
-cloud/doc session. Implementer: the code (terminal) session, this branch.
-Profile-first; hash-neutral acceptance.
+fragment-cached world-snapshot serialization) — **VERIFIED-CLOSED, see
+"Slice B results" below**. Owner of this contract: cloud/doc session.
+Implementer: the code (terminal) session, this branch. Profile-first;
+hash-neutral acceptance — both bars met.
 
 ## Classification (why an infra leg is allowed here)
 
@@ -735,3 +736,37 @@ attribution, stack sampler + per-tick windowing, canonical_json site
 attribution) are scratch tooling from that session, reproducible on the
 canonical machine; available to commit as `tools/_probe_perf01_*.py` if
 Ryan wants them brought over — not yet in this repo, not fabricated here.
+
+## Slice B — VERIFIED-CLOSED (2026-07-25, Ryan's ruling: "approved")
+
+Slice B's close-out STOP was answered "approved" — no conditions attached
+(unlike Slice A, which required the fallback-rest fixture test before
+closing). Slice B is closed as reported: mechanism committed (`83e3aacf`),
+evidence + doc updates committed (`d8a1f0a7`), both pushed.
+
+## CORE-PERF-01 — leg VERIFIED-CLOSED (2026-07-25)
+
+Both slices of the only mechanism this leg ever scoped are now
+VERIFIED-CLOSED. The leg's stated goal — O(n²) → O(n) per-tick validation
+cost, hash-neutral, so long-horizon behaviour/culture gates stop taking
+hours — is achieved and proven:
+- Original hypothesis (causal-parent-set rebuild) falsified at Stage 1;
+  Stage 1b corrected the attribution to the real dominant costs.
+- Slice A (Layer C, copy-ownership refactor): hash-neutral, ~1.22x–1.51x
+  measured, fallback-rest path closed with a verified fixture test.
+- Slice B (Core, fragment-cached hashing): hash-neutral (debug-assert-mode,
+  zero mismatches on every event across two full gate runs), ~1.47x–2.12x
+  measured (controlled methodology, ratio increasing with horizon).
+- Full suite green throughout every step, no executed test failure at any
+  point in this leg.
+
+**Deferred, not done here, available as clean follow-ups:** threading the
+fragment cache into `core/run_service.py` / `core/replay_service.py`; a
+Tier-A fixture test for the `merge_observations_into_knowledge` /
+`merge_knowledge_claim` deepcopy sites (same safe always-replace pattern as
+Slice A's other sites, never given an explicit safety verdict in the
+proposal so left untouched); bringing over the cloud session's probe
+scripts if wanted for reproducibility. None of these block calling the leg
+done — they're extensions of an already-proven pattern, not open risks.
+
+FRONTIER moved past this leg at close-out (`FRONTIER.md`).
