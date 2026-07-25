@@ -1,4 +1,9 @@
-# CORE-INTEGRITY-002 — Pinned-frame knowledge-fact aliasing (silent in-place write)
+# CORE-INTEGRITY-003 — Pinned-frame knowledge-fact aliasing (silent in-place write)
+
+> **ID note (2026-07-26):** originally filed as CORE-INTEGRITY-002 in a worktree
+> that did not yet have `866a17b1`, which had already claimed 002 for the
+> SEC-CAS concurrency stub (`memory/CORE-INTEGRITY-002-CONCURRENCY-CAS.md`).
+> Renumbered to 003 on merge. 002 belongs to the CAS/head-revision finding.
 
 **Status: PROPOSED — findings only, remediation DEFERRED.** A fix exists (fully
 implemented and test-verified in isolation) but is withheld from commit because
