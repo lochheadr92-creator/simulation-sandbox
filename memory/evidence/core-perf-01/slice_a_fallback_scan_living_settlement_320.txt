@@ -1,0 +1,2 @@
+scenario=living_settlement ticks=1-320
+failure-fallback-rest hits: 0

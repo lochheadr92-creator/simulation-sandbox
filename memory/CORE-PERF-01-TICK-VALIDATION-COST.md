@@ -323,8 +323,101 @@ found; a candidate for a small follow-up if wanted).
   `memory/evidence/core-perf-01/slice_a_ms_per_tick_before.txt` and
   `slice_a_ms_per_tick_after.txt`.
 
-"Prove nothing breaks (every hash must come out identical)" — proven.
-Slice B is next, under its own high-risk gate.
+**500-tick measurement (gap-fill, 2026-07-25):** the verification plan called
+for ms/tick at both 250 *and* 500 ticks; only 250 was measured in the
+original gate above. Filled via a temporary sparse-checkout worktree at the
+pre-Slice-A commit (`60bb06e6`) for a genuine "before" baseline on this same
+machine, since Slice A was already committed on the working tree by the time
+this gap was caught (removed after use; not part of the repo history):
+
+| window | before ms/tick | after ms/tick |
+|---|---:|---:|
+| ticks 1-50 | 604.4 | 415.5 |
+| ticks 51-100 | 746.1 | 504.8 |
+| ticks 101-200 | 800.5 | 506.4 |
+| ticks 201-300 | 836.0 | 505.4 |
+| ticks 301-400 | 781.4 | 514.4 |
+| ticks 401-500 | 726.6 | 536.6 |
+
+Overall: 382.0s → 252.3s over 500 ticks, **~1.51x** — a larger measured
+speed-up than the 250-tick figure (~1.22x), consistent with the growth term
+having more horizon to accumulate before Slice A removes its share. The
+shape difference is now stark: before, ms/tick keeps climbing through the
+full 500 ticks; after, it is essentially **flat from tick 100 through tick
+500** (506.4 → 505.4 → 514.4 → 536.6 — a ~6% drift across 400 ticks, versus
+before's continued climb). Evidence:
+`memory/evidence/core-perf-01/slice_a_500_ticks_before.txt` /
+`slice_a_500_ticks_after.txt`.
+
+### Why the resume check is the right stress test, not just "another repeat"
+
+The resume mechanism (`tools/living_agent_harness.py`, `if resume_at_tick is
+not None and tick == resume_at_tick: entities = copy.deepcopy(entities);
+rng = DeterministicRNG(seed)`) forcibly deep-copies the entire canonical
+world at the resume tick and resets the RNG object, then compares the
+downstream ticks against a plain, uninterrupted baseline run. That forced
+deep-copy severs *any* accidental cross-tick object sharing. If Slice A's
+copy-ownership refactor had left some mutable object improperly aliased
+across ticks — the signature failure class of this kind of refactor — the
+forced sever at the resume tick would change subsequent behaviour if the
+unmodified run's behaviour secretly depended on that aliasing persisting.
+`resume_matches: true` is therefore a targeted stress test for exactly the
+risk this refactor introduces, not a generic re-run.
+
+**Honest caveat:** it only exercises aliasing whose effects actually surface
+within the post-resume window of the specific scenario/seed/horizon tested —
+coverage-by-density, not proof. Checked directly (2026-07-25, read-only, no
+code changed): in the `collective_groups` H=250 resume window (ticks
+126-250), the code paths Slice A touches that depend on social-action
+proposals (`apply_relationship_consequence` /
+`apply_observed_social_information`) fire **88 times** — strong density.
+The `living_settlement_domain.py` exception-handler fallback-rest path
+(`except ValueError: ... "deterministic fallback rest"`) fires **zero
+times** — not just in the post-resume window, but **across the entire
+250-tick `collective_groups` run and the entire 320-tick `living_settlement`
+run**, both at the standard seed `living-agents-stage6`. This is not a
+resume-tick placement problem (no tick choice would fix it within these
+runs) — the path simply does not organically occur at these horizons/seed
+in either scenario, in this evidence or in the Upkeep leg's evidence before
+it. Flagged honestly rather than claimed covered: the resume/repeat/replay
+gate provides no organic coverage of that one branch. A dedicated Tier-A
+fixture test (constructing a scenario where `build_physical_action_proposal`
+raises `ValueError`) would be the reliable way to exercise it deterministically
+rather than hunting for an organic occurrence — not built here, since it
+goes beyond the "cheap, at your discretion" scope; flagged as an option if
+wanted, not silently declared out of scope.
+
+### The two-layer defense (why both checks are mandatory, neither substitutes)
+
+- **Layer 1 — resume (repeat + replay + resume equality):** catches fragile
+  *cross-tick* sharing — an object from an earlier tick still being read or
+  mutated by later-tick processing when it should have been independently
+  owned. This is a **self-consistency** check: it verifies the code produces
+  the same output as itself under repetition/resumption. It says nothing
+  about whether that output matches what the code produced *before* Slice A.
+- **Layer 2 — before/after comparison against the pre-change recorded
+  hashes** (the frozen `living_settlement` 320-tick hash and the
+  `collective_groups` `final_state_hash`/`accepted_event_sequence_hash`
+  values recorded in `memory/evidence/layer-c-leg1/` before Slice A):
+  catches **deterministic same-tick corruption** — the
+  `living_settlement_domain.py:736` alias class specifically, where a bug
+  could corrupt a value in a way that is still perfectly self-consistent
+  (repeatable, replayable, resumable) but simply *wrong* relative to the
+  pre-change behaviour. Repeat/replay/resume are **structurally blind** to
+  this class of bug: a deterministic bug reproduces identically every time
+  you re-run it, so internal-consistency checks alone would pass even if the
+  refactor silently changed canonical values. Only a comparison against an
+  independently-recorded *external* baseline (not derived from the same
+  buggy run) can catch it.
+
+Both layers passed in this gate (frozen hash byte-identical, `collective_
+groups` hashes byte-identical to the pre-Slice-A baseline, resume equality
+holds). Neither layer is redundant with the other — both are mandatory going
+forward for any change in this class, including Slice B.
+
+"Prove nothing breaks (every hash must come out identical)" — proven, on
+both layers. Slice B is next, under its own high-risk gate, pending Ryan's
+ruling on this close-out.
 
 ## CORE-INTEGRITY-001 interim discipline
 

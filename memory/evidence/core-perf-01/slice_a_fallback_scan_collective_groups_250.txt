@@ -1,0 +1,2 @@
+scenario=collective_groups ticks=1-250
+failure-fallback-rest hits: 0

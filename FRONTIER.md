@@ -70,9 +70,18 @@ Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) --
       living_settlement 320-tick hash byte-identical, collective_groups
       H=250 repeat+resume byte-identical, full suite exact match
       (339 passed/4 skipped/5 known errors/0 failed), measured ~1.22x
-      speed-up with the ms/tick growth curve now plateauing from ~tick 100
-      on (was climbing monotonically the whole run). Evidence:
-      memory/evidence/core-perf-01/. Slice B (Core, high-risk gate) is next,
+      speed-up at H=250 (~1.51x at H=500, gap-filled per the verification
+      plan) with the ms/tick growth curve essentially flat from ~tick 100
+      onward at both horizons (was climbing monotonically the whole run
+      before). Two-layer defense recorded in the contract doc: resume
+      catches cross-tick aliasing (stress-checked -- 88 social-action hits
+      in the post-resume window; the exception-handler fallback-rest path
+      has zero organic hits in either scenario at any tested horizon, an
+      honest coverage gap, not a placement fix); the before/after hash
+      comparison against the pre-change baseline catches deterministic
+      same-tick corruption that repeat/replay/resume is structurally blind
+      to. Evidence: memory/evidence/core-perf-01/. Slice A close-out STOP
+      delivered, awaiting Ryan's ruling. Slice B (Core, high-risk gate) is next,
       not yet started. No active Layer C *behaviour* leg is open (this is
       infra, not a behaviour leg).
 
