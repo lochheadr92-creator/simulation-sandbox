@@ -642,7 +642,15 @@ class LivingSettlementDomain(DomainEngine):
             }
 
             working_entities = dict(frame.entities)
-            working_actor = copy.deepcopy(entity)
+            # CORE-PERF-01 Slice A: deep-copy every field except living_agent/
+            # knowledge, which get overwritten on the next two lines anyway --
+            # deep-copying them first (as before) only to immediately discard
+            # the copy was pure waste. Every other field is still fully
+            # independently owned, unchanged from before.
+            working_actor = {
+                key: copy.deepcopy(value) for key, value in entity.items()
+                if key not in ("living_agent", "knowledge")
+            }
             working_actor["living_agent"] = state
             working_actor["knowledge"] = knowledge
             working_entities[entity_id] = working_actor
@@ -733,7 +741,14 @@ class LivingSettlementDomain(DomainEngine):
                     key: failed_counts[key] for key in sorted(failed_counts)[:16]
                 }
 
-            resulting_state = actor_update.get("living_agent") or state
+            # CORE-PERF-01 Slice A -- mandatory alias-break: actor_update may
+            # alias `state` itself (some builders copy working_actor's
+            # living_agent straight into the mutation payload). Under the
+            # shallow-copy-plus-copy-on-write regime the rest of this chain
+            # now uses, that alias is no longer broken incidentally by a
+            # wholesale deepcopy inside derive_internal_pressures -- it must
+            # be broken explicitly here instead.
+            resulting_state = copy.deepcopy(actor_update.get("living_agent") or state)
             resulting_state = derive_internal_pressures(
                 actor_after, resulting_state, knowledge, delta, tick,
                 night=night, weather=weather,
