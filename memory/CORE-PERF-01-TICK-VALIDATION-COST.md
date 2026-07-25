@@ -1,20 +1,26 @@
 # CORE-PERF-01 — Per-tick validation cost (O(n²) → O(n))
 
-**Status: Slice A VERIFIED-CLOSED (2026-07-25, Ryan's ruling) — hash-neutral
-at 250 and 500 ticks (~1.22x / ~1.51x measured speed-up), growth-curve
-plateau confirmed at both horizons, resume-window coverage-density checked
-honestly, fallback-rest path closed with a verified-to-have-teeth fixture
-test. Slice B AUTHORIZED, not started.** Authorization: "A then B — do the
-safe one first, prove nothing breaks (every hash must come out identical),
-then do the big one with full safety checks" (Ryan, 2026-07-25). Touch-surface
-is two independent slices: Slice A — Layer C (`living_settlement_domain.py` /
-`living_agent_cognition.py` / `living_agent_social.py` / `living_agent_
-reasoning.py`, single-boundary-copy ownership refactor) — **VERIFIED-CLOSED,
-see "Slice A results" below**; Slice B — Layer A/Core (`commit_pipeline.py`,
-fragment-cached world-snapshot
-serialization, high-risk gate) — next, not yet started. Owner of this
-contract: cloud/doc session. Implementer: the code (terminal) session, this
-branch. Profile-first; hash-neutral acceptance.
+**Status: Slice A VERIFIED-CLOSED (2026-07-25, Ryan's ruling); Slice B
+VERIFIED (2026-07-25), awaiting Ryan's close-out ruling.** Slice A:
+hash-neutral at 250 and 500 ticks (~1.22x / ~1.51x measured speed-up),
+fallback-rest path closed with a verified-to-have-teeth fixture test. Slice
+B: hash-neutral with debug-assert-mode proving byte-equality on every single
+accepted event across both full gate runs (zero mismatches), ~1.47x-2.12x
+measured speed-up (controlled, back-to-back methodology; ratio increasing
+with horizon exactly as the mechanism predicts), 7 new property tests
+including a direct proof that cache invalidation is load-bearing.
+Authorization: "A then B — do the safe one first, prove nothing breaks
+(every hash must come out identical), then do the big one with full safety
+checks" (Ryan, 2026-07-25). Touch-surface is two independent slices: Slice A
+— Layer C (`living_settlement_domain.py` / `living_agent_cognition.py` /
+`living_agent_social.py` / `living_agent_reasoning.py`, single-boundary-copy
+ownership refactor) — **VERIFIED-CLOSED, see "Slice A results" below**;
+Slice B — Layer A/Core (`commit_pipeline.py` / `core/mutations.py` /
+`core/hashing.py` / `core/kernel.py` / `tools/living_agent_harness.py`,
+fragment-cached world-snapshot serialization) — **VERIFIED, see "Slice B
+results" below, awaiting close-out ruling**. Owner of this contract:
+cloud/doc session. Implementer: the code (terminal) session, this branch.
+Profile-first; hash-neutral acceptance.
 
 ## Classification (why an infra leg is allowed here)
 
@@ -249,6 +255,119 @@ Expected effect (LIKELY): removes most of the ~44% share *and* its growth
 coefficient (residual growth = sha volume at GB/s + whatever Slice A leaves).
 Combined with Slice A: ~2.5× at 250 ticks, larger at 1,000; the ms/tick curve
 substantially flattened, with remaining growth bounded by cap saturation.
+
+## Slice B results (VERIFIED, 2026-07-25, canonical Windows machine)
+
+**Implementation, scoped minimally on purpose:** `core/mutations.py` gained
+three functions (`entity_fragment`, `spliced_snapshot_json`,
+`invalidate_entity_json_cache`) implementing exactly the mechanism above;
+`core/hashing.py` gained `hash_canonical_json_string` (sha256 of an
+already-built JSON string). `core/commit_pipeline.py::run_commit_frame`
+gained two new optional parameters, `entity_json_cache` and
+`debug_assert_fragment_cache`, both defaulting to values that preserve prior
+behaviour exactly when omitted -- **every one of the 26 files that call
+`run_commit_frame` without these params is completely unaffected.**
+`core/kernel.py::run_tick` threads them through (same additive-optional
+pattern already established for `valid_causal_parent_event_ids`).
+`tools/living_agent_harness.py::run_living_agent_harness` creates one cache
+dict internally and reuses it across every tick of a run (always on for the
+harness -- it is the primary beneficiary, per the Problem statement's own
+framing: harness-based gates are what needed to become tractable), and
+exposes `debug_assert_fragment_cache` as a parameter and a `--debug-assert-
+fragment-cache` CLI flag for gate use.
+
+**Deliberate scope decision, flagged rather than silently done:**
+`core/run_service.py` (the DB-backed production path) and
+`core/replay_service.py` were **not** touched. Both call `run_tick`, not
+`run_commit_frame` directly, so threading the cache into them later is the
+same additive pattern already proven here -- but neither is exercised by
+this leg's gate (which runs through the harness), and `run_service.py` is
+MONGO_URL-gated and untestable in this environment. Extending to them is a
+clean, low-risk follow-up if wanted, not done here per the proportionality
+doctrine (scope to what was measured and what the gate needs).
+
+**Correctness — three layers, matching the mechanism's own safety
+argument:**
+1. **Property/unit tests (7, new file `backend/tests/test_core_perf01_slice_b.py`):**
+   cold cache, empty entities, cache reuse across calls, `default=str`
+   fallback values, entity creation/removal, and — the most direct proof
+   the mechanism is load-bearing, not decorative —
+   `test_invalidation_is_required_for_correctness_after_an_update`:
+   constructs a stale (un-invalidated) cache, asserts it **actually
+   diverges** from the direct computation (not just trusts that it would),
+   then asserts invalidation restores correctness. An end-to-end test drives
+   a real `run_commit_frame` call with the cache on
+   (`debug_assert_fragment_cache=True`) and without, and asserts the
+   resulting `post_state_hash` values are byte-identical.
+2. **Debug-assert-mode on real gate runs:** `--debug-assert-fragment-cache`
+   run against the frozen `living_settlement` 320-tick seed (`repeat 1`,
+   ~1149 accepted events) and against `collective_groups` H=250
+   (`--repeat 2 --resume-at 125`, both repeats plus the resume window) —
+   **every single accepted event's spliced hash was compared against the
+   direct computation and found identical; zero mismatches, zero
+   `AssertionError`s.** This is the strongest form of the check: not a
+   sampled spot-check, every event.
+   Evidence: `memory/evidence/core-perf-01-slice-b/debug_assert_frozen_
+   living_settlement_320.json`, `debug_assert_collective_groups_resume_250.json`.
+3. **The frozen-hash gate itself:** with the cache active (debug-assert
+   mode OFF, i.e. the real production code path), both runs still land on
+   the exact pre-Slice-B hash values:
+   - `living_settlement` 320-tick: `final_state_hash` =
+     `897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`,
+     `repeat_matches: true`.
+   - `collective_groups` H=250: `final_state_hash` =
+     `91a9b7d1da3cfa6188169e924a3496d1d5d7e9fe870267dcf2715218735e8b98`,
+     `accepted_event_sequence_hash` =
+     `f2a9756bdd6ee4ca3dbee0f7fb179bb15d717e1578b6ddaa75e5e5d9ff277102`,
+     `repeat_matches: true`, `resume_matches: true` — both identical to the
+     pre-Slice-B (and pre-Slice-A) baseline.
+   - Full suite: same command as every prior check in this leg, results
+     match exactly (see "Full suite" below).
+
+**Performance — a methodology note worth recording, not just a number.**
+A first attempt compared the already-captured Slice A "after" 500-tick
+timing against a fresh Slice B "after" 500-tick timing and found Slice B
+apparently **slower** (279.1s vs 252.3s) — the two measurements were taken
+many minutes apart, separated by a large amount of unrelated work (Slice A
+close-out, several doc commits, fixture-test debugging), on a shared
+development machine with fluctuating background load. Rather than report
+that number, it was diagnosed: a controlled, back-to-back comparison (same
+script, same process lineage, cache and no-cache runs immediately adjacent,
+zero other work in between) tells a completely different and internally
+consistent story:
+
+| horizon | with-cache | without-cache | ratio |
+|---|---:|---:|---:|
+| 100 ticks | 622.0 ms/tick | 916.0 ms/tick | **1.47x** |
+| 250 ticks | 568.0 ms/tick | 1202.5 ms/tick | **2.12x** |
+
+Ratio *increasing* with horizon matches the mechanism exactly: Slice B
+removes the growth term (world-size-dependent re-serialization cost), so the
+relative benefit compounds the longer the run. A direct micro-benchmark
+(fully warm cache, 200 calls each, isolated from tick-loop overhead)
+confirms the same story at the level of the single hot call: direct
+`canonical_hash(snapshot_for_hash(...))` averaged **24,130 microseconds**;
+cached `spliced_snapshot_json` + hash averaged **5,961 microseconds** — a
+**4.05x** improvement on the exact call Stage 1b identified as ~44% of
+wall. Evidence: `memory/evidence/core-perf-01-slice-b/controlled_comparison_
+250_ticks.txt`, `timing_diagnostic_100_ticks_and_microbenchmark.txt`.
+
+**Lesson, recorded for future perf work on this machine:** separated-in-time
+measurements on a shared development machine are not a reliable before/after
+comparison once a session has been running many heavy processes back to
+back; controlled, immediately-adjacent, same-script comparisons are.
+
+**Full suite:** re-run after both Slice A and Slice B (all tests, both
+domain refactors, both property-test files active together): **349 executed
+passed** (342 from the Slice A count + 7 new Slice B property tests), **4
+known pre-existing skips** excluded from execution, **0 executed test
+failed**; 5 known `MONGO_URL`-env collection failures excluded from
+execution (same pre-existing, unrelated set as every prior check in this
+leg). Evidence: `memory/evidence/core-perf-01-slice-b/full_suite.txt`.
+
+"Prove nothing breaks (every hash must come out identical)" — proven, with
+the additional debug-assert-mode proof this slice's own mechanism specifically
+calls for. Full safety checks satisfied per the authorization.
 
 ## Verification plan (per slice, in order)
 

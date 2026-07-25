@@ -1,0 +1,325 @@
+{
+  "accepted_by_type": {
+    "expire_signal": 856,
+    "flee": 5,
+    "graze": 235,
+    "lifecycle_tick": 2000,
+    "living_consume": 30,
+    "living_drink": 25,
+    "living_gather": 22,
+    "living_move": 388,
+    "living_repair": 5,
+    "living_rest": 638,
+    "living_retrieve": 1,
+    "living_tend": 309,
+    "rest": 10,
+    "social_apologise": 1,
+    "social_cooperate": 62,
+    "social_lie": 1,
+    "social_promise": 1,
+    "social_reconcile": 1,
+    "social_repay": 36,
+    "social_request_help": 36,
+    "social_share_information": 1,
+    "social_threaten": 1,
+    "social_trade": 1,
+    "social_warn": 1,
+    "spawn_entity": 25,
+    "structure_wear": 100,
+    "update_association_registry": 250,
+    "update_group_shared_state": 163,
+    "weather_transition": 12
+  },
+  "accepted_event_count": 5216,
+  "accepted_event_sequence_hash": "f2a9756bdd6ee4ca3dbee0f7fb179bb15d717e1578b6ddaa75e5e5d9ff277102",
+  "actions_by_type": {
+    "apologise": 1,
+    "consume": 30,
+    "cooperate": 62,
+    "drink": 25,
+    "gather": 22,
+    "lie": 1,
+    "move": 388,
+    "promise": 1,
+    "reconcile": 1,
+    "repair": 5,
+    "repay": 36,
+    "request_help": 36,
+    "rest": 638,
+    "retrieve": 1,
+    "share_information": 1,
+    "tend": 309,
+    "threaten": 1,
+    "trade": 1,
+    "warn": 1
+  },
+  "association_summary_hash": "8d51ded25a29af7bc1ece69b1ddf6cfe6c740d34acbbc04f852efa0d8a11038c",
+  "capacity": {
+    "association": {
+      "final_composition": {
+        "current_truth_bytes": 24226,
+        "historical_support_evidence_bytes": 20058,
+        "other_structural_overhead_bytes": 6063,
+        "processed_evidence_id_bytes": 3577,
+        "provenance_reference_bytes": 43529,
+        "retained_proposal_summary_bytes": 0,
+        "total_serialized_bytes": 97453
+      },
+      "hard_cap_bytes": 131072,
+      "operational_target_bytes": 98304,
+      "peak_bytes": 98299,
+      "peak_composition": {
+        "current_truth_bytes": 21442,
+        "historical_support_evidence_bytes": 24283,
+        "other_structural_overhead_bytes": 6187,
+        "processed_evidence_id_bytes": 3577,
+        "provenance_reference_bytes": 42810,
+        "retained_proposal_summary_bytes": 0,
+        "total_serialized_bytes": 98299
+      },
+      "peak_headroom_percent": 25.004,
+      "peak_tick": 53
+    },
+    "group_state": {
+      "final_composition": {
+        "current_truth_bytes": 12371,
+        "historical_support_evidence_bytes": 4104,
+        "other_structural_overhead_bytes": 2531,
+        "processed_proposal_key_bytes": 3578,
+        "provenance_reference_bytes": 32032,
+        "retained_proposal_summary_bytes": 2832,
+        "total_serialized_bytes": 57448
+      },
+      "hard_cap_bytes": 65536,
+      "operational_target_bytes": 49152,
+      "peak_bytes": 57565,
+      "peak_composition": {
+        "current_truth_bytes": 12480,
+        "historical_support_evidence_bytes": 4104,
+        "other_structural_overhead_bytes": 2538,
+        "processed_proposal_key_bytes": 3578,
+        "provenance_reference_bytes": 32032,
+        "retained_proposal_summary_bytes": 2833,
+        "total_serialized_bytes": 57565
+      },
+      "peak_headroom_percent": 12.163,
+      "peak_tick": 158
+    }
+  },
+  "capacity_collective": {
+    "processed_keys_cap": 64,
+    "processed_keys_headroom_percent": 100.0,
+    "processed_keys_peak": 0,
+    "processed_keys_peak_tick": null
+  },
+  "capacity_rejection_reasons": {},
+  "commitment_statuses": {
+    "active": 16,
+    "completed": 23,
+    "pending": 24
+  },
+  "contradicted_claim_count": 88,
+  "current_truth_hash_at_tick_320": null,
+  "deceptive_claim_count": 0,
+  "decisions_by_kind": {
+    "critical_interrupt": 9,
+    "failed_plan_replan": 2,
+    "new_goal": 1525,
+    "plan_continuation": 448,
+    "replan": 5,
+    "resumption": 11
+  },
+  "false_belief_count": 0,
+  "final_active_group_goal_count": 0,
+  "final_active_group_norm_count": 0,
+  "final_association_record_count": 28,
+  "final_current_truth_hash": "966aa3821970a52bc18859ce422cd89b7600a0a0e7019e13bbbf339806d7a6d7",
+  "final_group_candidate_count": 12,
+  "final_group_goal_count": 0,
+  "final_group_norm_count": 0,
+  "final_recognised_group_count": 12,
+  "final_relationship_count": 61,
+  "final_shared_group_fact_count": 24,
+  "final_shared_group_state_count": 12,
+  "final_state_hash": "91a9b7d1da3cfa6188169e924a3496d1d5d7e9fe870267dcf2715218735e8b98",
+  "final_weakening_group_count": 0,
+  "frame_sequence_hash": "81df233254053eee386d7f69f8dc74002396a4c5007ba5dce6644807c31dfadd",
+  "goals_by_actor": {
+    "person-000": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "REPAY_DEBT",
+      "REQUEST_HELP",
+      "RESPOND_HELP",
+      "REST",
+      "TEND_STRUCTURE"
+    ],
+    "person-001": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "HELP_PERSON",
+      "PROMISE_HELP",
+      "RESPOND_HELP",
+      "REST",
+      "TEND_STRUCTURE"
+    ],
+    "person-002": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "REPAIR_SHELTER",
+      "REPAY_DEBT",
+      "REQUEST_HELP",
+      "REST",
+      "TEND_STRUCTURE"
+    ],
+    "person-003": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "REPAY_DEBT",
+      "REQUEST_HELP",
+      "REST",
+      "TEND_STRUCTURE",
+      "TRADE_RESOURCES",
+      "VERIFY_INFORMATION"
+    ],
+    "person-004": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "REST",
+      "TEND_STRUCTURE",
+      "THREATEN"
+    ],
+    "person-005": [
+      "APOLOGISE",
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "RECONCILE",
+      "REPAY_DEBT",
+      "REQUEST_HELP",
+      "REST",
+      "SHARE_RUMOUR",
+      "TEND_STRUCTURE"
+    ],
+    "person-006": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "REQUEST_HELP",
+      "REST",
+      "RETRIEVE_FOOD",
+      "TAKE_FOOD",
+      "TEND_STRUCTURE"
+    ],
+    "person-007": [
+      "DRINK_WATER",
+      "EAT_CARRIED",
+      "GATHER_FOOD",
+      "REQUEST_HELP",
+      "REST",
+      "TEND_STRUCTURE",
+      "WARN_DANGER"
+    ]
+  },
+  "group_collective_domain_enabled": true,
+  "group_goal_summary_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "group_norm_summary_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "group_state_summary_hash": "e9ad7201a79a4eca7f01014129fa7b8a2773fc1c5c4a90d18b28c4a291fe0692",
+  "knowledge_provenance": {
+    "direct": 896,
+    "legacy": 64
+  },
+  "max_state_counts": {
+    "association_records": 28,
+    "association_registry_bytes": 98299,
+    "causal_links": 32,
+    "collective_processed_keys": 0,
+    "collective_storage_content_units": 19,
+    "commitments": 12,
+    "decision_history": 12,
+    "dissolved_groups": 2,
+    "group_candidates": 12,
+    "group_state_processed_proposals": 96,
+    "group_state_registry_bytes": 57565,
+    "knowledge_facts": 120,
+    "memories": 32,
+    "relationships": 8,
+    "shared_group_facts": 24,
+    "shared_group_states": 12
+  },
+  "plan_failure_reasons": {
+    "access denied": 1,
+    "social target must be adjacent": 1
+  },
+  "rejected_by_reason": {
+    "group_state.stale_membership": 11,
+    "precondition.failed": 436,
+    "social_action.not_adjacent": 4
+  },
+  "rejected_proposal_count": 451,
+  "repeat_count": 2,
+  "repeat_matches": true,
+  "replay_matches_final_entities": true,
+  "replay_state_hash": "91a9b7d1da3cfa6188169e924a3496d1d5d7e9fe870267dcf2715218735e8b98",
+  "reported_claim_count": 0,
+  "resource_depletion": 20,
+  "resume_matches": true,
+  "resumed_repeat_at_tick": 125,
+  "retained_history_composition": {
+    "association_dissolved_history_rows": 2,
+    "association_processed_evidence_ids": 96,
+    "association_recent_evidence_rows": 140,
+    "group_processed_proposal_keys": 96,
+    "group_proposal_summary_rows": 12,
+    "group_support_history_rows": 24
+  },
+  "scenario_id": "collective_groups",
+  "seed": "living-agents-stage6",
+  "stage7c": {
+    "accepted_count": 0,
+    "accepted_participant_orders": [],
+    "final_storage_contents": {
+      "storage-camp": {
+        "food": 0,
+        "wood": 12
+      },
+      "storage-private": {
+        "food": 4,
+        "wood": 2
+      }
+    },
+    "final_storage_processed_keys": 0,
+    "first_accepted_tick": null,
+    "first_rejected_tick": null,
+    "rejected_by_reason": {},
+    "rejected_count": 0
+  },
+  "ticks": 250,
+  "useful_state_changed_after_tick_320": false,
+  "useful_truth_changes_after_tick_320": {
+    "association": 0,
+    "combined": 0,
+    "first_tick": null,
+    "group_state": 0,
+    "last_tick": null
+  },
+  "weather_conditions": [
+    "rain",
+    "storm",
+    "cold_clear",
+    "clear",
+    "rain",
+    "storm",
+    "cold_clear",
+    "clear",
+    "rain",
+    "storm",
+    "cold_clear",
+    "clear"
+  ]
+}

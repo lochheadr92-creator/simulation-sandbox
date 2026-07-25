@@ -84,9 +84,31 @@ Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) --
       regression in what it covers, restored) and honestly scoped (does not
       catch the separate :736 cross-tick alias class, which is Layer 1's
       job, verified empirically). Evidence: memory/evidence/core-perf-01/.
-      Slice B (Core, high-risk gate) is next, authorized, before-numbers
-      first per the verification plan. No active Layer C *behaviour* leg is
-      open (this is infra, not a behaviour leg).
+      **Slice B VERIFIED (2026-07-25), awaiting Ryan's close-out ruling:**
+      fragment-cached world-snapshot serialization in core/mutations.py +
+      core/hashing.py, threaded through commit_pipeline.py -> kernel.py ->
+      the harness (26 existing run_commit_frame callers unaffected -- new
+      params default to prior behaviour). Debug-assert-mode proved
+      byte-equality on every single accepted event across both full gate
+      runs (frozen living_settlement 320-tick, collective_groups H=250
+      repeat+resume) -- zero mismatches. Hash-neutral: both runs still land
+      on the exact pre-Slice-B hashes with the cache active. 7 new property
+      tests (backend/tests/test_core_perf01_slice_b.py), including a direct
+      proof that cache invalidation is load-bearing (a stale, un-invalidated
+      cache is asserted to actually diverge, not just trusted to). Measured
+      speed-up via controlled back-to-back comparison (a first attempt using
+      separated-in-time measurements misleadingly showed a slowdown --
+      diagnosed as machine noise, not a regression, and documented as a
+      methodology lesson): ~1.47x at 100 ticks, ~2.12x at 250 ticks, ratio
+      increasing with horizon as the mechanism predicts; ~4.05x on the
+      isolated hot call (24.1ms -> 6.0ms, fully warm cache). Full suite: 349
+      executed passed (342 + 7 new), 4 known skips excluded, 5 known errors
+      excluded, 0 failed. Evidence: memory/evidence/core-perf-01-slice-b/.
+      Deliberately did not touch core/run_service.py or core/replay_
+      service.py (not exercised by this leg's gate, MONGO_URL-gated in this
+      environment) -- same additive pattern available as a follow-up. No
+      active Layer C *behaviour* leg is open (this is infra, not a
+      behaviour leg).
 
 Blocked / parked:
   - Aid Exchange ............... DEFERRED — needs Layer F-A (material surplus)
