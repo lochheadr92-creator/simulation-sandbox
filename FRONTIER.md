@@ -50,18 +50,24 @@ Gate shape (magnitude measured, not pre-picked; Invariant 12(b)) — ALL GREEN:
     vacuous false_belief_count >= 0 net; demonstrated to fail under an induced
     regression and pass restored
 
-Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) —
-      Stage 1 Discovery complete (2026-07-25, read-only, no code changed).
-      Original hypothesis (causal-parent-set rebuild in Core's
-      commit_pipeline.py) FALSIFIED by profiling: run_commit_frame is only
-      ~17% of profiled runtime. Actual dominant cost (~75%) is copy.deepcopy,
-      reached through living_settlement_domain.py's per-agent activate() call
-      graph -- living_agent_cognition.py / living_agent_social.py functions
-      each doing a wholesale copy.deepcopy(state) of the full per-agent
-      canonical state. This moves the touch-surface from Layer A (Core) to
-      Layer C (domain code) -- a different risk profile requiring
-      re-authorization before any Stage 2 code. STOP delivered with findings
-      and options; awaiting direction. No active Layer C *behaviour* leg is
+Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) --
+      Stage 1 + Stage 1b Discovery complete (2026-07-25, both read-only, no
+      code changed). Original hypothesis (causal-parent-set rebuild in Core's
+      commit_pipeline.py) FALSIFIED. VERIFIED attribution (outermost-call
+      timing + 200 Hz stack sampling, immune to cProfile's recursive-call
+      inflation): dominant cost is commit_pipeline.py:463's per-accepted-
+      proposal whole-world rehash (~44% of wall on its own, ~60% total for
+      canonical hashing/serialization -- Core, Slice B); secondary cost is
+      wholesale per-agent copy.deepcopy(state) in the living_settlement_
+      domain.py activation chain (~22-33% of wall -- Layer C, Slice A). Full
+      two-slice Stage 2 mechanism proposal now folded into the contract doc
+      (Slice A: Layer C single-boundary-copy ownership refactor + a
+      mandatory alias-break at living_settlement_domain.py:736, lower risk,
+      recommended first; Slice B: Core fragment-cached world-snapshot
+      serialization, byte-identical hashes via a byte-equality property
+      check, high-risk gate, recommended second). STOP for Ryan's
+      authorization of Stage 2 (order: A then B, or reorder/trim) -- no
+      implementation authorized yet. No active Layer C *behaviour* leg is
       open (this is infra, not a behaviour leg).
 
 Blocked / parked:
