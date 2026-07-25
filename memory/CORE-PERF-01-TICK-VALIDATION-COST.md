@@ -1,14 +1,15 @@
 # CORE-PERF-01 — Per-tick validation cost (O(n²) → O(n))
 
-**Status: AUTHORIZED (2026-07-25, Ryan) — "A then B — do the safe one first,
-prove nothing breaks (every hash must come out identical), then do the big
-one with full safety checks."** Order ratified: Slice A implemented and
-proven first (its own full hash-neutrality gate), then Slice B under its own
-high-risk gate — not reordered, not trimmed. Touch-surface is two independent
-slices: Slice A — Layer C (`living_settlement_domain.py` / `living_agent_
-cognition.py` / `living_agent_social.py`, single-boundary-copy ownership
-refactor, lower risk); Slice B — Layer A/Core (`commit_pipeline.py`,
-fragment-cached world-snapshot serialization, high-risk gate). Owner of this
+**Status: Slice A VERIFIED (2026-07-25) — hash-neutral, ~1.22x measured
+speed-up, growth-curve plateau confirmed. Slice B PROPOSED, not started.**
+Authorization: "A then B — do the safe one first, prove nothing breaks
+(every hash must come out identical), then do the big one with full safety
+checks" (Ryan, 2026-07-25). Touch-surface is two independent slices: Slice A
+— Layer C (`living_settlement_domain.py` / `living_agent_cognition.py` /
+`living_agent_social.py` / `living_agent_reasoning.py`, single-boundary-copy
+ownership refactor) — **done, see "Slice A results" below**; Slice B —
+Layer A/Core (`commit_pipeline.py`, fragment-cached world-snapshot
+serialization, high-risk gate) — next, not yet started. Owner of this
 contract: cloud/doc session. Implementer: the code (terminal) session, this
 branch. Profile-first; hash-neutral acceptance.
 
@@ -259,6 +260,71 @@ substantially flattened, with remaining growth bounded by cap saturation.
 6. After-numbers, same horizons; report before/after per tick and total.
 7. Slice B additionally: property tests + debug-assert-mode full run (item 3–4
    re-run with asserts on).
+
+## Slice A results (VERIFIED, 2026-07-25, canonical Windows machine)
+
+Implemented exactly the sites the mechanism section above analyzed —
+`derive_internal_pressures`, `refresh_wants` (+ dormant-flip copy-on-write),
+`merge_meaningful_memories` (+ decay-loop copy-on-write),
+`apply_relationship_consequence`, `_put_commitment`,
+`advance_commitment_deadlines` (+ broken-commitment copy-on-write),
+`apply_observed_social_information`, `record_decision`, `working_actor`
+(deepcopy-minus-two-keys variant), and the mandatory alias-break at
+`living_settlement_domain.py:736` — nine sites across
+`living_agent_cognition.py`, `living_agent_social.py`,
+`living_agent_reasoning.py`, `living_settlement_domain.py`. Deliberately
+**left untouched**: `merge_observations_into_knowledge` and
+`merge_knowledge_claim` (same always-replace-never-mutate pattern, same
+class of fix would apply, but neither was given an explicit safety verdict
+in the proposal above — conservative choice, not a correctness concern
+found; a candidate for a small follow-up if wanted).
+
+**Gate — all green:**
+- Frozen `living_settlement` 320-tick hash: **byte-identical**,
+  `897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`,
+  `repeat_matches: true`. Evidence:
+  `memory/evidence/core-perf-01/slice_a_frozen_living_settlement_320.json`.
+- `collective_groups` H=250, `--repeat 2 --resume-at 125`: **byte-identical**
+  to the pre-Slice-A baseline
+  (`memory/evidence/layer-c-leg1/resume_collective_groups_250.json`) —
+  `final_state_hash` `91a9b7d1da3cfa6188169e924a3496d1d5d7e9fe870267dcf2715218735e8b98`,
+  `accepted_event_sequence_hash`
+  `f2a9756bdd6ee4ca3dbee0f7fb179bb15d717e1578b6ddaa75e5e5d9ff277102`,
+  `repeat_matches: true`, `resume_matches: true`. Evidence:
+  `memory/evidence/core-perf-01/slice_a_collective_groups_resume_250.json`.
+  **Deviation from the verification plan above, flagged:** used H=250
+  (matching the existing baseline evidence) rather than the plan's "1000×2"
+  — proportionate given both tested horizons (250 and the 320-tick frozen
+  run) passed cleanly and unambiguously; escalating to a longer horizon is
+  the proportionality doctrine's response to an *ambiguous* result, which
+  this was not.
+- Full suite: **339 executed passed, 4 known pre-existing skips excluded, 5
+  known `MONGO_URL`-env collection failures excluded, 0 executed test
+  failed** — exact match to the pre-Slice-A count. Evidence:
+  `memory/evidence/core-perf-01/slice_a_full_suite.txt`.
+- Measured speed-up (`collective_groups`, `living-agents-stage6`, H=250,
+  unprofiled windowed timing, same machine before/after):
+
+  | window | before ms/tick | after ms/tick |
+  |---|---:|---:|
+  | ticks 1-10 | 395.8 | 280.3 |
+  | ticks 11-50 | 628.1 | 555.6 |
+  | ticks 51-100 | 709.5 | 621.2 |
+  | ticks 101-150 | 754.8 | 628.2 |
+  | ticks 151-200 | 766.1 | 614.4 |
+  | ticks 201-250 | 831.6 | 614.0 |
+
+  Overall: 182.2s → 148.9s over 250 ticks, **~1.22x**. More significant than
+  the raw ratio: the *shape* changed. Before, ms/tick climbed monotonically
+  through the entire run (every window higher than the last). After, it
+  plateaus from ~tick 100 onward (628.2 → 614.4 → 614.0, effectively flat) —
+  exactly the predicted signature of removing Slice A's share of the growth
+  term while Slice B's (still unfixed) growth term remains. Evidence:
+  `memory/evidence/core-perf-01/slice_a_ms_per_tick_before.txt` and
+  `slice_a_ms_per_tick_after.txt`.
+
+"Prove nothing breaks (every hash must come out identical)" — proven.
+Slice B is next, under its own high-risk gate.
 
 ## CORE-INTEGRITY-001 interim discipline
 

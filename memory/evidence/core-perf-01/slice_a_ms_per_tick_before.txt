@@ -1,0 +1,6 @@
+ticks 1-10: 3.958s total, 395.8 ms/tick avg over this window, entity_count=29, valid_parent_ids_size=225
+ticks 11-50: 25.123s total, 628.1 ms/tick avg over this window, entity_count=28, valid_parent_ids_size=1061
+ticks 51-100: 35.474s total, 709.5 ms/tick avg over this window, entity_count=36, valid_parent_ids_size=2116
+ticks 101-150: 37.741s total, 754.8 ms/tick avg over this window, entity_count=37, valid_parent_ids_size=3156
+ticks 151-200: 38.306s total, 766.1 ms/tick avg over this window, entity_count=33, valid_parent_ids_size=4203
+ticks 201-250: 41.582s total, 831.6 ms/tick avg over this window, entity_count=40, valid_parent_ids_size=5216

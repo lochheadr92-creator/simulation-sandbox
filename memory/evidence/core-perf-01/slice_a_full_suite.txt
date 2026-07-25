@@ -1,0 +1,68 @@
+........................................................................ [ 21%]
+........................................................................ [ 42%]
+........................................................................ [ 63%]
+........................................................................ [ 84%]
+...................................................                      [100%]
+=================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_concurrency.py __________________
+tests\test_concurrency.py:18: in <module>
+    from core import db as core_db
+core\db.py:4: in <module>
+    MONGO_URL = os.environ["MONGO_URL"]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+<frozen os>:714: in __getitem__
+    ???
+E   KeyError: 'MONGO_URL'
+__________ ERROR collecting tests/test_frame_persistence_batching.py __________
+tests\test_frame_persistence_batching.py:19: in <module>
+    from core.storage.frame_transaction import (
+core\storage\frame_transaction.py:46: in <module>
+    from core.db import client, db
+core\db.py:4: in <module>
+    MONGO_URL = os.environ["MONGO_URL"]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+<frozen os>:714: in __getitem__
+    ???
+E   KeyError: 'MONGO_URL'
+_________________ ERROR collecting tests/test_phase5_fork.py __________________
+tests\test_phase5_fork.py:11: in <module>
+    from core import db as core_db
+core\db.py:4: in <module>
+    MONGO_URL = os.environ["MONGO_URL"]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+<frozen os>:714: in __getitem__
+    ???
+E   KeyError: 'MONGO_URL'
+____________ ERROR collecting tests/test_phase5a4a_transaction.py _____________
+tests\test_phase5a4a_transaction.py:23: in <module>
+    from core.db import db, ensure_indexes
+core\db.py:4: in <module>
+    MONGO_URL = os.environ["MONGO_URL"]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+<frozen os>:714: in __getitem__
+    ???
+E   KeyError: 'MONGO_URL'
+_________ ERROR collecting tests/test_stage6_version_compatibility.py _________
+tests\test_stage6_version_compatibility.py:4: in <module>
+    from core.run_service import (
+core\run_service.py:10: in <module>
+    from core.db import client, db
+core\db.py:4: in <module>
+    MONGO_URL = os.environ["MONGO_URL"]
+                ^^^^^^^^^^^^^^^^^^^^^^^
+<frozen os>:714: in __getitem__
+    ???
+E   KeyError: 'MONGO_URL'
+============================== warnings summary ===============================
+..\..\..\..\..\..\..\Users\RJLoc\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\formparsers.py:12
+  C:\Users\RJLoc\AppData\Local\Programs\Python\Python312\Lib\site-packages\starlette\formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/test_concurrency.py - KeyError: 'MONGO_URL'
+ERROR tests/test_frame_persistence_batching.py - KeyError: 'MONGO_URL'
+ERROR tests/test_phase5_fork.py - KeyError: 'MONGO_URL'
+ERROR tests/test_phase5a4a_transaction.py - KeyError: 'MONGO_URL'
+ERROR tests/test_stage6_version_compatibility.py - KeyError: 'MONGO_URL'
+339 passed, 4 skipped, 1 warning, 5 errors in 78.22s (0:01:18)

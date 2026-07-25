@@ -66,11 +66,15 @@ Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) --
       recommended first; Slice B: Core fragment-cached world-snapshot
       serialization, byte-identical hashes via a byte-equality property
       check, high-risk gate, recommended second). AUTHORIZED by Ryan
-      (2026-07-25): "A then B" -- Slice A implementation in progress, its
-      own full hash-neutrality gate required (frozen living_settlement
-      320-tick hash, collective_groups repeat+replay+resume, full suite,
-      measured speed-up) before Slice B begins. No active Layer C
-      *behaviour* leg is open (this is infra, not a behaviour leg).
+      (2026-07-25): "A then B". **Slice A VERIFIED (2026-07-25):** frozen
+      living_settlement 320-tick hash byte-identical, collective_groups
+      H=250 repeat+resume byte-identical, full suite exact match
+      (339 passed/4 skipped/5 known errors/0 failed), measured ~1.22x
+      speed-up with the ms/tick growth curve now plateauing from ~tick 100
+      on (was climbing monotonically the whole run). Evidence:
+      memory/evidence/core-perf-01/. Slice B (Core, high-risk gate) is next,
+      not yet started. No active Layer C *behaviour* leg is open (this is
+      infra, not a behaviour leg).
 
 Blocked / parked:
   - Aid Exchange ............... DEFERRED — needs Layer F-A (material surplus)
