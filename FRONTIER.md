@@ -66,24 +66,27 @@ Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) --
       recommended first; Slice B: Core fragment-cached world-snapshot
       serialization, byte-identical hashes via a byte-equality property
       check, high-risk gate, recommended second). AUTHORIZED by Ryan
-      (2026-07-25): "A then B". **Slice A VERIFIED (2026-07-25):** frozen
-      living_settlement 320-tick hash byte-identical, collective_groups
-      H=250 repeat+resume byte-identical, full suite exact match
-      (339 passed/4 skipped/5 known errors/0 failed), measured ~1.22x
+      (2026-07-25): "A then B". **Slice A VERIFIED-CLOSED (2026-07-25, Ryan's
+      ruling):** frozen living_settlement 320-tick hash byte-identical,
+      collective_groups H=250 repeat+resume byte-identical, full suite exact
+      match (339 passed/4 skipped/5 known errors/0 failed), measured ~1.22x
       speed-up at H=250 (~1.51x at H=500, gap-filled per the verification
       plan) with the ms/tick growth curve essentially flat from ~tick 100
       onward at both horizons (was climbing monotonically the whole run
-      before). Two-layer defense recorded in the contract doc: resume
+      before). Three-layer defense recorded in the contract doc: resume
       catches cross-tick aliasing (stress-checked -- 88 social-action hits
-      in the post-resume window; the exception-handler fallback-rest path
-      has zero organic hits in either scenario at any tested horizon, an
-      honest coverage gap, not a placement fix); the before/after hash
-      comparison against the pre-change baseline catches deterministic
-      same-tick corruption that repeat/replay/resume is structurally blind
-      to. Evidence: memory/evidence/core-perf-01/. Slice A close-out STOP
-      delivered, awaiting Ryan's ruling. Slice B (Core, high-risk gate) is next,
-      not yet started. No active Layer C *behaviour* leg is open (this is
-      infra, not a behaviour leg).
+      in the post-resume window); the before/after hash comparison against
+      the pre-change baseline catches deterministic same-tick corruption
+      repeat/replay/resume is structurally blind to; a new Tier-A fixture
+      test (backend/tests/test_core_perf01_slice_a.py, 3 tests) closes the
+      exception-handler fallback-rest path's zero-organic-coverage gap
+      permanently -- verified to have teeth (fails under an induced
+      regression in what it covers, restored) and honestly scoped (does not
+      catch the separate :736 cross-tick alias class, which is Layer 1's
+      job, verified empirically). Evidence: memory/evidence/core-perf-01/.
+      Slice B (Core, high-risk gate) is next, authorized, before-numbers
+      first per the verification plan. No active Layer C *behaviour* leg is
+      open (this is infra, not a behaviour leg).
 
 Blocked / parked:
   - Aid Exchange ............... DEFERRED — needs Layer F-A (material surplus)

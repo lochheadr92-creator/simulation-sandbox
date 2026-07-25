@@ -1,14 +1,17 @@
 # CORE-PERF-01 — Per-tick validation cost (O(n²) → O(n))
 
-**Status: Slice A VERIFIED (2026-07-25) — hash-neutral, ~1.22x measured
-speed-up, growth-curve plateau confirmed. Slice B PROPOSED, not started.**
-Authorization: "A then B — do the safe one first, prove nothing breaks
-(every hash must come out identical), then do the big one with full safety
-checks" (Ryan, 2026-07-25). Touch-surface is two independent slices: Slice A
-— Layer C (`living_settlement_domain.py` / `living_agent_cognition.py` /
-`living_agent_social.py` / `living_agent_reasoning.py`, single-boundary-copy
-ownership refactor) — **done, see "Slice A results" below**; Slice B —
-Layer A/Core (`commit_pipeline.py`, fragment-cached world-snapshot
+**Status: Slice A VERIFIED-CLOSED (2026-07-25, Ryan's ruling) — hash-neutral
+at 250 and 500 ticks (~1.22x / ~1.51x measured speed-up), growth-curve
+plateau confirmed at both horizons, resume-window coverage-density checked
+honestly, fallback-rest path closed with a verified-to-have-teeth fixture
+test. Slice B AUTHORIZED, not started.** Authorization: "A then B — do the
+safe one first, prove nothing breaks (every hash must come out identical),
+then do the big one with full safety checks" (Ryan, 2026-07-25). Touch-surface
+is two independent slices: Slice A — Layer C (`living_settlement_domain.py` /
+`living_agent_cognition.py` / `living_agent_social.py` / `living_agent_
+reasoning.py`, single-boundary-copy ownership refactor) — **VERIFIED-CLOSED,
+see "Slice A results" below**; Slice B — Layer A/Core (`commit_pipeline.py`,
+fragment-cached world-snapshot
 serialization, high-risk gate) — next, not yet started. Owner of this
 contract: cloud/doc session. Implementer: the code (terminal) session, this
 branch. Profile-first; hash-neutral acceptance.
@@ -410,14 +413,72 @@ wanted, not silently declared out of scope.
   independently-recorded *external* baseline (not derived from the same
   buggy run) can catch it.
 
-Both layers passed in this gate (frozen hash byte-identical, `collective_
-groups` hashes byte-identical to the pre-Slice-A baseline, resume equality
-holds). Neither layer is redundant with the other — both are mandatory going
+### Layer 3 — the fallback-rest fixture test (closing condition, Ryan's ruling)
+
+`backend/tests/test_core_perf01_slice_a.py` (3 tests, new file). Forces
+`build_physical_action_proposal`'s first call within a single `activate()`
+invocation to raise `ValueError` (via a monkeypatch closure that captured
+the true original function once, at import time, to avoid chaining into
+itself across repeated calls within one test — a bug caught and fixed while
+writing this), driving the exception-handler fallback-rest path
+deterministically instead of relying on the organic occurrence that Layer 1
+and Layer 2's evidence shows never happens at these horizons/seed. Asserts,
+per Ryan's ruling, exactly the three named properties:
+- **Well-formed:** the fallback proposal has `action_type == "rest"`, the
+  expected `plan.status`/`failure_reason` fields, and — the strongest form
+  of this check — is **accepted by the real commit pipeline**
+  (`run_commit_frame`), not just inspected for shape.
+- **Deterministic:** two independent genesis builds, each forced to fail the
+  same way, produce byte-identical fallback proposals.
+- **Free of aliasing into the failed plan:** the `plan` object used to build
+  the failed (first) attempt and the `fallback_plan` object used to build
+  the succeeding (second) attempt are captured directly via the monkeypatch
+  closure and asserted to be different objects whose mutations don't cross —
+  this is exactly `fallback_plan = copy.deepcopy(plan)`'s safety property,
+  tested directly rather than assumed.
+
+**Verified both ways, not just written and trusted:** temporarily reverted
+`fallback_plan = copy.deepcopy(plan)` to `fallback_plan = plan` (zero net
+diff on the file afterward, confirmed via `git diff`) — the aliasing test
+failed as expected (`assert ... is not ...` caught it). Restored, re-ran
+green.
+
+**Honest scope finding, also verified empirically:** these three tests do
+**not** catch a regression in the separate `:736` alias-break
+(`resulting_state = copy.deepcopy(actor_update.get("living_agent") or
+state)`) — temporarily reverted that line too (zero net diff after) and
+re-ran the full fixture file: **all 3 tests still passed.** This is expected,
+not a gap in what was asked: `:736`'s risk is that an aliased `state` object
+could get embedded into canonical entities and corrupt a *later* tick — a
+cross-tick concern, which is Layer 1 (resume)'s job, not a same-tick fixture
+test's. The two layers cover genuinely different failure classes, exactly as
+"The two-layer defense" above describes; this fixture test is a third,
+narrower layer specifically for the `plan`/`fallback_plan` pair Ryan named,
+not a general-purpose aliasing detector for every deepcopy in the chain.
+
+Both layers 1 and 2 passed in this gate (frozen hash byte-identical,
+`collective_groups` hashes byte-identical to the pre-Slice-A baseline,
+resume equality holds), and layer 3 (the fixture test) is green and
+independently verified to have teeth for the property it was asked to
+cover. Neither layer is redundant with the others — all are mandatory going
 forward for any change in this class, including Slice B.
 
 "Prove nothing breaks (every hash must come out identical)" — proven, on
-both layers. Slice B is next, under its own high-risk gate, pending Ryan's
-ruling on this close-out.
+all three layers.
+
+## Slice A — VERIFIED-CLOSED (2026-07-25, Ryan's ruling)
+
+"Ruling on Slice A close-out: accepted, conditional on one item — build the
+Tier-A fixture test for the fallback-rest path... That path is Slice-A-touched
+code with zero organic coverage; the fixture closes it permanently and it's
+the cheapest possible fix. Everything else stands as reported: the 500-tick
+before/after, the flat after-curve, and the recorded two-layer rationale are
+accepted as VERIFIED." Condition satisfied (Layer 3 above, `backend/tests/
+test_core_perf01_slice_a.py`, 3 tests, verified to have teeth both for what
+it covers and honest about what it doesn't). Slice A is closed. Slice B is
+next, under its own high-risk gate, as already authorized — before-numbers
+for B first, debug-assert-mode on for the gate runs, per the verification
+plan.
 
 ## CORE-INTEGRITY-001 interim discipline
 
