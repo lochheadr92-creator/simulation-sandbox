@@ -65,10 +65,12 @@ Active leg: CORE-PERF-01 (memory/CORE-PERF-01-TICK-VALIDATION-COST.md) --
       mandatory alias-break at living_settlement_domain.py:736, lower risk,
       recommended first; Slice B: Core fragment-cached world-snapshot
       serialization, byte-identical hashes via a byte-equality property
-      check, high-risk gate, recommended second). STOP for Ryan's
-      authorization of Stage 2 (order: A then B, or reorder/trim) -- no
-      implementation authorized yet. No active Layer C *behaviour* leg is
-      open (this is infra, not a behaviour leg).
+      check, high-risk gate, recommended second). AUTHORIZED by Ryan
+      (2026-07-25): "A then B" -- Slice A implementation in progress, its
+      own full hash-neutrality gate required (frozen living_settlement
+      320-tick hash, collective_groups repeat+replay+resume, full suite,
+      measured speed-up) before Slice B begins. No active Layer C
+      *behaviour* leg is open (this is infra, not a behaviour leg).
 
 Blocked / parked:
   - Aid Exchange ............... DEFERRED — needs Layer F-A (material surplus)

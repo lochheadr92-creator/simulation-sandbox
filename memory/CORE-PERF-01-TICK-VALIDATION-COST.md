@@ -1,16 +1,16 @@
 # CORE-PERF-01 — Per-tick validation cost (O(n²) → O(n))
 
-**Status: PROPOSED — awaiting Ryan's authorization at this STOP. No code
-touched.** Original root-cause hypothesis (causal-parent-set rebuild)
-FALSIFIED at Stage 1; Stage 1b (re-scoped Discovery, cloud session) corrected
-the attribution and produced a revised two-slice Stage 2 mechanism proposal
-(below). Touch-surface is two independent slices: Slice A — Layer C
-(`living_settlement_domain.py` / `living_agent_cognition.py` / `living_agent_
-social.py`, single-boundary-copy ownership refactor, lower risk); Slice B —
-Layer A/Core (`commit_pipeline.py`, fragment-cached world-snapshot
-serialization, high-risk gate). Owner of this contract: cloud/doc session.
-Implementer when authorized: the code (terminal) session. Profile-first;
-hash-neutral acceptance.
+**Status: AUTHORIZED (2026-07-25, Ryan) — "A then B — do the safe one first,
+prove nothing breaks (every hash must come out identical), then do the big
+one with full safety checks."** Order ratified: Slice A implemented and
+proven first (its own full hash-neutrality gate), then Slice B under its own
+high-risk gate — not reordered, not trimmed. Touch-surface is two independent
+slices: Slice A — Layer C (`living_settlement_domain.py` / `living_agent_
+cognition.py` / `living_agent_social.py`, single-boundary-copy ownership
+refactor, lower risk); Slice B — Layer A/Core (`commit_pipeline.py`,
+fragment-cached world-snapshot serialization, high-risk gate). Owner of this
+contract: cloud/doc session. Implementer: the code (terminal) session, this
+branch. Profile-first; hash-neutral acceptance.
 
 ## Classification (why an infra leg is allowed here)
 
@@ -382,13 +382,14 @@ Queued **after the Upkeep leg closes**. Independent of it. Recommended to land
 need tractable long runs. FRONTIER "queued next" pointer added at the Upkeep
 close-out (2026-07-25, `FRONTIER.md`).
 
-## STOP — authorization question (2026-07-25, awaiting Ryan)
+## Authorization (2026-07-25, Ryan)
 
-Authorize Stage 2 as: **Slice A (Layer C ownership refactor) first, its own
-gate, then Slice B (fragment-cached snapshot hashing) under the high-risk
-gate** — or reorder/trim (A-only is a valid smaller leg; B-only captures the
-bigger win but touches Core first). Implementation belongs to the terminal
-session per the contract header.
+"A then B — do the safe one first, prove nothing breaks (every hash must come
+out identical), then do the big one with full safety checks." Order ratified
+as originally recommended, no reordering, no trimming. Slice A's gate
+(frozen `living_settlement` 320-tick hash, `collective_groups`
+repeat+replay+resume, full suite, measured speed-up) must be fully green,
+committed, and reported before Slice B implementation begins.
 
 **Evidence:** the cloud session's probe scripts (outermost-deepcopy
 attribution, stack sampler + per-tick windowing, canonical_json site
