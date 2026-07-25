@@ -136,6 +136,7 @@ Indexes, not essays. Each stamped "as of `<commit>`".
 | Aid Exchange *(arch. 8C Leg A)* | DEFERRED | needs **Layer F-A material surplus** (not full economy) | a committed run shows reliable transferable surplus | `lega_v2_full.patch`: priority-5 window, keep-one guard, RESPOND_AID 3334 |
 | Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **Layer F-A material surplus** | agents accumulate storable surplus organically | mechanism on branch |
 | CORE-INTEGRITY-001 remediation | DEFERRED | authorized re-baseline (moves frozen hashes) | dedicated core-integrity stage at a STOP | finding + probes on branch |
+| CORE-INTEGRITY-002 remediation *(frame-knowledge aliasing)* | DEFERRED | authorized re-baseline (moves frozen `living_settlement` + `collective_groups` hashes) | dedicated core-integrity stage at a STOP | finding + withheld fix described in `memory/CORE-INTEGRITY-002-frame-knowledge-aliasing.md` |
 | Remaining Layer-E culture (plurality, enforcement, diffusion) *(arch. 8C–8D)* | not started | behaviour + social density (Layers C, D) | C and D organically thicken | — |
 
 ## 9. Coherence test (the project is coherent when a newcomer can answer these from the docs, not from chat history)
