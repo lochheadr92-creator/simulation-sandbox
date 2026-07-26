@@ -224,8 +224,47 @@ participant-storer trips eligibility re-derivation (`:494-503`) first.
 only over `preconditions`, on the correct premise that `core/mutations.py:24`
 is a blind replace and preconditions are Core's only *generic* guard. It did
 not read this family's domain validator, where the compensating re-derivation
-lives. F1 and F4 were rated by the same method and have **not** been re-checked
-against their validators — do that before treating either as real.
+lives. F1 and F4 were rated by the same method. **Both have since been
+re-checked against their validators (2026-07-26) and both survive:**
+
+- **F1 `knowledge` — survives.** `validate_social_action_proposal`
+  (`living_agent_social.py:544-601`) touches knowledge exactly once, in the
+  `lie` branch: `target_knowledge = (updates.get(target_id) or {}).get("knowledge")`
+  followed by a `deceptive_source_claim` leak check. It reads from **`updates`**
+  — the proposal's own declared mutation — never from the live `entities`
+  argument. No re-derivation, no comparison against current state. With the
+  VERIFIED absence of any `knowledge` precondition, F1's defence class is
+  **none**.
+- **F4 `living_agent` — survives.** The only guard is `if "living_agent" in
+  update and entity_id not in allowed_people: return
+  "social_action.uncausal_relationship_update"`. That constrains **which
+  entity** may be written, never **which value**.
+  `validate_living_action_proposal` (`living_agent_actions.py:586-660`) does not
+  compare `living_agent` against live state either. Defence class:
+  **scope-only guard**.
+
+**The distinction that decided it** — and the reason F2 died while F1 and F4 did
+not — is that the collective validator reads `storage.get("contents")` and
+`_person_resources(person)` from the live `entities` argument, whereas the social
+and living-action validators check `actor_before` / `source_before` /
+`destination_before` values carried in the proposal's own `meta`. The second
+shape looks identical in review and defends nothing against a concurrent writer:
+a stale proposal is internally consistent and passes.
+
+That is why "has a CAS / has no CAS" is too coarse to audit against. The
+defence classes actually observed so far are four, and only the first is a
+real guard against a concurrent writer:
+
+| Class | Guards against a concurrent writer? | Seen at |
+|---|---|---|
+| Live re-derivation | **yes** — reads current `entities` | F2 (`group_collective_contracts.py:515-521`) |
+| Self-consistency vs the proposal's own `_before` meta | **no** — a stale proposal passes | living-action transfers (`living_agent_actions.py:635-646`) |
+| Scope-only guard | **no** — constrains *which entity*, not *which value* | F4 (`living_agent_social.py:573-574`) |
+| None | **no** | F1 |
+
+Recording the *class*, not merely the presence, is what would have caught F2
+in the first pass — and it is what makes F1 and F4 survive this re-check
+rather than dissolve the way F2 did.
 
 *No remediation required. The rejected "reverse the priorities" fix and the
 proposed `contents` CAS are both moot.*
@@ -387,10 +426,10 @@ disposition vocabulary per `ARCHITECTURE-SPINE.md` §Capability delivery lifecyc
 
 | # | Evidence | Scenario reachability | Hash consequence of the fix | Disposition | Next action |
 |---|---|---|---|---|---|
-| F1 `knowledge` | **LIKELY** — code-read; no CAS on `knowledge` anywhere is VERIFIED by grep, the same-tick collision is not. **Rated by the same preconditions-only method that got F2 wrong** | reachable only in `living_settlement` / `emergent_groups` / `collective_groups` | **UNKNOWN** — not probed | DEFERRED to core-integrity stage | **re-check for a compensating validator re-derivation before any fix**; then disposition with CORE-INTEGRITY-003 |
+| F1 `knowledge` | **LIKELY** — code-read; no CAS on `knowledge` anywhere VERIFIED by grep; the same-tick collision is not probed. **Validator re-check DONE 2026-07-26 — no compensating re-derivation exists** (defence class: none) | reachable only in `living_settlement` / `emergent_groups` / `collective_groups` | **UNKNOWN** — not probed | DEFERRED to core-integrity stage | probe reachability, then disposition with CORE-INTEGRITY-003 |
 | F2 storage `contents` | **REFUTED — VERIFIED.** Defended by `validate_group_collective_proposal:515-521` (live re-derivation), plus eligibility re-derivation for the participant-storer case | moot | none — no fix required | **REJECTED** (finding withdrawn) | none; retain the pinning test |
 | F3 person `action` | **CONFIRMED — VERIFIED.** Discriminating `rest` test written and reproduces; rating conflict resolved to HIGH | `collective_groups` only — and **never proposed** there in 1,000 organic ticks | **none — hash-neutral** (VERIFIED: zero collective proposals in the frozen scenario) | DEFERRED to core-integrity stage | add the `action` CAS in that stage; gate tier is trivial, not re-baseline |
-| F4 asymmetric CAS | **LIKELY** — same preconditions-only method as F2; not re-checked against validators | `living_settlement` family | UNKNOWN — the "likely moves the hash" note was an inference, not a measurement | DEFERRED | re-check for a compensating validator, then bundle with F1 |
+| F4 asymmetric CAS | **LIKELY** — code-read. **Validator re-check DONE 2026-07-26 — guarded by scope only, never by value** (defence class: scope-only guard) | `living_settlement` family | UNKNOWN — the "likely moves the hash" note was an inference, not a measurement | DEFERRED | probe reachability, then bundle with F1 |
 | F5 trust SSOT | **VERIFIED** — both representations and their divergent consumers read directly from code | `people` family (derived view) vs `living_settlement` family (canonical field) | n/a — design decision, not a CAS | **needs a ruling**, not a fix | Ryan: reconcile or deprecate one |
 | F6 priority tie | **VERIFIED** | all group scenarios | changing a priority is an architectural change (`ARCHITECTURE-SPINE.md`) | record as intentional, or re-assign | Ryan |
 | F7 dead literal | **VERIFIED** | n/a | **none — VERIFIED, not inferred**: `engine_priority` is absent from `core_fields` (`commit_pipeline.py:75-100`) and `canonical_json` sorts keys; frozen 320 hash and `collective_groups` 1,000 hash both byte-identical pre/post | **DONE 2026-07-26** | none |
