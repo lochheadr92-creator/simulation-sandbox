@@ -19,3 +19,6 @@ frontend/node_modules/.cache/
 # Claude Code local worktrees and machine-local settings
 .claude/worktrees/
 .claude/settings.local.json
+
+# Scratch working files — CLAUDE.md requires scratch under ignored paths
+scratchpad/
