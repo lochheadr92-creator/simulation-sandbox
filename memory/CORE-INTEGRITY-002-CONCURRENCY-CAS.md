@@ -88,12 +88,33 @@ probe — is still required and still unwritten.
   evidence about CAS behaviour in either direction** — it never reaches the
   concurrent step.
 
-  **LIKELY (not verified): shared root with registry finding F8.** The same
-  audit measured `group_collective` proposing **zero** times in 1,000 organic
-  ticks of `collective_groups`, with `select_due_ids`
-  (`group_collective_domain.py:24-27`) returning `[]` unless both registries
-  are present. A group that never forms would explain both. Not investigated —
-  recorded so the next session does not re-derive it.
+  **The setup-miss now has a concrete mechanism (2026-07-26).** The F8
+  diagnostic (`backend/tools/_probe_f8_collective_preconditions.py`) measured
+  when each registry first appears in a `collective_groups` run:
+
+  ```
+  association-registry-000  first seen at tick  1
+  group-shared-state-000    first seen at tick 23
+  ```
+
+  `test_concurrent_stage7b_…` steps the run **12 ticks**, then asserts
+  `registry_before.get("groups")` on `group-shared-state-000`. **At tick 12
+  that registry does not exist yet.** The test asserts on a registry roughly 11
+  ticks before it is created.
+
+  **LIKELY the entire explanation for 7b** — a setup horizon that is simply too
+  short — which would make it a *test-isolation defect, not an engine race*.
+  That is one of the two outcomes this stub was opened to decide, so it
+  materially narrows the question. **Not VERIFIED:** the probe measures the
+  harness path, and 7b drives the API path; they must be confirmed to agree on
+  formation timing before this is closed. Also note it says nothing about 7a,
+  which is intermittent and fails elsewhere.
+
+  *Corrects the earlier note in this section:* the hypothesis was "a group that
+  never forms". Groups **do** form — 12 candidates, all 12 recognised. They
+  just form later than the test waits. F8's own blockage is a separate gate
+  (no `shared_storage` fact, gate 3), so the two are related by timing rather
+  than by a shared root cause.
 
 ## Next actions (when opened)
 

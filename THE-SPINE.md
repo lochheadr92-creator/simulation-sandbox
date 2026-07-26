@@ -84,13 +84,17 @@ Two things were built out of order and both stalled:
    half was addressed by Variety Leg 1 — see §3. The rich-action half was not;
    social density is the next Layer C item.)*
 2. **Aid (E) outran the economy (F).** Giving needs a surplus; nobody has one under
-   survival pressure. 7C (group deposit) was recorded as dying the same way —
-   **that diagnosis is falsified for 7C** (2026-07-26, VERIFIED): the collective
-   deposit is not food-scoped (`group_collective_contracts.py:103-110` falls back
-   to wood), wood surplus was present and stored in the measured run, and the
-   domain still proposed **zero** times in 1,000 organic ticks. See §8. 8C Leg A's
-   surplus diagnosis is *not* automatically falsified with it — it has its own
-   17/17 evidence and needs its own check.
+   survival pressure. 7C (group deposit) was recorded as dying the same way.
+   That diagnosis was called *falsified* on 2026-07-26 — the collective deposit
+   is genuinely not food-scoped (`group_collective_contracts.py:103-110` falls
+   back to wood) and the domain still proposed **zero** times in 1,000 organic
+   ticks. **The diagnostic later that day partly reinstated it** (see §8): 7C
+   stops because no group ever gains a `shared_storage` fact, and that evidence
+   requires two agents storing to one storage within 4 ticks — whose main
+   driver, `STORE_SURPLUS`, *is* gated on `food >= 3`. So surplus plausibly
+   blocks 7C one link upstream of the deposit. LIKELY, not VERIFIED. 8C Leg A's
+   surplus diagnosis is separate either way — it has its own 17/17 evidence and
+   needs its own check.
 
 The correction is just to respect the stack: **fill C now** (ordinary life), before
 more E; keep aid parked until **F-A** (material surplus) exists. Same order Maslow
@@ -146,7 +150,7 @@ Indexes, not essays. Each stamped "as of `<commit>`".
 | Item | Delivery | Blocker | Re-entry condition | Preserved |
 |---|---|---|---|---|
 | Aid Exchange *(arch. 8C Leg A)* | DEFERRED | needs **Layer F-A material surplus** (not full economy) | a committed run shows reliable transferable surplus | `lega_v2_full.patch`: priority-5 window, keep-one guard, RESPOND_AID 3334 |
-| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **UNKNOWN — surplus falsified as the cause (2026-07-26)** | *(old: "agents accumulate storable surplus organically" — retired; it would never fire this domain)* Measured `collective_groups` 1,000 ticks, seed `living-agents-stage6`: `accepted 0 / rejected 0` — **never proposed**, while `storage-camp` ended `{food: 0, wood: 12}` and the deposit falls back to wood (`group_collective_contracts.py:103-110`). New re-entry condition needed; first place to look is `select_due_ids` (`group_collective_domain.py:24-27`), which returns `[]` unless both registries are present | mechanism on branch |
+| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **no group ever acquires a `shared_storage` fact** (DIAGNOSED 2026-07-26) | Registries form and all 12 groups are recognised; the domain activates. It stops at gate 3: only `shared_shelter` facts are ever produced, zero `shared_storage`, identically at 120 and 1,000 ticks. `shared_storage` evidence needs **two agents doing `store`/`retrieve`/`access` on the same storage within 4 ticks** (`association_contracts.py:303-316`), and `STORE_SURPLUS` is gated on `food >= 3` (`living_settlement_domain.py:393`). **Re-entry condition: that paired-storage coincidence occurs organically.** *(Supersedes both the retired "accumulate storable surplus" condition and the 2026-07-26 "surplus falsified" note in §4 — the deposit is not food-scoped, but its enabling evidence effectively is, one link upstream. LIKELY, needs one more measurement.)* | mechanism on branch; probe `backend/tools/_probe_f8_collective_preconditions.py` |
 | CORE-INTEGRITY-001 remediation | DEFERRED | authorized re-baseline (moves frozen hashes) | dedicated core-integrity stage at a STOP | finding + probes on branch |
 | CORE-INTEGRITY-003 remediation *(frame-knowledge aliasing)* | DEFERRED | authorized re-baseline (moves frozen `living_settlement` + `collective_groups` hashes) | dedicated core-integrity stage at a STOP | finding + withheld fix described in `memory/CORE-INTEGRITY-003-frame-knowledge-aliasing.md` |
 | Remaining Layer-E culture (plurality, enforcement, diffusion) *(arch. 8C–8D)* | not started | behaviour + social density (Layers C, D) | C and D organically thicken | — |

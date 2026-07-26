@@ -368,20 +368,43 @@ moment eligibility is evaluated). This upgrades F8 from a design question to a
 passes, and the ownership-invariant fixture builds a real deposit proposal from
 the real builder. The code is fine; the *organic preconditions* are never met.
 
-**Two candidate causes, not distinguished.** Both are UNKNOWN:
+**DIAGNOSED 2026-07-26 (ruling B). Blocked at GATE 3 — and it was neither
+candidate cause.** Probe: `backend/tools/_probe_f8_collective_preconditions.py`,
+which walks the eligibility chain in the domain's own order and reports the
+first gate that fails. Identical result at **120 and 1,000 ticks**
+(`collective_groups`, seed `living-agents-stage6`, hash
+`43893bdde4ce4b93c6076650326861b66ff8bd6343a7568653d122917db1638a`):
 
-1. **The registries never materialise** — `select_due_ids`
-   (`group_collective_domain.py:24-27`) returns `[]` unless *both*
-   `association-registry-000` and `group-shared-state-000` exist, so the domain
-   is never even activated. Consistent with `rejected_count: 0`.
-2. **The registries exist but eligibility never coincides** — a group is
-   recognised, but two members are never simultaneously adjacent to the shared
-   storage while carrying a resource.
+| Gate | Result |
+|---|---|
+| 1 · domain activates (both registries exist) | **PASS** — `association-registry-000` tick 1, `group-shared-state-000` tick 23 |
+| 2 · a group is recognised | **PASS** — 12 candidates, **all 12 recognised** |
+| 3 · a recognised group holds a `shared_storage` fact | **FAIL** — `all_fact_categories: {"shared_shelter": 24}`, **zero `shared_storage`, ever** |
+| 4 · ≥2 eligible participants | vacuous |
+| 5 · `derive_coordinated_deposits` | 0 |
 
-`rejected_count: 0` mildly favours (1): if the domain were activating and
-building proposals that then failed validation, rejections would appear. But
-proposals can also fail to be *built* (`derive_coordinated_deposits` returning
-nothing), which produces zero of both. Not decisive.
+*Both original hypotheses were wrong.* The registries **do** materialise and the
+domain **does** activate (refuting cause 1), and groups form and are recognised
+readily (so cause 2's premise never even arises). The failure is a third thing:
+**the specific fact category the deposit requires is never produced.**
+
+**The cause chain, read from code:** a `shared_storage` *group fact* requires
+`shared_storage` *association evidence*, which
+(`association_contracts.py:303-316`) is derived only when **two agents perform
+storage actions (`store` / `retrieve` / `access`) on the SAME storage within 4
+ticks of each other**. Meanwhile the principal driver of store actions,
+`STORE_SURPLUS`, is gated on `resources["food"] >= 3`
+(`living_settlement_domain.py:393`).
+
+**This partially walks back `THE-SPINE.md`'s "surplus falsified for 7C" claim
+(`683ef0fe`), which was mine.** Everything it asserts remains true — the
+*deposit* is genuinely not food-scoped and does fall back to wood. But the
+*enabling evidence* upstream of the deposit depends on paired storage actions
+whose main driver **is** food-gated at `>= 3`. So surplus may well block 7C
+after all, one link earlier in the chain than anyone had looked. **LIKELY, not
+VERIFIED** — confirming it needs one more measurement (how often `store` fires
+at all, and whether two agents ever coincide on one storage inside the 4-tick
+window). Not run; out of scope for this session.
 
 | # | Option | Cost | Effect |
 |---|---|---|---|
@@ -389,24 +412,33 @@ nothing), which produces zero of both. Not decisive.
 | **B** | **Run the one distinguishing diagnostic, then rule** | one read-only probe | Ruling becomes evidence-based; see leverage below |
 | **C** | Retire 7C | destructive | Premature — mechanism is built, tested, and already DEFERRED behind F-A |
 
-**Recommendation: B**, and it is the highest-leverage cheap probe currently
-available anywhere in the audit. One read-only query — do the two registries
-exist in a `collective_groups` run, and does any group reach
-`recognition_state: recognised` with a `shared_storage` fact — plausibly
-resolves **three** open items at once:
+**Ruling B taken 2026-07-26; diagnostic run (above). It paid off on all three
+predicted fronts:**
 
-- **F8 itself**, replacing a guess with a cause.
-- **`THE-SPINE.md` §8's 7C row**, whose blocker currently reads UNKNOWN since
-  the surplus diagnosis was falsified. A real re-entry condition could replace
-  it.
-- **The last failing test in the suite.** `CORE-INTEGRITY-002`'s
-  `test_concurrent_stage7b_...` fails 4/4 at a *setup* assertion,
-  `assert registry_before.get("groups")` — the group never forms. That is the
-  same "groups do not form organically" hypothesis. If cause (1) holds, one
-  diagnosis explains both.
+- **F8 itself** — cause located: gate 3, no `shared_storage` fact.
+- **`THE-SPINE.md` §8's 7C row** — its UNKNOWN blocker is replaced with the
+  measured one.
+- **The last failing test in the suite** — and the mechanism is now concrete
+  rather than a hypothesis. `CORE-INTEGRITY-002`'s `test_concurrent_stage7b_…`
+  fails 4/4 at `assert registry_before.get("groups")`, a setup assertion taken
+  **after 12 setup ticks**. The probe measures `group-shared-state-000` first
+  appearing at **tick 23**. The registry does not exist yet when the test
+  asserts on it. **LIKELY** the whole explanation — the test's setup horizon is
+  simply too short — pending confirmation that the API path matches the
+  harness path. That would make it a test-isolation defect, not an engine race,
+  which is one of the two outcomes CORE-INTEGRITY-002 was opened to decide.
 
-**Still needs a ruling** — B is a recommendation about *how* to rule, not the
-ruling. Not investigated in the audit that raised it.
+**What remains for Ryan: the ruling itself.** The question is no longer "why" —
+it is what 7C should *be*, now that the cause is known and cheap to state:
+
+| | Ruling | Consequence |
+|---|---|---|
+| **A** | 7C is observability-only; accept it never fires organically | Honest now that the cause is documented, but concedes a built, tested capability is dead |
+| **B** | 7C should fire; the 4-tick paired-storage window is too tight and/or `STORE_SURPLUS`'s `food >= 3` gate is too strict | A behaviour change, **re-baseline-class**, and it belongs behind Layer F-A or the social-density leg, not a spot fix |
+| **C** | Retire 7C | Still premature |
+
+Recommendation deferred: this is a capability-scope question, not a technical
+one, and it interacts with the F-A deferral already recorded in `THE-SPINE.md`.
 
 **F9 — Structure `condition` is sound.** Recorded because it was the expected
 risk and is not one. Phase separation (wear = environment/0, repair+tend =
