@@ -7,7 +7,13 @@ from __future__ import annotations
 
 import copy
 
-from core.constants import STRUCTURE_TEND_RESTORE_AMOUNT
+from core.constants import (
+    EFFORT_TRANSFER_ACTOR_ENERGY_COST,
+    EFFORT_TRANSFER_TARGET_ENERGY_GAIN,
+    HELP_TARGET_HEALTH_RESTORE,
+    REST_ENERGY_RESTORE,
+    STRUCTURE_TEND_RESTORE_AMOUNT,
+)
 from core.hashing import canonical_hash
 from domains.living_agent_contracts import (
     ACTION_SCHEMA_VERSION,
@@ -432,7 +438,7 @@ def build_physical_action_proposal(
         effects.append("internal_state_change")
 
     elif action_type == "rest":
-        actor_update["energy"] = min(1000, int(actor.get("energy", 0)) + 80)
+        actor_update["energy"] = min(1000, int(actor.get("energy", 0)) + REST_ENERGY_RESTORE)
         effects.append("internal_state_change")
 
     elif action_type == "use_tool":
@@ -499,10 +505,10 @@ def build_physical_action_proposal(
         if target.get("type") != "person" or not target.get("alive", True):
             raise ValueError("help target must be living person")
         updates[target_id] = {
-            "health": min(1000, int(target.get("health", 1000)) + 50),
-            "energy": min(1000, int(target.get("energy", 0)) + 40),
+            "health": min(1000, int(target.get("health", 1000)) + HELP_TARGET_HEALTH_RESTORE),
+            "energy": min(1000, int(target.get("energy", 0)) + EFFORT_TRANSFER_TARGET_ENERGY_GAIN),
         }
-        actor_update["energy"] = max(0, int(actor.get("energy", 0)) - 20)
+        actor_update["energy"] = max(0, int(actor.get("energy", 0)) - EFFORT_TRANSFER_ACTOR_ENERGY_COST)
         action["participants"] = [target_id]
         effects.extend(["health_change", "social_signal"])
 

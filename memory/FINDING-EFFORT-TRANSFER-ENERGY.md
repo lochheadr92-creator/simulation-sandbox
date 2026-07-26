@@ -1,6 +1,27 @@
 # FINDING — the `+40 / −20` effort-transfer energy pair (`cooperate`, `help`)
 
-**Status: OPEN — needs a ruling, not a fix. Raised 2026-07-26.**
+**Status: RULING A TAKEN 2026-07-26 — ratified as-is, constants named,
+hash-neutral. The gradient question stays OPEN and deferred to the Layer C
+social-density leg.** Raised 2026-07-26.
+
+> **What was done under ruling A.** `+40`, `−20`, `+50`, `+80` promoted to named
+> constants in `core/constants.py` with their evidence recorded as **NONE ON
+> RECORD** — the honest entry, since no probe, contract or measurement ever set
+> them. `EFFORT_TRANSFER_TARGET_ENERGY_GAIN` and
+> `EFFORT_TRANSFER_ACTOR_ENERGY_COST` are **shared** between `cooperate`
+> (`living_agent_social.py`) and `help` (`living_agent_actions.py`): they were
+> duplicated literals of equal value modelling one concept, so a future change
+> now hits both rather than letting them drift silently. `HELP_TARGET_HEALTH_
+> RESTORE` and `REST_ENERGY_RESTORE` stay separate — a different quantity and a
+> different mechanic respectively.
+>
+> **Verified hash-neutral, not assumed:** frozen `living_settlement` 320 hash
+> `897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`
+> byte-identical after the change; full suite unchanged at 411 passed / 1
+> failed / 4 skipped (the one failure is the unrelated stage7b setup assertion).
+>
+> **Not done, deliberately:** nothing about the gradient itself. Options B, C
+> and D below remain live and remain re-baseline-class.
 Moved out of `memory/REGISTRY-COMPONENT-OWNERSHIP.md`, where it was carried as
 finding **F11** and was misclassified twice. Registry cross-reference kept.
 

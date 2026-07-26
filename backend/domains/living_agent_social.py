@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import copy
 
+from core.constants import (
+    EFFORT_TRANSFER_ACTOR_ENERGY_COST,
+    EFFORT_TRANSFER_TARGET_ENERGY_GAIN,
+)
 from core.hashing import canonical_hash
 from domains.living_agent_actions import living_action_metadata, social_signal_spec
 from domains.living_agent_cognition import merge_knowledge_claim
@@ -433,8 +437,8 @@ def build_social_action_proposal(
             {"entity_id": target_id, "field": "carried_resources", "op": "eq", "value": target_resources},
         ])
     elif target and action_type == "cooperate":
-        updates[target_id]["energy"] = min(1000, int(target.get("energy", 0)) + 40)
-        updates[actor_id]["energy"] = max(0, int(actor.get("energy", 0)) - 20)
+        updates[target_id]["energy"] = min(1000, int(target.get("energy", 0)) + EFFORT_TRANSFER_TARGET_ENERGY_GAIN)
+        updates[actor_id]["energy"] = max(0, int(actor.get("energy", 0)) - EFFORT_TRANSFER_ACTOR_ENERGY_COST)
 
     claim = copy.deepcopy((message or {}).get("claim"))
     if target and action_type in ("warn", "share_information", "lie") and claim:

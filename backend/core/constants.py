@@ -94,6 +94,32 @@ FOOD_INTERACTION_PROTOCOL_VERSION = "food-interaction-v1"
 FOOD_INTERACTION_EXPIRY_TICKS = 3
 FOOD_INTERACTION_RANGE = 1        # same adjacency range as 5B1 GIVE_FOOD
 
+# --- Effort transfer and self-restore energy (memory/FINDING-EFFORT-TRANSFER-ENERGY.md) ---
+# EVIDENCE: NONE ON RECORD. These four values were inline literals with no
+# rationale anywhere; the 2026-07-26 audit found no probe, contract or
+# measurement that set any of them. Promoted to named constants and RATIFIED
+# AS-IS (ruling A, 2026-07-26) -- naming them is hash-neutral, changing them is
+# not. Do not read the names as endorsement of the numbers.
+#
+# Measured consequence of the pair, recorded so it is not rediscovered: the
+# actor is charged unconditionally while the target's gain is capped by
+# headroom, so a full target means the actor pays and the target receives
+# nothing. That is the COMMON case -- 199 of 269 target writes clamped across
+# the two frozen baselines, making cooperate net energy-NEGATIVE (-420 over 37
+# events in living_settlement 320; -1650 over 232 in collective_groups 1000).
+# Whether that gradient is intended is an OPEN RULING; revisit inside the Layer
+# C social-density leg, where cooperate's economics actually matter.
+#
+# Shared deliberately between `cooperate` (living_agent_social.py) and `help`
+# (living_agent_actions.py): they were duplicated literals of equal value
+# modelling one concept -- an actor spending energy to benefit another. Sharing
+# makes a future change hit both, which is the intent; split them here if they
+# are ever meant to diverge, rather than letting the literals drift silently.
+EFFORT_TRANSFER_TARGET_ENERGY_GAIN = 40  # energy the target gains, capped by min(1000, ...)
+EFFORT_TRANSFER_ACTOR_ENERGY_COST = 20   # energy the actor spends, floored by max(0, ...) -- never observed to clamp (0 of 269)
+HELP_TARGET_HEALTH_RESTORE = 50          # `help` only; health is a separate quantity from the energy pair above
+REST_ENERGY_RESTORE = 80                 # `rest` self-restore: minted, not transferred -- energy is a non-conserved quantity by design
+
 
 def time_phase(tick: int) -> str:
     t = tick % DAY_LENGTH_TICKS
