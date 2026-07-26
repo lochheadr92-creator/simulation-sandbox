@@ -1,3 +1,61 @@
+# CORE-INTEGRITY-002 — CLOSED as test hygiene (2026-07-26)
+
+> ## CLOSE-OUT — Ryan's ruling, 2026-07-26
+>
+> **002 closes as test hygiene, not as an engine investigation.** Phases 4–11 of
+> the prior plan (deterministic fixture, material-equivalence test, canary
+> probe) are **cancelled and must not be restarted.**
+>
+> ### Two dispositions, not one
+>
+> **7b — VERIFIED, resolved.** `test_concurrent_stage7b_…` stepped a fixed 12
+> ticks and then asserted on `group-shared-state-000`, a registry that does not
+> exist that early. It failed in **setup**, before reaching any concurrent step,
+> and therefore never produced evidence about CAS behaviour in either
+> direction. Replaced with a single-attempt wait-for-precondition that fires on
+> the first valid tick. Evidence: the 30-seed formation distribution,
+> `memory/evidence/core-integrity-002/FORMATION-DISTRIBUTION-2026-07-26.md`
+> (formation ticks 11–187, bimodal, upper tail unconverged at n=30).
+>
+> **7a — DEFERRED. Not answered.** Whether the association-revision signature
+> (`assert 6 == (6 + 1)`) is an engine lost update or a test-side race remains
+> **UNKNOWN**. What *is* settled is that the original assertion was invalid:
+> serial steps with no concurrency legitimately leave the revision unchanged
+> when the proposal is rejected with `causality.invalid_parent` (2/12 and 5/16
+> steps measured, up to three consecutively). **No engine race was verified.**
+>
+> ### Re-entry condition — and why this deferral is safe
+>
+> Reopen when the conservation assertion fires:
+>
+> ```
+> association revision delta  ==  accepted association-proposal count
+> ```
+>
+> **This is the reason 7a can be deferred without a probe watching it.** That
+> assertion is now instrumented in `test_concurrency.py` and its predicate is
+> proven able to fail on all four violation shapes (accepted-with-no-advance,
+> advance-with-no-accept, double-accept, and two-accepted-one-applied). A real
+> occurrence therefore **surfaces itself** on any suite run. Nothing needs to be
+> standing guard, which is precisely why no canary probe is required.
+>
+> Also reopening: an operation with neither an accepted nor a rejected
+> disposition; wrong head/tick advancement; wrong commit-frame count; duplicate
+> candidate ids; or evidence that omitted prior registry history materially
+> changes proposal or contention semantics.
+>
+> ### Authority record — retained
+>
+> **When a new task conflicts with a prior STOP boundary, stop unless the new
+> instruction explicitly names and supersedes that boundary. General or implied
+> permission is insufficient. If the prior boundary is not named, it remains in
+> force.** The authorisation-breach record below is kept in full: the 7a repair
+> exceeded its original Case A authority, was retained because it implements a
+> stronger conservation invariant whose predicate was independently proven
+> capable of failing, and sets **no precedent** for further scope breach.
+
+---
+
 # CORE-INTEGRITY-002 — Suspected CAS/head-revision lost update under concurrent steps (STUB)
 
 > ## RECLASSIFIED 2026-07-26 — TEST DEFECT, not a verified race (Case A)

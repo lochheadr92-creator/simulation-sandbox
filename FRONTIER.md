@@ -9,7 +9,22 @@ stays lean by design — see `AGENT_WORKFLOW.md`'s documentation-load rule.)
 Layer:          C — Individual Agency (behaviour) + A — Kernel (infra, one-off)
 Capability:     Behaviour Enrichment  (variety → social density → individuality → memory)
 
-Active leg:     NONE. Both most-recent legs closed 2026-07-25.
+Active leg:     Layer C — SOCIAL DENSITY.  Status: NOT STARTED.
+                Activated 2026-07-26 on the CORE-INTEGRITY-002 close-out.
+                Needs its own probe + contract phase (Invariant 12 v2) before
+                ANY implementation. This is a new leg-loop start.
+
+                Carried forward, open and unstarted:
+                  - F8 storage trace: WHY agents never store. Measured: one
+                    storage action in 1,000 organic ticks of collective_groups
+                    (a `retrieve`), zero `store` actions ever. This is the
+                    first thing social density has to move.
+                  - OQ-1: 64 same-tick same-person `energy` collisions in
+                    collective_groups, 0 in living_settlement. Cause UNKNOWN;
+                    the F11 attribution was withdrawn. See
+                    memory/REGISTRY-COMPONENT-OWNERSHIP.md.
+                  - Rulings queued for Ryan: the effort-transfer gradient
+                    (memory/FINDING-EFFORT-TRANSFER-ENERGY.md) and F8 A/B/C.
 
 Closed leg:     Variety Leg 1 — Upkeep drive
 Status:         VERIFIED — CLOSED (2026-07-25). Full detail, gate results,
