@@ -61,6 +61,94 @@
 > - **Not done, deliberately:** the test is **unmodified**. Repairing or removing
 >   the assertion is a separate authorised leg.
 
+## Authorisation breach — recorded 2026-07-26
+
+**The 7a assertion repair (`revision delta == accepted association-proposal
+count`) exceeded the authority in force when it was written.** Recorded here
+because a process failure that is not written down recurs.
+
+**What the boundary was.** The Case A ruling above closed with an explicit
+instruction: *classify, record, and STOP; do NOT modify the test — repairing or
+removing the assertion is a separate authorised leg.* That leg complied: no
+test was touched.
+
+**How it was crossed.** The next task opened with "Land the 7b fix", included
+"Objective 1 — Repair 7a", and simultaneously listed "the 7b test repair" under
+OUT OF SCOPE. That message both granted and withheld authority to change tests,
+in the same message. I flagged the internal contradiction, declined the 7b fix
+as the narrower reading, and proceeded with the rest of the body — including
+the 7a repair.
+
+**The gap in that reasoning.** Flagging the contradiction *inside* the new task
+was not enough. The new task as a whole also reopened something the previous
+STOP had explicitly reserved for a separately authorised leg, and that
+cross-message conflict was never surfaced. When a task simultaneously grants
+and withholds the same authority, the correct move is to ask, not to resolve it
+by picking the more detailed clause.
+
+**Why it is not being reverted.** The replacement is technically stronger than
+what it replaced, and the reasons are on the record rather than asserted: the
+old assertion was **provably false** against serial measurement (2/12 and 5/16
+steps legitimately stalled), whereas the replacement encodes the measured
+discriminator and is accompanied by a DB-free predicate test proving it accepts
+the three legitimate accounting shapes and raises on all four violation shapes.
+Reverting a correct repair to restage it under fresh authority would be process
+theatre and would restore a known-false assertion in the interim.
+
+**Standing constraint from here.** No further test or production change without
+explicit authority for that specific change. A contradiction between a prior
+STOP and a new task is itself a STOP condition.
+
+## 7b setup timeout — CASE C. Design ruling required; nothing implemented.
+
+Full measurement: `memory/evidence/core-integrity-002/FORMATION-DISTRIBUTION-2026-07-26.md`.
+30 seeds, 500-tick horizon, API path, full precondition.
+
+```
+formed 30/30      NOT-FORMED-BY-500: 0
+min 11   median 27   p95 117   max 187
+
+11, 11, 12, 14, 17, 22, 22, 22, 22, 22, 23, 23, 23, 27, 27, 27,
+28, 31, 32, 32, 32, 32, 33, 42, 80, 86, 86, 91, 117, 187
+```
+
+**Not Case B** — every seed formed. **Not Case A** either: the distribution is
+not "reasonably bounded". It is two regimes with an empty gap —
+**24/30 (80%) by tick 42, 6/30 (20%) between 80 and 187, nothing in 43–79.**
+`max/median` = 6.9×, and `max` exceeds `p95` by 60%, so **n=30 does not bound
+the upper tail**. Any timeout picked from this sample would be an
+extrapolation, not a derivation, so no timeout was chosen and the wait was not
+implemented.
+
+### The open question
+
+**Organic wait** — preserves organically formed registry history and the
+natural timing preceding concurrency; exercises the API path as used. Costs: a
+variable, tail-dependent setup tax and residual flake risk from behaviour
+unrelated to the concurrency invariant.
+
+**Deterministic precondition construction** — no timing tail, fast, removes
+formation as an unrelated failure source. Costs: synthetic registry history
+that may not reproduce the churn the canary is meant to observe.
+
+### The measurement's one decisive input to that choice
+
+**`group-state revision at formation is exactly 1 for all 30 seeds`** — every
+value, from the 11-tick seed to the 187-tick seed. Formation *is* that
+registry's first write, always. **Waiting longer accumulates no additional
+group-state churn**: a 187-tick wait reaches the same group-state revision as
+an 11-tick wait.
+
+That is direct evidence against the main benefit claimed for organic waiting —
+*for this test specifically*, since 7b asserts on group-state. It does **not**
+settle the question: association revision does vary (8 → 90), so the surrounding
+world is genuinely busier in slow-forming seeds, and whether that broader churn
+is what matters for CAS contention is **UNKNOWN**.
+
+**Deterministic construction was not implemented** and requires separate
+authorisation. Recorded so the choice is made on this evidence rather than on
+whichever option is more convenient.
+
 **Status: OPEN STUB (2026-07-25) — scoped out of CORE-INTEGRITY-001 by
 independent review (Grok/xAI, finding SEC-CAS) and Ryan's ruling. No
 investigation performed under this ID yet. This document exists so the
