@@ -99,6 +99,67 @@ theatre and would restore a known-false assertion in the interim.
 explicit authority for that specific change. A contradiction between a prior
 STOP and a new task is itself a STOP condition.
 
+## Session handoff — 2026-07-26. Deterministic fixture: three findings, then context exhausted.
+
+**Nothing implemented. `backend/tests/test_concurrency.py` remains uncommitted
+and unchanged from the previous session** (7a conservation repair, DB-free
+predicate + coverage, and a now-superseded organic wait). Three findings that
+the next session should not have to re-derive:
+
+### 1. Contract-level viability is ALREADY PROVEN in-memory
+
+`test_stage7c_group_collective.py::_recognised_with_shared_storage()` (line 112)
+builds recognised groups and a `shared_storage` fact through the **real**
+builders, and at lines 134-137 already asserts exactly the Phase 3 gate:
+
+```python
+supports = derive_group_support_evidence(entities, 4)
+assert any(s.get("category") == "shared_storage" for s in supports)
+gs = build_group_state_proposal(entities, 4)
+assert gs is not None
+```
+
+So the non-vacuity gate is satisfiable in memory today. The unsolved part is
+**persistence into the MongoDB API path**, not the construction.
+
+### 2. `SUPPORT_FRESHNESS_TICKS = 4` is a hard fixture constraint
+
+`group_state_contracts.py:33`, enforced at `:210`:
+`tick - evidence.tick > 4` → the evidence is skipped. Supports also require
+exactly 2 `participant_ids` that are a subset of group members, an allowed
+category (`shared_shelter` / `shared_storage`), and a permitted `target_id`.
+
+**Consequence:** the constructed evidence must sit within 4 ticks of the tick
+the concurrent step executes at. A fixture built at tick 4 and then stepped to
+tick 10 goes vacuous again — silently, and in exactly the way that passes the
+accounting equation trivially.
+
+### 3. The persistence blocker — the real open question
+
+`step_run` guards commits with
+`frame_transaction.py:630`: `run["last_state_hash"] != frame.expected_state_hash`.
+But `expected_state_hash` is **read from the run document itself**
+(`run_service.py:357`), so this is a **CAS on the run doc, not a verification
+that entity content matches the hash.**
+
+Therefore inserting constructed entities directly into `db.entities`
+**would pass the CAS** — while leaving the run's accepted-event chain unable to
+reproduce its own entity state. Phase 6 requires replay/repeat/resume equality,
+so a fixture built that way risks either failing those checks or, worse,
+passing them because the test never replays that particular run.
+
+**This is not yet a falsifier.** It has not been executed, and there may be a
+legitimate route: rebuild the run doc's `last_state_hash` / `next_order_index`
+consistently with the inserted entities, or drive the state in through a
+genuine accepted frame (`commit_frame_atomically`) rather than a raw insert.
+The second option is the one to try first — it uses the production commit path
+and keeps the event chain authoritative.
+
+**Recommended next step:** attempt the fixture via a real committed frame, and
+make the Phase 3 serial control the first thing that runs. If a serial
+`step_run` on the fixture yields `accepted = 0, revision delta = 0`, stop —
+that is the vacuity signal, and it is the whole reason the gate exists.
+
 ## Phase 3 GATE — STOP. Prior association history IS materially consumed.
 
 **Recorded 2026-07-26 while mapping 7b's material precondition ahead of
