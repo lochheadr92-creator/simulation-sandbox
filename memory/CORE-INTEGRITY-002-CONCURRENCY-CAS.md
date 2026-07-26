@@ -64,13 +64,36 @@ probe — is still required and still unwritten.
   redirect; script did not survive the session).
 - Isolated re-runs of the intermittent tests pass (e.g. 4/4 on
   2026-07-23), consistent with either explanation.
-- **The two named tests are no longer intermittent-failing for the original
-  reason.** As of 2026-07-26 they failed deterministically, along with 14
-  others, purely because `uq_run_order_index` could not build over the fossil
-  data. That is a *third* explanation, distinct from both the seed-dependent
-  setup-miss and a genuine engine race — and it masked whichever of those two
-  is real. Re-measure the intermittency after the drop before drawing on any
-  pre-2026-07-26 flake observation.
+- **The two named tests were masked by a third cause, now removed.** Before
+  2026-07-26 they failed deterministically, along with 14 others, purely
+  because `uq_run_order_index` could not build over the fossil data — an
+  explanation distinct from both the seed-dependent setup-miss and a genuine
+  engine race. Any pre-2026-07-26 flake observation is unreliable.
+
+- **Re-measured 2026-07-26, immediately after the fossil drop** (index now
+  builds; suite went 16 failures → 2). Three isolated runs of
+  `tests/test_concurrency.py`:
+
+  | Test | Failures | Character |
+  |---|---|---|
+  | `..._stage7b_steps_do_not_duplicate_shared_state_or_head` | **3 / 3** | deterministic |
+  | `..._stage7a_steps_do_not_duplicate_groups_or_head` | 1 / 3 | intermittent |
+
+  The stub's premise that both fail *intermittently* is therefore falsified for
+  7b. More importantly, **7b fails at `test_concurrency.py:174`,
+  `assert registry_before.get("groups")` — a SETUP assertion that runs before
+  any concurrency is exercised at all.** The group simply never formed in its
+  12 setup ticks. That is the seed-dependent setup-miss branch of the original
+  hypothesis, not the race branch, and it means 7b currently provides **no
+  evidence about CAS behaviour in either direction** — it never reaches the
+  concurrent step.
+
+  **LIKELY (not verified): shared root with registry finding F8.** The same
+  audit measured `group_collective` proposing **zero** times in 1,000 organic
+  ticks of `collective_groups`, with `select_due_ids`
+  (`group_collective_domain.py:24-27`) returning `[]` unless both registries
+  are present. A group that never forms would explain both. Not investigated —
+  recorded so the next session does not re-derive it.
 
 ## Next actions (when opened)
 
