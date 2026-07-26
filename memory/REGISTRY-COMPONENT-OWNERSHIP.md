@@ -173,7 +173,14 @@ not re-baseline-class.** Frozen `living_settlement` 320 hash
 `commit_pipeline.py:485`; benign), `condition` 221, `living_agent` 132,
 `energy` 64, `quantity` 12. Every non-`last_event_id` collision is
 **intra-family** (`living_settlement`). No cross-owner collision fired in
-1,000 ticks. The 64 `energy` collisions are the F11 cross-entity writer.
+1,000 ticks. **Correction (2026-07-26):** an earlier revision of this section
+attributed the 64 `energy` collisions to the F11 cross-entity writer. That was
+an inference, never measured, and the follow-up census actively weakens it —
+`living_settlement` 320 accepts **37 `cooperate` actions and produces 0 energy
+collisions**. A `cooperate` writes actor and target energy inside **one**
+proposal, so it yields one event touching two entities, not two events touching
+one — which is not the collision shape at all. The 64 collisions are real and
+`collective_groups`-only; **their cause is UNKNOWN and unattributed.**
 
 *Note on engine identity: in the organic run the settlement domain re-stamps
 `proposer_engine_id` to `living_settlement`, while the builders set
@@ -399,9 +406,33 @@ target**. Table 1's `energy` row listed `people_domain`,
 `living_agent_social`, and it did not record that the write is cross-entity.
 Same domain family, so this is not an ownership violation; it is an incomplete
 row, and the LOW rating it carried assumed one-per-scenario **self**-writes.
-The census measured **64** same-tick same-person `energy` collisions in 1,000
-ticks (all intra-family). Re-rated MEDIUM. The general lesson is recorded in
-the header note: writer lists in this pass are lower bounds, not inventories.
+Re-rated MEDIUM. The general lesson is recorded in the header note: writer
+lists in this pass are lower bounds, not inventories.
+
+**Scenario identified (2026-07-26) — and the fix is RE-BASELINE-CLASS.** The
+write lives in the `cooperate` branch only (`living_agent_social.py:435-437`)
+and it is **non-conserving**: `+40` to the target, `−20` from the actor, so
+every `cooperate` mints 20 energy the engine invented. Measured on the frozen
+`living_settlement` 320-tick baseline, at the confirming hash
+`897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`:
+
+```
+cooperate actions accepted : 37
+events writing energy      : 1529
+same-tick energy collisions: 0
+```
+
+So the **frozen baseline already encodes 37 × (+20) = +740 units of invented
+energy**. Correcting the non-conservation changes committed state and moves the
+frozen hash: F11's fix is **re-baseline-class, not hash-neutral**, and needs an
+authorised re-baseline STOP — unlike F3, which is hash-neutral. Not fixed here;
+F11 writes person entities and falls under the CORE-INTEGRITY-001 containment
+discipline.
+
+*Separate from the collision count:* non-conservation fires on **every**
+`cooperate`, collision or not. The 64 collisions measured in `collective_groups`
+are a distinct, still-unattributed phenomenon — see the correction under Probe
+results.
 
 ---
 
@@ -436,7 +467,7 @@ disposition vocabulary per `ARCHITECTURE-SPINE.md` §Capability delivery lifecyc
 | F8 dead end | **VERIFIED, and worse than recorded** — zero proposals in 1,000 organic ticks | `collective_groups` | none | **needs a ruling** — is 7C organically inert by design, or broken? | Ryan; probe *why* nothing is proposed if it matters |
 | F9 structure sound | **VERIFIED** | all | none | no action — recorded as a counterexample | — |
 | F10 no ownership tests | **VERIFIED** | all | tests only — hash-neutral | **DONE 2026-07-26** | none; extend coverage as new domains land |
-| F11 `energy` cross-entity writer | **VERIFIED** — `living_agent_social.py:436-437`; 64 same-tick collisions measured | `living_settlement` family | n/a — registry correction, no code change | Table 1 row corrected, re-rated MEDIUM | Ryan: confirm the MEDIUM re-rating |
+| F11 `energy` cross-entity writer | **VERIFIED** — `living_agent_social.py:435-437`, `cooperate` branch only, non-conserving (+40 target / −20 actor) | **frozen `living_settlement` 320: 37 `cooperate` accepted** (VERIFIED at hash `897f3f7f…3c5ab`); `collective_groups` also affected | **RE-BASELINE-CLASS** — the frozen baseline already encodes +740 units of invented energy; correcting conservation moves the hash | DEFERRED to core-integrity stage (writes person entities) | Ryan: authorise a re-baseline before any fix; confirm the MEDIUM re-rating |
 
 **The probes did double duty, and running them first was correct — it killed a
 HIGH finding and downgraded a gate.** Adding a CAS changes which proposals Core
