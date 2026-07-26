@@ -138,6 +138,61 @@ probe — is still required and still unwritten.
   at tick 12. F8's own blockage is a different gate again (no `shared_storage`
   fact), so these are three distinct issues, not one shared root.
 
+## PROPOSED fix for 7b — NOT APPLIED. Do not land without reading the canary argument.
+
+**API-path confirmation (2026-07-26).** The tick-23 measurement was taken on the
+harness path; 7b drives the API path. Measured there directly
+(`create_run` / `step_run`, `collective_groups`, one tick at a time), across
+three runs:
+
+```
+association-registry-000  exists at tick 1     (all runs)
+group-shared-state-000    has groups at tick 14, 14, and NOT WITHIN 30
+state at tick 12          registry_exists: False, groups_truthy: False
+```
+
+Confirmed: 7b's assertion cannot pass at tick 12 on the API path either. Also
+newly visible — **formation timing is seed-variable** (14, 14, >30). That is
+the "seed-dependent setup-miss" this stub originally hypothesised, now measured.
+
+### The proposal
+
+1. Replace the fixed `await step_run(run["id"], 12)` with a **bounded
+   wait-for-precondition**: step one tick at a time until
+   `group-shared-state-000` carries a non-empty `groups` map, cap ~40 ticks.
+2. On hitting the cap, **`pytest.fail`, never skip** — a real regression in
+   group formation must still fail loudly rather than silently pass.
+3. Fire the concurrent steps **immediately** once the precondition is met.
+4. **Leave every post-concurrency assertion byte-identical.** The fix touches
+   setup only.
+5. **Do not touch 7a.** Its setup passes; its failure *is* the canary firing.
+
+### Why this preserves the canary signal
+
+The stated risk is that making 7b wait longer parks it past the window where
+registry churn makes the race observable. That risk is real, and it is exactly
+why the fix must **not** be "step more ticks".
+
+- **A fixed bump is the wrong shape, and the data shows it.** Formation landed
+  at tick 14 twice and later than 30 once. Any constant is either too small
+  (flaky again) or large enough to park the test deep in quiescence — which is
+  the masking failure mode.
+- **Waiting for the *precondition* fires the concurrent steps at the earliest
+  tick the registry is live**, i.e. when it is most actively churning, not
+  least. That preserves the contention window and arguably sharpens it.
+- **7b currently supplies ZERO canary coverage.** It dies in setup, before
+  `asyncio.gather(attempt(), attempt())` is ever reached, so its concurrency
+  assertions have never once executed. The fix turns a dark signal on; it
+  cannot mask a signal that is not currently being emitted.
+- **The canary assertions themselves are untouched** — `head_revision ==
+  before + 1`, exactly one commit frame, no duplicate candidate ids, and
+  `registry["revision"] == before + 1`. That last one is the same signature 7a
+  fails on, so 7b regains an independent second reading of it on a different
+  registry (`group-shared-state-000` rather than `association-registry-000`).
+
+**Still not landed.** Wants a reviewer who agrees the precondition-wait does not
+alter what is being tested.
+
 ## Next actions (when opened)
 
 1. Re-derive the canary probe: instrument or observe head-revision CAS
