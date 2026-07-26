@@ -388,23 +388,52 @@ domain **does** activate (refuting cause 1), and groups form and are recognised
 readily (so cause 2's premise never even arises). The failure is a third thing:
 **the specific fact category the deposit requires is never produced.**
 
-**The cause chain, read from code:** a `shared_storage` *group fact* requires
-`shared_storage` *association evidence*, which
-(`association_contracts.py:303-316`) is derived only when **two agents perform
-storage actions (`store` / `retrieve` / `access`) on the SAME storage within 4
-ticks of each other**. Meanwhile the principal driver of store actions,
-`STORE_SURPLUS`, is gated on `resources["food"] >= 3`
-(`living_settlement_domain.py:393`).
+### Gate-3 cause — SETTLED 2026-07-26, and simpler than the first attempt
 
-**This partially walks back `THE-SPINE.md`'s "surplus falsified for 7C" claim
-(`683ef0fe`), which was mine.** Everything it asserts remains true — the
-*deposit* is genuinely not food-scoped and does fall back to wood. But the
-*enabling evidence* upstream of the deposit depends on paired storage actions
-whose main driver **is** food-gated at `>= 3`. So surplus may well block 7C
-after all, one link earlier in the chain than anyone had looked. **LIKELY, not
-VERIFIED** — confirming it needs one more measurement (how often `store` fires
-at all, and whether two agents ever coincide on one storage inside the 4-tick
-window). Not run; out of scope for this session.
+Probe: `backend/tools/_probe_f8_storage_pairing.py`, which replays the
+accepted-event stream and evaluates the real predicate from
+`association_contracts.py:303-316` every tick. `collective_groups`, 1,000
+ticks, hash `43893bdde4ce4b93c6076650326861b66ff8bd6343a7568653d122917db1638a`:
+
+```
+VERDICT                 : C_ONLY_ONE_DISTINCT_STORER
+storage_action_count    : 1        <- in the ENTIRE 1,000-tick run
+distinct_storer_count   : 1
+closest_cross_agent_gap : null     <- no two agents ever touched one storage
+```
+
+The single action is a **`retrieve`** of 1 food by `person-006` at tick 7.
+**Zero `store` actions occur, ever.**
+
+| Candidate | Verdict |
+|---|---|
+| (a) rule counts food stores only, so wood never qualified | **REFUTED** — code-read: `association_contracts.py:303-316` tests `action["type"] in {"store","retrieve","access"}` and never inspects resource kind. Wood would qualify identically |
+| (b) resource-agnostic, but no two stores ever fell inside the 4-tick window | **REFUTED** — you cannot pair two storage actions when the run contains one |
+| (c) only one distinct agent ever performed a storage action | **CONFIRMED, VERIFIED** |
+
+**The `{food: 0, wood: 12}` final state was genesis seeding, not deposits.**
+Genesis `storage-camp` contents are `{"food": 1, "wood": 12}`. Wood went
+**12 → 12, untouched**; food went 1 → 0 via that one `retrieve`. Nothing was
+ever deposited. Reading the wood as evidence that "stores demonstrably
+happened" is the trap here, and it caught both of us.
+
+**Correcting the previous attribution, which was mine and was wrong.** The
+earlier text blamed `STORE_SURPLUS`'s `food >= 3` gate
+(`living_settlement_domain.py:393`) for stores failing to *pair up*. That
+framing is void: stores do not fail to pair, they do not happen. The 4-tick
+pairing window is **not** the binding constraint and never gets the chance to
+be. The `food >= 3` gate survives only as one unverified candidate answer to
+the *new* and different question below.
+
+**`THE-SPINE.md`'s "surplus falsified for 7C" claim (`683ef0fe`) is
+reinstated, not walked back.** The deposit is not food-scoped — true, and
+irrelevant, because the chain dies four steps earlier. Surplus is not
+demonstrated as the blocker either; what is demonstrated is that the
+storage-interaction layer is organically inert in this scenario.
+
+**New open question, deliberately not investigated:** *why* do agents never
+perform storage actions? Candidates include the `food >= 3` gate, `STORE_SURPLUS`
+never winning action scoring, or no nudge ever selecting it. Unverified.
 
 | # | Option | Cost | Effect |
 |---|---|---|---|

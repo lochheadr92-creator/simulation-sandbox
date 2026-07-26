@@ -84,17 +84,16 @@ Two things were built out of order and both stalled:
    half was addressed by Variety Leg 1 — see §3. The rich-action half was not;
    social density is the next Layer C item.)*
 2. **Aid (E) outran the economy (F).** Giving needs a surplus; nobody has one under
-   survival pressure. 7C (group deposit) was recorded as dying the same way.
-   That diagnosis was called *falsified* on 2026-07-26 — the collective deposit
-   is genuinely not food-scoped (`group_collective_contracts.py:103-110` falls
-   back to wood) and the domain still proposed **zero** times in 1,000 organic
-   ticks. **The diagnostic later that day partly reinstated it** (see §8): 7C
-   stops because no group ever gains a `shared_storage` fact, and that evidence
-   requires two agents storing to one storage within 4 ticks — whose main
-   driver, `STORE_SURPLUS`, *is* gated on `food >= 3`. So surplus plausibly
-   blocks 7C one link upstream of the deposit. LIKELY, not VERIFIED. 8C Leg A's
-   surplus diagnosis is separate either way — it has its own 17/17 evidence and
-   needs its own check.
+   survival pressure. 7C (group deposit) was recorded as dying the same way, and
+   **for 7C that diagnosis is falsified** (2026-07-26, VERIFIED — see §8). Not
+   because surplus exists, but because the chain dies four steps earlier: agents
+   perform **one** storage action in 1,000 ticks and **zero** `store` actions,
+   so no `shared_storage` fact is ever derived and the deposit is never even
+   considered. Surplus is neither confirmed nor refuted as a blocker; it never
+   gets to be the question. *(An intermediate note that day blamed
+   `STORE_SURPLUS`'s `food >= 3` gate for stores failing to pair — void: stores
+   do not fail to pair, they do not happen.)* 8C Leg A's surplus diagnosis is
+   separate either way — it has its own 17/17 evidence and needs its own check.
 
 The correction is just to respect the stack: **fill C now** (ordinary life), before
 more E; keep aid parked until **F-A** (material surplus) exists. Same order Maslow
@@ -150,7 +149,7 @@ Indexes, not essays. Each stamped "as of `<commit>`".
 | Item | Delivery | Blocker | Re-entry condition | Preserved |
 |---|---|---|---|---|
 | Aid Exchange *(arch. 8C Leg A)* | DEFERRED | needs **Layer F-A material surplus** (not full economy) | a committed run shows reliable transferable surplus | `lega_v2_full.patch`: priority-5 window, keep-one guard, RESPOND_AID 3334 |
-| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **no group ever acquires a `shared_storage` fact** (DIAGNOSED 2026-07-26) | Registries form and all 12 groups are recognised; the domain activates. It stops at gate 3: only `shared_shelter` facts are ever produced, zero `shared_storage`, identically at 120 and 1,000 ticks. `shared_storage` evidence needs **two agents doing `store`/`retrieve`/`access` on the same storage within 4 ticks** (`association_contracts.py:303-316`), and `STORE_SURPLUS` is gated on `food >= 3` (`living_settlement_domain.py:393`). **Re-entry condition: that paired-storage coincidence occurs organically.** *(Supersedes both the retired "accumulate storable surplus" condition and the 2026-07-26 "surplus falsified" note in §4 — the deposit is not food-scoped, but its enabling evidence effectively is, one link upstream. LIKELY, needs one more measurement.)* | mechanism on branch; probe `backend/tools/_probe_f8_collective_preconditions.py` |
+| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **agents never perform storage actions at all** (VERIFIED 2026-07-26) | Registries form, all 12 groups are recognised, the domain activates — it stops at gate 3, zero `shared_storage` facts ever. Cause measured, not inferred: the 1,000-tick run contains **one** storage action in total (a `retrieve` of 1 food, `person-006`, tick 7) and **zero `store` actions**. `storage-camp`'s `{food: 0, wood: 12}` is genesis seeding (`{food: 1, wood: 12}`) minus that one retrieve — nothing was ever deposited. The 4-tick pairing rule (`association_contracts.py:303-316`) is resource-agnostic and never becomes the binding constraint. **Re-entry condition: ≥2 distinct agents perform storage actions on a shared storage organically.** *(Supersedes the "surplus falsified" framing in §4 and the earlier `food >= 3` attribution — why agents never store is a separate, unverified question.)* | mechanism on branch; probes `_probe_f8_collective_preconditions.py`, `_probe_f8_storage_pairing.py` |
 | CORE-INTEGRITY-001 remediation | DEFERRED | authorized re-baseline (moves frozen hashes) | dedicated core-integrity stage at a STOP | finding + probes on branch |
 | CORE-INTEGRITY-003 remediation *(frame-knowledge aliasing)* | DEFERRED | authorized re-baseline (moves frozen `living_settlement` + `collective_groups` hashes) | dedicated core-integrity stage at a STOP | finding + withheld fix described in `memory/CORE-INTEGRITY-003-frame-knowledge-aliasing.md` |
 | Remaining Layer-E culture (plurality, enforcement, diffusion) *(arch. 8C–8D)* | not started | behaviour + social density (Layers C, D) | C and D organically thicken | — |
