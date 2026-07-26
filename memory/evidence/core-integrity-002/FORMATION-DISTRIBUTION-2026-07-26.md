@@ -137,6 +137,72 @@ direction.
 | Present after drop | **false** (verified via `list_database_names`) |
 | Normal DB | `simulation_sandbox` — **not touched by the probe** |
 
+## Draw order — how the observed maximum developed
+
+The sorted list above describes **shape**. It cannot show how the maximum
+emerged, which is a different question and the one that matters when judging
+whether 30 samples bound anything. Recorded in measurement order:
+
+| # | seed | tick | running max | new max? | assoc rev | gs rev | head rev |
+|---|---|---|---|---|---|---|---|
+| 1 | `ci002-form-0867a37426` | 22 | 22 | **YES** | 15 | 1 | 22 |
+| 2 | `ci002-form-d05844fbb5` | 91 | 91 | **YES** | 56 | 1 | 91 |
+| 3 | `ci002-form-0523cc6ed8` | 80 | 91 | no | 63 | 1 | 80 |
+| 4 | `ci002-form-3b542fdc30` | 86 | 91 | no | 66 | 1 | 86 |
+| 5 | `ci002-form-c0e08c64de` | 32 | 91 | no | 25 | 1 | 32 |
+| 6 | `ci002-form-4ff54b5487` | 22 | 91 | no | 19 | 1 | 22 |
+| 7 | `ci002-form-1d2191a4c0` | 187 | 187 | **YES** | 90 | 1 | 187 |
+| 8 | `ci002-form-aa0d80b363` | 22 | 187 | no | 18 | 1 | 22 |
+| 9 | `ci002-form-f642481177` | 23 | 187 | no | 14 | 1 | 23 |
+| 10 | `ci002-form-fab803ddd7` | 12 | 187 | no | 9 | 1 | 12 |
+| 11 | `ci002-form-a6dc1db689` | 28 | 187 | no | 20 | 1 | 28 |
+| 12 | `ci002-form-2c27b2ffb6` | 31 | 187 | no | 27 | 1 | 31 |
+| 13 | `ci002-form-e0b74d0da2` | 27 | 187 | no | 17 | 1 | 27 |
+| 14 | `ci002-form-f9c7e14dba` | 33 | 187 | no | 24 | 1 | 33 |
+| 15 | `ci002-form-d54af5b4cc` | 22 | 187 | no | 14 | 1 | 22 |
+| 16 | `ci002-form-ff8769a576` | 23 | 187 | no | 14 | 1 | 23 |
+| 17 | `ci002-form-0b0afcf98b` | 42 | 187 | no | 38 | 1 | 42 |
+| 18 | `ci002-form-545efdc7f2` | 32 | 187 | no | 25 | 1 | 32 |
+| 19 | `ci002-form-04ff129255` | 11 | 187 | no | 8 | 1 | 11 |
+| 20 | `ci002-form-c44d974319` | 27 | 187 | no | 17 | 1 | 27 |
+| 21 | `ci002-form-43acc0fd21` | 23 | 187 | no | 17 | 1 | 23 |
+| 22 | `ci002-form-84a4458bd2` | 22 | 187 | no | 16 | 1 | 22 |
+| 23 | `ci002-form-794a434127` | 17 | 187 | no | 12 | 1 | 17 |
+| 24 | `ci002-form-cbce16c737` | 32 | 187 | no | 27 | 1 | 32 |
+| 25 | `ci002-form-3bcd78a4f7` | 14 | 187 | no | 11 | 1 | 14 |
+| 26 | `ci002-form-fea8d62fbf` | 117 | 187 | no | 65 | 1 | 117 |
+| 27 | `ci002-form-c4cfb35d16` | 27 | 187 | no | 19 | 1 | 27 |
+| 28 | `ci002-form-0e8665a7d0` | 32 | 187 | no | 25 | 1 | 32 |
+| 29 | `ci002-form-91c6b7c28d` | 86 | 187 | no | 58 | 1 | 86 |
+| 30 | `ci002-form-59a94b8d79` | 11 | 187 | no | 8 | 1 | 11 |
+
+**Running-maximum sequence**
+
+```
+22, 91, 91, 91, 91, 91, 187, 187, 187, 187, 187, 187, 187, 187, 187,
+187, 187, 187, 187, 187, 187, 187, 187, 187, 187, 187, 187, 187, 187, 187
+```
+
+| | |
+|---|---|
+| New maxima at samples | **1, 2, 7** |
+| Last new maximum | sample **7**, value **187** |
+| Samples after the final new maximum | **23** |
+
+### What this does and does not license
+
+- **The sorted list describes shape.** Two regimes, empty gap 43–79.
+- **The draw order describes how the observed maximum developed.** It tripled
+  within the first 7 samples (22 → 91 → 187) and then did not move for 23.
+- **Neither proves the true distribution is bounded.** 23 draws without a new
+  maximum is *consistent with* stabilisation and equally consistent with a
+  heavy tail whose next exceedance simply had not been drawn. With a long tail,
+  extended runs without a new maximum are exactly what you expect to see; they
+  are not evidence of an upper limit. **No convergence is inferred.**
+- **This uncertainty no longer blocks 7b.** Deterministic precondition
+  construction removes formation timing from the test entirely, so the
+  unbounded tail stops being a property the test depends on.
+
 ## Limitations
 
 1. **n = 30.** p95 is a coarse order statistic at this sample size; the raw
