@@ -380,11 +380,6 @@ def build_collective_deposit_proposal(entities: dict, tick: int, action: dict) -
         "is_exogenous": False,
         "requested_time": int(tick),
         "phase": "agent",
-        "engine_priority": 88,  # after group_state (89) so shared facts exist first in priority? lower number = higher priority
-        # PHASE_RANK then engine_priority: lower engine_priority commits first.
-        # group_state is 89; use 90 so shared-state updates can land first same tick,
-        # then collective action sees them next activation. Same-tick: we only
-        # read existing shared facts from pinned frame, so 90 is fine.
         "touched_scope": touched,
         "preconditions": preconditions,
         "mutation": {"entity_updates": entity_updates, "new_entities": {}},
@@ -395,8 +390,9 @@ def build_collective_deposit_proposal(entities: dict, tick: int, action: dict) -
             f"initiator={initiator_id}"
         ),
     }
-    # Fix engine_priority comment: want collective AFTER group_state when both
-    # fire. group_state=89; collective should be higher number (later).
+    # Commit AFTER group_state (89) when both fire in the same tick: lower
+    # engine_priority commits first, so 90 puts the collective action last and
+    # lets shared-state updates land ahead of it.
     proposal["engine_priority"] = 90
     return proposal
 
