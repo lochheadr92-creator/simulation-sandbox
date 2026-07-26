@@ -88,33 +88,55 @@ probe — is still required and still unwritten.
   evidence about CAS behaviour in either direction** — it never reaches the
   concurrent step.
 
-  **The setup-miss now has a concrete mechanism (2026-07-26).** The F8
-  diagnostic (`backend/tools/_probe_f8_collective_preconditions.py`) measured
-  when each registry first appears in a `collective_groups` run:
+  **The two tests have SEPARATE causes. Do not let 7b close this stub.**
+
+  **7b — EXPLAINED, and it is not what 002 is about.** The F8 diagnostic
+  (`backend/tools/_probe_f8_collective_preconditions.py`) measured registry
+  formation timing in `collective_groups`:
 
   ```
   association-registry-000  first seen at tick  1
   group-shared-state-000    first seen at tick 23
   ```
 
-  `test_concurrent_stage7b_…` steps the run **12 ticks**, then asserts
-  `registry_before.get("groups")` on `group-shared-state-000`. **At tick 12
-  that registry does not exist yet.** The test asserts on a registry roughly 11
-  ticks before it is created.
+  `test_concurrent_stage7b_…` steps **12 ticks**, then asserts
+  `registry_before.get("groups")` on `group-shared-state-000` — a registry that
+  does not exist for another ~11 ticks. It fails in **setup**, before reaching
+  any concurrent step, which is why it is deterministic (4/4). That makes it a
+  **test-isolation defect, not an engine race**, and it therefore says nothing
+  about the CAS question. *Not yet VERIFIED:* the probe measures the harness
+  path and 7b drives the API path; see the confirmation note below.
 
-  **LIKELY the entire explanation for 7b** — a setup horizon that is simply too
-  short — which would make it a *test-isolation defect, not an engine race*.
-  That is one of the two outcomes this stub was opened to decide, so it
-  materially narrows the question. **Not VERIFIED:** the probe measures the
-  harness path, and 7b drives the API path; they must be confirmed to agree on
-  formation timing before this is closed. Also note it says nothing about 7a,
-  which is intermittent and fails elsewhere.
+  **7a — UNTOUCHED, and still undecided. This is the canary.** Different test,
+  different scenario (`emergent_groups`, not `collective_groups`), different
+  assertion, different failure mode. Its setup assertion is
+  `registry_before is not None` on the **association** registry, which exists
+  from tick 1 — so 6 setup ticks are ample and **its setup passes**. It fails
+  *after* the concurrent steps, at `test_concurrency.py:157`:
+
+  ```
+  assert int(registry["revision"]) == int(registry_before["revision"]) + 1
+  E   assert 6 == (6 + 1)
+  ```
+
+  Two concurrent steps ran; one succeeded; `current_tick` advanced by 1 and
+  `head_revision` advanced by 1 — **but the association registry revision did
+  not advance at all.** A committed step that leaves its registry write
+  unreflected is exactly the lost-update / CAS signature this stub was opened
+  for. It is **intermittent (1 of 4 isolated runs)**, which is consistent with
+  a race and inconsistent with a deterministic setup miss.
+
+  **Nothing here decides 7a.** The canary probe in "Next actions" is still
+  required. Recorded now: the concrete failing assertion and its observed
+  values, which this stub previously lacked entirely.
 
   *Corrects the earlier note in this section:* the hypothesis was "a group that
-  never forms". Groups **do** form — 12 candidates, all 12 recognised. They
-  just form later than the test waits. F8's own blockage is a separate gate
-  (no `shared_storage` fact, gate 3), so the two are related by timing rather
-  than by a shared root cause.
+  never forms". **Groups form readily and early** — the association registry
+  exists at tick 1, and by 120 ticks there are 12 candidates, all 12
+  `recognised`. Nothing about group formation is slow or failing. 7b's problem
+  is only that the *group-state* registry lands at tick 23 and the test looks
+  at tick 12. F8's own blockage is a different gate again (no `shared_storage`
+  fact), so these are three distinct issues, not one shared root.
 
 ## Next actions (when opened)
 
