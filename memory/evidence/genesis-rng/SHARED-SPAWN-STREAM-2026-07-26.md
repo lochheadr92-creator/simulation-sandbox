@@ -333,3 +333,69 @@ Honest split, per CORE-INTEGRITY-004:
 - **Per-entity RNG keying is still owed.** Only per-parameter landed. Adding a
   person still shifts every later person's draws on that parameter's stream.
   Debt is load-bearing before Stage 11 touches population counts.
+
+---
+
+## SESSION HANDOFF — 2026-07-27, stopped after stage 1
+
+Stopped on user instruction ("stop and save") with stage 1 committed and green.
+Start a fresh session; this doc is the memory, not the context window.
+
+### DONE
+
+- **Step 0 — push.** `85ba7c87..7270e61f`. The 004 evidence, this finding, and
+  age Part A are on origin.
+- **Step 1 — two-tier isolation tests.** Written and pre-registered before
+  implementing; both observed colours matched the pre-registration.
+- **Step 2 — stage 1.** Committed as **`ce49d762`**. Gate fully green: four
+  pre-registered bands PASS, tier 1 green, suite 430 executed passed / 0
+  executed failed / 4 skipped, repeat+replay+resume True, frozen hash
+  `48dfec22…1b1e3b` reconfirmed byte-identical on the final tree.
+
+### NOT STARTED
+
+- **Stage 2** — genesis band `(657000, 2007500)` + `CHILD_MAX_AGE_TICKS =
+  657_000`. Both were drafted in the working tree earlier this session and
+  **deliberately reverted by edit** (never `git checkout`) so stage 2 lands on
+  top of stage 1 rather than inside it. Re-apply to `core/constants.py`,
+  `world/generator.py` (`_default_person_age_range()` + `GENESIS_ADULT_AGE_MAX_
+  TICKS`) and `tests/test_age_projection.py`.
+- **Step 4** — qualified full suite, repeat/replay/resume, push.
+- **Step 5** — STOP; frontier returns to Layer C social density.
+
+### Pre-registered stage-2 gate (agreed, not yet run)
+
+Noise source is **ORDERING**, and that is now a code-read fact rather than an
+assumption: `age_ticks`'s only consumers are the genesis draw, the read-only API
+projection, and `lifecycle_domain`, whose sole behavioural branch is
+`if life_stage == "elder"`. `life_stage` is `"adult"` on both sides (strict `<`,
+so exactly 657,000 is an adult; max genesis 2,007,500 + 320 ticks stays 364,000
+below elder). So new ages can reach behaviour ONLY through
+content_hash → event-id `hash8` → commit order.
+
+- genesis diff exact via tier 2, ages only — **already proven**: tiers 1 and 2
+  compare exactly `(3_000, 30_000)` against `(657_000, 2_007_500)`, which is
+  precisely the stage-2 default change, so they *are* stage 2's genesis diff;
+- accepted within **±3%** of stage 1's 4,849 → **4,704 – 4,994**;
+- character envelope unchanged: deaths ≤ 1, rest fraction 0.25–0.45, entropy
+  ≥ 1.8 bits;
+- expect a delta at **noise-floor order, not near zero** — the hash8 channel
+  guarantees movement;
+- second hash, second write-up, same honesty split: exact at genesis,
+  statistical at trajectory.
+
+### Outstanding, tracked
+
+1. **`collective_groups` baseline is STALE** and unmeasured — see the register
+   entry in `memory/CAPABILITY-DOCTRINE.md`. Its hash necessarily moved. Measure
+   ONCE at the leg close (after stage 2) so the value is not immediately
+   superseded, and only with explicit authorisation at that STOP.
+2. **Adversarial review is AUTHORISED** for after stage 2 — independent
+   non-Anthropic agent over the complete branch diff, blind pass first, findings
+   ledger (FIX/ACCEPT/DISPUTE) in the close-out per
+   `memory/ADVERSARIAL-REVIEW-PROTOCOL.md`. Never self-review: this session
+   wrote the code, the tests, and the claims.
+3. **Goal-scoring smell parked** in `FRONTIER.md` queued rulings beside the
+   effort-transfer gradient. Pre-existing, untouched, not asserted as correct.
+4. Old-trace `warn` completion is **LIKELY**, inferred from the pre-change test
+   passing. Not observed; no revert was performed to check.
