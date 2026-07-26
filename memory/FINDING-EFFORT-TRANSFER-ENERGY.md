@@ -71,9 +71,30 @@ Agents sit near full energy, so **29 of 37** target gains evaporate at the
 ceiling while every actor cost lands in full. In this baseline `cooperate` is
 net energy-**destroying**, by −420.
 
+**It replicates on the other frozen baseline** (`collective_groups` 1,000, hash
+`43893bdde4ce4b93c6076650326861b66ff8bd6343a7568653d122917db1638a`), so this is
+not a `living_settlement` quirk:
+
+| Baseline | cooperates | nominal | **actual** | target clamped | actor clamped |
+|---|---|---|---|---|---|
+| `living_settlement` 320 | 37 | +740 | **−420** | 29 (78%) | 0 |
+| `collective_groups` 1,000 | 232 | +4,640 | **−1,650** | 170 (73%) | 0 |
+
+Three things the pair shows that one baseline could not:
+
+- **The sign inverts in both**, at a near-identical clamp rate (78% / 73%).
+- **`max(0, …)` never fires — 0 of 269 actor writes across both runs.** The
+  floor clamp is effectively dead in practice; `min(1000, …)` is the only one
+  that is load-bearing. Any ruling should treat the two clamps differently.
+- **Per-event magnitude differs** (−11.35 vs −7.11), which is direct evidence
+  for the state-dependent gradient in §"What is actually open" — the effect
+  tracks how full the targets happen to be, rather than being a fixed penalty.
+
 *Any earlier "+740 units of invented energy" figure — including in
 `REGISTRY-COMPONENT-OWNERSHIP.md` before 2026-07-26 — was an unclamped ceiling
-mistaken for a measurement. Wrong in magnitude and in sign.*
+mistaken for a measurement. Wrong in magnitude and in sign. The same applies to
+`+4,640` for `collective_groups`; both ceilings are shown above only to
+contrast them against the measured values.*
 
 ## What is actually open
 
