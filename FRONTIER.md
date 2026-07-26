@@ -25,6 +25,18 @@ Active leg:     Layer C — SOCIAL DENSITY.  Status: NOT STARTED.
                     memory/REGISTRY-COMPONENT-OWNERSHIP.md.
                   - Rulings queued for Ryan: the effort-transfer gradient
                     (memory/FINDING-EFFORT-TRANSFER-ENERGY.md) and F8 A/B/C.
+                  - DEBT, load-bearing before Stage 11 touches population
+                    counts: per-parameter-PER-ENTITY RNG keying. Authorised;
+                    only per-parameter is implemented in world/generator.py.
+                    With per-parameter streams, adding a person still shifts
+                    every LATER person's draws.
+                  - CORE-INTEGRITY-004: single-run A/B action-count deltas are
+                    untrustworthy at tens-of-percent scale. Social density's
+                    first act -- the 5,000-tick baseline control sampled at
+                    1,000 / 3,000 / 5,000 -- is now DOUBLY motivated: it is
+                    both the organic-reachability baseline and the only way to
+                    separate signal from ordering noise. Single-horizon A/B
+                    readings are suspect.
 
 Closed leg:     Variety Leg 1 — Upkeep drive
 Status:         VERIFIED — CLOSED (2026-07-25). Full detail, gate results,

@@ -3,6 +3,41 @@
 **Status: OPEN. CONFIRMED by pre-registered experiment 2026-07-26/27.**
 This is the finding that explains this week's unattributable deltas.
 
+## VERBATIM EVIDENCE — transcribed across a context boundary
+
+The scalpel probe is **gitignored**; these numbers existed nowhere durable and
+are transcribed here verbatim so the finding survives without them.
+
+```
+SCALPEL: in-process monkey-patch replacing the content_hash tie-break with
+         (entity_id, proposal_type). Core untouched, probe gitignored.
+
+CONTROL PASS: 6,198 invocations run A; 12,396 total (strictly increasing)
+
+BAND_A (657000, 2007500): accepted=4620  rejected=1578
+BAND_B (700000, 1500000): accepted=4620  rejected=1578
+Delta: 0.  Action mix: identical, every type.
+
+SAME BANDS UNDER THE REAL TIE-BREAK (Gate 1):
+  accepted             -61 (~1.2%)
+  living_rest          451 -> 325  (-28%)
+  social_request_help  +51
+  social_cooperate     -19
+  social_repay         -22
+  precondition.failed  +95
+  causality.invalid_parent = 0 on BOTH sides
+```
+
+**Collision instrument INVALID.** Its `SEEN` map was module-level and never
+reset between arms, so it reported 6,198 — exactly run A's invocation count.
+**Do not cite it.** Moot for an identical result; it would have been
+load-bearing on a "still moves" outcome, where collision-slot fallback ordering
+is a competing explanation. **Requirement for any re-run: reset the map between
+arms and log the resolved order within each collision slot in both arms.**
+
+An earlier scalpel attempt ran **without** a positive control; its output was
+never read, so it cannot have anchored this conclusion.
+
 ## The mechanism
 
 `order_key` (`commit_pipeline.py:108`) is
@@ -101,6 +136,27 @@ one nobody should trust.
 | The delta was a `causality.invalid_parent` cascade | same STOP report | **REFUTED** — zero occurrences either side |
 | Keyed sub-streams fix the coupling | mine, this session | **REFUTED** — values isolated, behaviour still moved |
 | Gate 1 verdict: ordering carrying meaning makes the spawn index *unsafe* | mine | **WRONG INFERENCE** — measurement sound, conclusion inverted. A live ordering channel makes freezing the genesis door load-bearing, not unsafe |
+| Gate 1 stop-rule, and endorsing the forced-ordering test as discriminating | cloud session | **WRONG**, corrected **before** the result. Forced ordering could not discriminate: spawn-event `hash8` differs by age regardless of order, so both candidates predicted movement under it |
+| "Stage 2 will be small and explicable" | cloud session | **WRONG**, corrected **before** the result. Event ids embed content `hash8`, so an edited entity's spawn id changes, enters proposals as a causal parent, and perturbs ordering — stage 2 lands at noise-floor order, not near zero |
+
+Both corrections landed **pre-result**, which is what distinguishes them from
+rationalisation. Recorded on both sides: predictions from the cloud session and
+from the implementing session failed at similar rates.
+
+## Remediation candidates — DEFERRED to a dedicated high-risk stage
+
+**None of these enter the current leg.** All are Core surgery and all move
+every hash once:
+
+1. **Make the content-independent tie-break permanent** — the scalpel's
+   `(entity_id, proposal_type)` in place of `content_hash`. Proven to remove
+   the channel; needs a collision policy for the residual ties.
+2. **Event ids without a content component** — drop `hash8` from
+   `evt-{tick}-{order}-{hash8}`, so a changed payload no longer changes the id
+   that other proposals cite as a causal parent.
+3. **Provenance references out of `core_fields`** — exclude
+   `causal_parent_event_ids` from the hashed set, so ordering stops depending
+   on which events preceded.
 
 ## Remediation — not done, needs its own stage
 
