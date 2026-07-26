@@ -1,5 +1,66 @@
 # CORE-INTEGRITY-002 — Suspected CAS/head-revision lost update under concurrent steps (STUB)
 
+> ## RECLASSIFIED 2026-07-26 — TEST DEFECT, not a verified race (Case A)
+>
+> **The 7a assertion that started this is not an engine guarantee.**
+> `test_concurrency.py:157` asserts every step advances the association-registry
+> revision. Measured **serially, with no concurrency anywhere**, it does not.
+>
+> Probe: `backend/tools/_probe_ci002_serial_revision.py`. Scenario
+> `emergent_groups` (the one 7a uses), API path (`create_run` / `step_run`, the
+> path 7a drives), one tick at a time. **VERIFIED by execution.**
+>
+> | Run | Steps | assoc-rev deltas seen | Stalled steps | Bumps with no substantive change |
+> |---|---|---|---|---|
+> | `run-6d8cafb75f11` | 12 | {0, 1} | **2** (ticks 7→8, 11→12) | 0 |
+> | `run-c93c607ca47b` | 16 | {0, 1} | **5** (6→7, 7→8, 8→9, 11→12, 12→13) | 0 |
+>
+> Every stalled step shows the association proposal **REJECTED** with
+> `causality.invalid_parent`, revision delta **0**, and substantive state
+> unchanged — while `current_tick` and `head_revision` each still advance by
+> exactly 1. Up to **three consecutive** stalls were observed. No concurrency
+> was involved in any of it.
+>
+> **Mechanism, read from code.** `advance_association_registry`
+> (`association_contracts.py:793`) bumps `revision` *unconditionally*, so the
+> revision advances **iff the proposal is accepted**. Acceptance is not
+> guaranteed: `_valid_causal_parent_ids` (`run_service.py:288-292`) builds the
+> valid-parent set from **only the `last_event_id` of each currently-live
+> entity** plus validated external anchors — not from run history. An
+> association proposal cites evidence event ids from earlier ticks, and once
+> those are no longer any live entity's *current* `last_event_id`, Core rejects
+> it at `commit_pipeline.py:470`. Deterministic and by design.
+>
+> **So 7a's failure signature is a legitimate no-op tick, not a lost update.**
+> `assert 6 == (6 + 1)` is exactly what a `causality.invalid_parent` rejection
+> produces.
+>
+> ### Telling a legitimate no-op from a real concurrency failure
+>
+> | | Legitimate no-op (measured, common) | Genuine concurrency failure (never observed) |
+> |---|---|---|
+> | assoc-rev delta | 0 | 0 **with the proposal ACCEPTED**, or ≥2 |
+> | association proposal | REJECTED `causality.invalid_parent`, or ABSENT | ACCEPTED |
+> | `current_tick` | +1 | ≠ +1 |
+> | `head_revision` | +1 | ≠ +1 |
+> | `commit_frames` for the tick | 1 | ≠ 1 |
+> | duplicate candidate ids | none | present |
+>
+> **Only the revision assertion is unsound.** 7a's other assertions —
+> `head_revision == before + 1`, exactly one commit frame, no duplicate
+> candidate ids — are legitimate concurrency checks and all **passed**.
+>
+> ### What this does and does not settle
+>
+> - **Settled (VERIFIED):** the observed 7a failure is fully explained as a test
+>   defect. It is not evidence of a race.
+> - **NOT settled:** whether a genuine CAS/head-revision lost update is possible
+>   under concurrent stepping. It has never been tested by a *valid* assertion,
+>   so absence of a valid failing signal is not evidence of absence. The canary
+>   probe in "Next actions" is still required.
+> - **Not done, deliberately:** the test is **unmodified**. Repairing or removing
+>   the assertion is a separate authorised leg.
+
 **Status: OPEN STUB (2026-07-25) — scoped out of CORE-INTEGRITY-001 by
 independent review (Grok/xAI, finding SEC-CAS) and Ryan's ruling. No
 investigation performed under this ID yet. This document exists so the
