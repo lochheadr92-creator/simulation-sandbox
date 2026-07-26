@@ -81,10 +81,16 @@ Two things were built out of order and both stalled:
    layered on a world where agents **rested ~90% of the time** and every rich action
    fired ~once per 1,000 ticks [`BEHAVIOUR-BASELINE-001`]. Culture can't feel alive
    on an idle world — hence "machinery, not felt culture." *(Historical: the rest
-   half was addressed by Variety Leg 1 — see §3. The rich-action half is not;
+   half was addressed by Variety Leg 1 — see §3. The rich-action half was not;
    social density is the next Layer C item.)*
 2. **Aid (E) outran the economy (F).** Giving needs a surplus; nobody has one under
-   survival pressure. 7C (group deposit) died the same way.
+   survival pressure. 7C (group deposit) was recorded as dying the same way —
+   **that diagnosis is falsified for 7C** (2026-07-26, VERIFIED): the collective
+   deposit is not food-scoped (`group_collective_contracts.py:103-110` falls back
+   to wood), wood surplus was present and stored in the measured run, and the
+   domain still proposed **zero** times in 1,000 organic ticks. See §8. 8C Leg A's
+   surplus diagnosis is *not* automatically falsified with it — it has its own
+   17/17 evidence and needs its own check.
 
 The correction is just to respect the stack: **fill C now** (ordinary life), before
 more E; keep aid parked until **F-A** (material surplus) exists. Same order Maslow
@@ -140,7 +146,7 @@ Indexes, not essays. Each stamped "as of `<commit>`".
 | Item | Delivery | Blocker | Re-entry condition | Preserved |
 |---|---|---|---|---|
 | Aid Exchange *(arch. 8C Leg A)* | DEFERRED | needs **Layer F-A material surplus** (not full economy) | a committed run shows reliable transferable surplus | `lega_v2_full.patch`: priority-5 window, keep-one guard, RESPOND_AID 3334 |
-| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **Layer F-A material surplus** | agents accumulate storable surplus organically | mechanism on branch |
+| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **UNKNOWN — surplus falsified as the cause (2026-07-26)** | *(old: "agents accumulate storable surplus organically" — retired; it would never fire this domain)* Measured `collective_groups` 1,000 ticks, seed `living-agents-stage6`: `accepted 0 / rejected 0` — **never proposed**, while `storage-camp` ended `{food: 0, wood: 12}` and the deposit falls back to wood (`group_collective_contracts.py:103-110`). New re-entry condition needed; first place to look is `select_due_ids` (`group_collective_domain.py:24-27`), which returns `[]` unless both registries are present | mechanism on branch |
 | CORE-INTEGRITY-001 remediation | DEFERRED | authorized re-baseline (moves frozen hashes) | dedicated core-integrity stage at a STOP | finding + probes on branch |
 | CORE-INTEGRITY-003 remediation *(frame-knowledge aliasing)* | DEFERRED | authorized re-baseline (moves frozen `living_settlement` + `collective_groups` hashes) | dedicated core-integrity stage at a STOP | finding + withheld fix described in `memory/CORE-INTEGRITY-003-frame-knowledge-aliasing.md` |
 | Remaining Layer-E culture (plurality, enforcement, diffusion) *(arch. 8C–8D)* | not started | behaviour + social density (Layers C, D) | C and D organically thicken | — |
