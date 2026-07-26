@@ -1,0 +1,106 @@
+{
+  "files": {
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/COLLISIONS.json": {
+      "bytes": 547,
+      "documents": 1,
+      "sha256": "77b75dad2a96f106f33ed677d04833b292cd72cb47285c5c827104fe1f76e4b2"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/accepted_events.jsonl": {
+      "bytes": 5918297,
+      "documents": 198,
+      "sha256": "4b6a6ca88d47d06a8c39a7107c5b2c1f52e3e51e78787f30989a7e4f39fdc936"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/activation_diagnostics.jsonl": {
+      "bytes": 126903,
+      "documents": 39,
+      "sha256": "e266e206e2e667ae1ca2d7fe4914e747a25bb1e0d05a9f43178dd0bb86e50d2e"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/commit_frames.jsonl": {
+      "bytes": 9036,
+      "documents": 10,
+      "sha256": "00d15563daf9572c87fc44e302ea1e5f5c90843a329cedcefe362372b1ab9984"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/entities.jsonl": {
+      "bytes": 835626,
+      "documents": 39,
+      "sha256": "f87e1a113c1b250fa8100c885b7cb021d0a25ae343cffa5a8b576b588bb4b201"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/external_influences.jsonl": {
+      "bytes": 203,
+      "documents": 1,
+      "sha256": "ca39b40aadca8295c7529fb28232ebfb78aa34327ae2a8c833e54d06242f42a7"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/kernel_runs.jsonl": {
+      "bytes": 2333,
+      "documents": 1,
+      "sha256": "a0ad522365f804ad813ba6b4f02dd9a1c32710fdc00b91d880a18b2fad8dbcab"
+    },
+    "memory/evidence/core-integrity-002/run-1fb2793e6a64/rejected_proposals.jsonl": {
+      "bytes": 480003,
+      "documents": 3,
+      "sha256": "52d7a24fba50d1e70919f8a35a66e26d96e9e329e4884f18d17bfe1316054fba"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/COLLISIONS.json": {
+      "bytes": 6740,
+      "documents": 12,
+      "sha256": "ab80eb7f142c7df7661ee952cabba358e7894e56309300677023e5cb61f82966"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/accepted_events.jsonl": {
+      "bytes": 15357755,
+      "documents": 16674,
+      "sha256": "c629cb5a915d8f43f85d01a9744b73d2f49e28a7dc3ee899f08c627cd50fe55e"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/activation_diagnostics.jsonl": {
+      "bytes": 69638,
+      "documents": 47,
+      "sha256": "3033a29f10b7b82b1088f90212889badc7a9ab2b76bf73c9f879c515ee978685"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/commit_frames.jsonl": {
+      "bytes": 1389870,
+      "documents": 1406,
+      "sha256": "50dd2c074cb447b2e9a29cf32258841824ffec1bbcd0786ebb4199d4d77372cc"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/entities.jsonl": {
+      "bytes": 236102,
+      "documents": 39,
+      "sha256": "dcf319488909ce2477b4ee927758e4720d245c42f9f49962cdef348b55ad12c6"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/external_influences.jsonl": {
+      "bytes": 4490,
+      "documents": 21,
+      "sha256": "94d80d264f35e045771c918591deda9c9dd30f74b0a33556f7f16c3152ed40ba"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/kernel_runs.jsonl": {
+      "bytes": 4659,
+      "documents": 1,
+      "sha256": "ae43cb5bef9b24f7f36cb6f6ebbc6ca6a52ce52f3260c0918f401984720aeeef"
+    },
+    "memory/evidence/core-integrity-002/run-9bc94ad9a5e8/rejected_proposals.jsonl": {
+      "bytes": 47513408,
+      "documents": 1206,
+      "sha256": "14c62ac28a35558ff6c0b082191431270b0fd65e493e6f754bf28a2a3dba2816"
+    }
+  },
+  "runs": {
+    "run-1fb2793e6a64": {
+      "_colliding_order_indexes": 1,
+      "accepted_events": 198,
+      "activation_diagnostics": 39,
+      "commit_frames": 10,
+      "entities": 39,
+      "external_influences": 1,
+      "kernel_runs": 1,
+      "rejected_proposals": 3
+    },
+    "run-9bc94ad9a5e8": {
+      "_colliding_order_indexes": 12,
+      "accepted_events": 16674,
+      "activation_diagnostics": 47,
+      "commit_frames": 1406,
+      "entities": 39,
+      "external_influences": 21,
+      "kernel_runs": 1,
+      "rejected_proposals": 1206
+    }
+  }
+}

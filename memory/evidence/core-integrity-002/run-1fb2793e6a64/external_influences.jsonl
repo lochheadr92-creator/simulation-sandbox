@@ -1,0 +1,1 @@
+{"_id": {"$oid": "6a5d01381ec399bec0c33742"}, "id": "infl-ec4dc57dd9", "intervention_type": "spawn_tree", "payload": {"resource": 60, "x": 2, "y": 2}, "run_id": "run-1fb2793e6a64", "simulation_time": 8}

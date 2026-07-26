@@ -1,0 +1,26 @@
+[
+  {
+    "_id": 177,
+    "events": [
+      {
+        "created_utc": {
+          "$date": "2026-07-19T16:54:17Z"
+        },
+        "event_type": "spawn_tree",
+        "frame_id": "run-1fb2793e6a64-ext-infl-ec4dc57dd9",
+        "id": "evt-8-177-2e1d632f",
+        "simulation_time": 8
+      },
+      {
+        "created_utc": {
+          "$date": "2026-07-19T16:54:16Z"
+        },
+        "event_type": "expire_signal",
+        "frame_id": "frame-9",
+        "id": "evt-9-177-4ebc0c20",
+        "simulation_time": 9
+      }
+    ],
+    "n": 2
+  }
+]
