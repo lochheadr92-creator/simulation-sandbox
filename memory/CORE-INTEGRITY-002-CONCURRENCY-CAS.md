@@ -99,6 +99,104 @@ theatre and would restore a known-false assertion in the interim.
 explicit authority for that specific change. A contradiction between a prior
 STOP and a new task is itself a STOP condition.
 
+## Phase 3 GATE — STOP. Prior association history IS materially consumed.
+
+**Recorded 2026-07-26 while mapping 7b's material precondition ahead of
+deterministic construction. Deterministic setup as specified would produce a
+vacuously-passing test.**
+
+### The exact code path
+
+```
+GroupStateDomain.select_due_ids            group_state_domain.py:20-22
+    requires ASSOCIATION_REGISTRY_ID in entities                    -- cheap
+build_group_state_proposal                 group_state_contracts.py:460
+    supports = derive_group_support_evidence(entities, tick)        :472
+    if not supports: return None                                    :474-475   <-- HERE
+derive_group_support_evidence              group_state_contracts.py:186
+    recognised = _recognised_groups(association); if not: return [] :190-192
+    records = association["association_records"]                    :193
+    for record: for evidence in record["recent_evidence"]:          :197-202
+        ... category-matched evidence becomes a support
+_bounded_supports                          group_state_contracts.py:440
+    processed = existing["processed_proposal_keys"]                 :441
+    skip any support whose proposal_key is already processed        :445-446
+```
+
+**`derive_group_support_evidence` derives supports from
+`association_records[*].recent_evidence` — the association registry's
+accumulated evidence history.** That history is exactly what an organic run
+builds up tick by tick.
+
+### Why this fails the gate
+
+A constructed state carrying `group-shared-state-000` with a non-empty `groups`
+map and `revision: 1`, but **without** the underlying association evidence
+records, yields:
+
+```
+derive_group_support_evidence -> []   ->   build_group_state_proposal -> None
+```
+
+So **the group_state domain proposes nothing in the concurrent frame.** The
+revision-accounting invariant then reads `accepted = 0, delta = 0` and passes
+*trivially*. That is an always-green test — precisely the failure mode the
+DB-free predicate coverage was written to prevent, reintroduced through the
+fixture instead of the assertion.
+
+### This refutes the ruling's stated premise
+
+The ruling reasoned that organic waiting adds a long-tailed setup dependency
+"without producing a different group-state revision history material to the
+assertion". That is **true of group-state revision history** — the measurement
+confirmed it is always `1` at formation. But the material dependency is not
+group-state revision history; it is **association evidence history**, which is
+what causes group_state to propose at all. The 30-seed measurement did not
+examine that path, so it could not surface this.
+
+`processed_proposal_keys` on the group-state registry is a second, smaller
+history dependency (`:445-446`).
+
+### What this does NOT say
+
+- **Not "deterministic construction is impossible."** It is achievable — the
+  existing 7C fixture `_recognised_with_shared_storage()`
+  (`test_stage7c_group_collective.py:112`) builds recognised groups and shared
+  facts deterministically through the **real** `build_association_proposal` /
+  `build_group_state_proposal` builders.
+- **It says the construction is materially larger than the ruling specified:**
+  it must reconstruct association evidence records, not merely assert
+  group-state revision `1`. And that fixture is the in-memory `run_commit_frame`
+  path, whereas 7b drives `create_run` / `step_run` against MongoDB, so the
+  constructed state must additionally be persisted with causal-parent anchors
+  that exist in that run's `accepted_events`.
+
+### Answers to the Phase 3 questions
+
+1. **Absolute association revision value consumed?** No. It is *pinned*
+   (`group_state_contracts.py:500-504`, `revision eq association.revision`) but
+   read live at build time, so any internally consistent value works.
+2. **Only internally consistent membership + a pinned revision?** No — see 3.
+3. **Does prior association history affect candidate generation / validation?**
+   **YES.** `association_records[*].recent_evidence` is the sole source of
+   supports. This is the gate failure.
+4. **Is group-state revision `1` the complete material first-formation
+   condition?** **No.** Revision `1` is a *consequence* of first formation, not
+   the condition. The condition is association evidence sufficient to derive
+   non-empty supports.
+5. **Fields that must match organic first formation:** association
+   `schema_version`, recognised group candidates with `member_ids`,
+   `association_records[*].recent_evidence` of the categories
+   `derive_group_support_evidence` matches, group-state `groups` map, and
+   causal-parent anchors resolvable in the run's accepted events.
+6. **Irrelevant to the canary:** absolute revision magnitudes, the number of
+   ticks taken to reach formation, and association evidence beyond what yields
+   the supports actually consumed.
+
+**STOPPED here.** Phases 4–11 not started. Deciding how to proceed is a design
+call: either reconstruct association evidence deterministically (larger than
+the ruling assumed) or revisit organic waiting with the tail understood.
+
 ## 7b setup timeout — CASE C. Design ruling required; nothing implemented.
 
 Full measurement: `memory/evidence/core-integrity-002/FORMATION-DISTRIBUTION-2026-07-26.md`.
