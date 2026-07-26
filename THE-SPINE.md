@@ -61,7 +61,7 @@ Two separate questions, not one: is the *mechanism* built, and does the behaviou
 |---|---|---|---|---|
 | A Kernel | SOLID | — | VERIFIED | regression suite passes; frozen hashes verified |
 | B Physical World | SOLID | — | VERIFIED | harness runs |
-| **C Individual Agency** | **survival SOLID · non-survival drives ABSENT** | **THIN (~90% rest)** | **CURRENT FRONT** | `BEHAVIOUR-BASELINE-001` |
+| **C Individual Agency** | **survival SOLID · non-survival drives THIN** (one drive, Upkeep, added 2026-07-25) | **THIN** (rest 32.1%, was ~90%; action entropy 2.31 bits, was 0.75) | **PARTIAL** — Variety Leg 1 closed; social density, individuality, memory not started | `memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md` §6; `BEHAVIOUR-BASELINE-001` |
 | D Interaction | SOLID | THIN (rich actions fire ~once/1000 ticks) | VERIFIED-mech | `BEHAVIOUR-BASELINE-001` |
 | E Collective Behaviour | SOLID | THIN ("machinery, not felt culture") | VERIFIED-mech; deposit DEFERRED *(arch. 7C)* | Layer-E close-outs *(arch. 8A/8B)* |
 | F Economy | ABSENT | ABSENT | PARKED | — |
@@ -78,9 +78,11 @@ DEFERRED, REJECTED, SUPERSEDED}. No other wording for status.
 Two things were built out of order and both stalled:
 
 1. **Culture (E) outran individual behaviour (C).** Norms and transmission were
-   layered on a world where agents **rest ~90% of the time** and every rich action
-   fires ~once per 1,000 ticks [`BEHAVIOUR-BASELINE-001`]. Culture can't feel alive
-   on an idle world — hence "machinery, not felt culture."
+   layered on a world where agents **rested ~90% of the time** and every rich action
+   fired ~once per 1,000 ticks [`BEHAVIOUR-BASELINE-001`]. Culture can't feel alive
+   on an idle world — hence "machinery, not felt culture." *(Historical: the rest
+   half was addressed by Variety Leg 1 — see §3. The rich-action half is not;
+   social density is the next Layer C item.)*
 2. **Aid (E) outran the economy (F).** Giving needs a surplus; nobody has one under
    survival pressure. 7C (group deposit) died the same way.
 
@@ -94,11 +96,15 @@ culture. We learned it the hard way; it is written down now.
 Owned by `FRONTIER.md` (the only file that declares the current task). Summary:
 
 > **Layer C — Individual Agency: behaviour enrichment.** Order: variety → social
-> density → individuality → memory. **Active leg: Variety Leg 1 — an Upkeep drive**
-> (a recurring non-survival pull to maintain worn structures, so idle ticks become
-> small useful actions). Player outcome: agents visibly rest less and tend their
-> surroundings. Primary metric: rest fraction falls from `BEHAVIOUR-BASELINE-001`
-> and the action mix broadens.
+> density → individuality → memory. **Active leg: NONE** — both most-recent legs
+> closed 2026-07-25. Variety Leg 1 (Upkeep drive) VERIFIED–CLOSED: agents rest
+> less and tend worn structures on their own initiative (rest 73.3%→32.1%
+> `living_settlement`; 89.5%→40.9% / 88.9%→47.2% `collective_groups`; entropy
+> 0.75→2.31 / 1.52→2.46 bits; frozen hash re-baselined `84d3ad52…c32d2` →
+> `897f3f7f…3c5ab` with authorisation). CORE-PERF-01 (Layer A infra)
+> VERIFIED–CLOSED, hash-neutral, ~1.2–2.1×. **Next, not started:** Layer C social
+> density — needs its own probe + contract phase (C-12 v2) before any
+> implementation.
 
 ## 6. The five rails (every layer obeys these)
 
