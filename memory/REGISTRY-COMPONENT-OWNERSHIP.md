@@ -86,7 +86,7 @@ registry, not built), animal/weather internals, migration policies.
 | `reciprocity_trust` view | *(no entity field)* | `reciprocity_trust` | **none — zero writers.** Read-only consumers `people_domain.py:357`, `people_utility.py:253,263`, `food_interaction_proposals.py:442-443` | — | **LOW** | `test_phase5b5_reciprocity_trust.py:162-163,375-376,389-393,401-410,502-514` |
 | `hunger` | person (also animal) | per-scenario action owner | `people_domain.py:373`; `living_settlement_domain.py:708,714`; `living_agent_actions.py:422`; `core/interventions.py:25`; `animal_domain.py:104` | `interventions.py:25` player boost — contractual, commits in its own frame (`api/routes.py:467-470`) | **LOW** *(re-verify: `c2d7b4c6` added intervention CAS)* | `test_simulation_sandbox.py:158-169` (behaviour only) |
 | `thirst` | person | per-scenario action owner | `people_domain.py:374`; `living_settlement_domain.py:709-711,714`; `living_agent_actions.py:431`; `interventions.py:25` | as above | **LOW** *(same re-verify)* | `test_phase5a3_navigation.py:369` |
-| `energy` *(canonical; `fatigue` is derived)* | person | per-scenario action owner | `people_domain.py:375`; `living_settlement_domain.py:712,715`; `living_agent_actions.py:435,503,505`; **`living_agent_social.py:436-437` (cross-entity — actor AND target; missed by all three passes, found 2026-07-26 by test)**; `interventions.py:25` | `living_agent_social.py:436` writes the **target's** energy — same domain family, so not an ownership violation, but undeclared | **MEDIUM** *(was LOW; the LOW rating assumed one-per-scenario self-writes, which the cross-entity social writer breaks — see F11)* | `test_component_ownership_invariants.py::test_social_actions_write_energy_cross_entity` |
+| `energy` *(canonical; `fatigue` is derived)* | person | per-scenario action owner | `people_domain.py:375`; `living_settlement_domain.py:712,715`; `living_agent_actions.py:435,503,505`; **`living_agent_social.py:436-437` (cross-entity — actor AND target; missed by all three passes, found 2026-07-26 by test)**; `interventions.py:25` | `living_agent_social.py:436` writes the **target's** energy — same domain family, so not an ownership violation, but undeclared | **MEDIUM** *(was LOW; that rating assumed one-per-scenario **self**-writes, which the cross-entity social writer breaks. Held at MEDIUM pending **OQ-1** — 64 unattributed same-tick `energy` collisions in `collective_groups`, 0 in `living_settlement`. Drop to LOW if OQ-1 resolves to something benign)* | `test_component_ownership_invariants.py::test_social_actions_write_energy_cross_entity` |
 | `fatigue` | — | **no canonical field exists** | none — derived at `living_agent_cognition.py:470` as `1000 - energy` | — | inherits `living_agent` | `test_stage6a_living_cognition.py:278` |
 | `carried_resources` / `inventory` / `food_inventory` | person | per-scenario action owner | `people_domain.py:378,425`; `living_agent_actions.py:138` via `:342,395,399,421,447,468`; `living_agent_social.py:240` via `:395-396,422-423`; `group_collective_contracts.py:293`; genesis `world/generator.py:97` | `people_domain.py:425` (food receiver), `living_agent_social.py:396,423` (target), `group_collective_contracts.py:293` — all contractual and CAS-guarded | **LOW/MEDIUM** — every producer CASes (`living_agent_actions.py:345,406-408,423`; `living_agent_social.py:404-405,432-433`; `group_collective_contracts.py:351-356`) | `test_stage6c_physical_actions.py:69,71,87,137,163,203`; `test_stage7c_group_collective.py:225,247,345` |
 | Structure `condition` (wear) | shelter / structure | **shared — no single owner** | ecology wear `ecology_domain.py:100`; repair/damage `living_agent_actions.py:470-471`; tend `living_agent_actions.py:485-489`; created at 1000 `:452` | Yes by design — environment-phase wear vs agent-phase repair/tend | **MEDIUM** — resolved by phase order + strict CAS; see F7 | `test_layer_c_upkeep.py:113,136,152,159,197`; `test_stage6c_physical_actions.py:144-161` |
@@ -398,41 +398,77 @@ Two design points worth carrying to the next registry:
   *after* another writer of the same field needs the CAS; guarding the earlier
   writer protects nothing. "After" is `engine_priority` (`commit_pipeline.py:108`).
 
-**F11 — `energy` has an undeclared cross-entity writer. MEDIUM. NEW
-2026-07-26,** found by the F10 tests, not by any inventory pass.
+**F11 — `energy` has an undeclared cross-entity writer. LOW (ownership).
+RESCOPED 2026-07-26.** Found by the F10 tests, not by any inventory pass:
 `living_agent_social.py:436-437` writes `energy` on **both the actor and the
 target**. Table 1's `energy` row listed `people_domain`,
 `living_settlement_domain`, `living_agent_actions` and `interventions` — not
-`living_agent_social`, and it did not record that the write is cross-entity.
-Same domain family, so this is not an ownership violation; it is an incomplete
-row, and the LOW rating it carried assumed one-per-scenario **self**-writes.
-Re-rated MEDIUM. The general lesson is recorded in the header note: writer
-lists in this pass are lower bounds, not inventories.
+`living_agent_social`, and did not record that the write is cross-entity. Same
+domain family, so it is not an ownership violation; it is an incomplete row.
+Table 1 corrected. **That writer fact is all that remains of F11 here.**
 
-**Scenario identified (2026-07-26) — and the fix is RE-BASELINE-CLASS.** The
-write lives in the `cooperate` branch only (`living_agent_social.py:435-437`)
-and it is **non-conserving**: `+40` to the target, `−20` from the actor, so
-every `cooperate` mints 20 energy the engine invented. Measured on the frozen
-`living_settlement` 320-tick baseline, at the confirming hash
-`897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab`:
+**Everything else that was filed under F11 has moved to
+`memory/FINDING-EFFORT-TRANSFER-ENERGY.md`,** because it was misclassified
+twice and the second misclassification was mine:
 
-```
-cooperate actions accepted : 37
-events writing energy      : 1529
-same-tick energy collisions: 0
-```
+- **Not a collision.** One `cooperate` proposal writing both energies is *one
+  event touching two entities*, not two events touching one. Measured:
+  `living_settlement` 320 → 37 cooperates, **0** same-tick energy collisions.
+  No CAS applies; it does not belong in the CORE-INTEGRITY family.
+- **Not a conservation defect.** Energy is non-conserved *by design* — `rest`
+  mints 80 from nothing (`living_agent_actions.py:435`), and the engine's
+  conservation validators (`living_action.nonconserving_transfer`,
+  `social_action.nonconserving_exchange`) are deliberately scoped to
+  **resource** transfers, not energy.
+- **The "+740 units of invented energy" figure previously stated here was
+  wrong in magnitude *and sign*.** `min(1000, e+40)` and `max(0, e-20)` clamp
+  at both ends, so `37 × 20` was an unclamped ceiling, not a measurement.
+  Summing the real per-event deltas gives **−420**: 29 of 37 target gains
+  evaporate at the ceiling while every actor cost lands in full. In that
+  baseline `cooperate` is net energy-**destroying**.
 
-So the **frozen baseline already encodes 37 × (+20) = +740 units of invented
-energy**. Correcting the non-conservation changes committed state and moves the
-frozen hash: F11's fix is **re-baseline-class, not hash-neutral**, and needs an
-authorised re-baseline STOP — unlike F3, which is hash-neutral. Not fixed here;
-F11 writes person entities and falls under the CORE-INTEGRITY-001 containment
-discipline.
+The rescoped finding needs a **ruling**, not a fix, and its one concrete gap is
+that `+40 / −20 / +50 / +80` are inline literals with no evidence comment
+(`CLAUDE.md`: constants carry the evidence that set them). See that doc.
 
-*Separate from the collision count:* non-conservation fires on **every**
-`cooperate`, collision or not. The 64 collisions measured in `collective_groups`
-are a distinct, still-unattributed phenomenon — see the correction under Probe
-results.
+*Unrelated to all of the above:* the 64 same-tick `energy` collisions measured
+in `collective_groups` are a **different phenomenon** and remain **UNKNOWN** —
+see "Open questions" below.
+
+---
+
+## Open questions
+
+**OQ-1 — the 64 `collective_groups` same-tick `energy` collisions are
+unexplained. UNKNOWN. Opened 2026-07-26. Do not close by assumption.**
+
+The multi-writer census measured **64** same-tick / same-person / same-field
+`energy` collisions in 1,000 ticks of `collective_groups` (engine pair
+`living_settlement`, i.e. intra-family), reproduced identically across two
+independent probe runs. `living_settlement` 320 measured **0**.
+
+It was attributed to F11's cross-entity `cooperate` writer. **That attribution
+is withdrawn.** The disproof is direct: `living_settlement` accepts 37
+cooperates and produces zero collisions, and a `cooperate` writes both energies
+inside *one* proposal — one event touching two entities, which is not the
+collision shape at all. Cooperate is not sufficient to produce one.
+
+Scenario counts, for whoever picks this up:
+
+| Scenario | cooperates | energy-writing events | collisions |
+|---|---|---|---|
+| `living_settlement` 320 | 37 | 1,529 | **0** |
+| `collective_groups` 1,000 | 232 | 7,244 | **64** |
+
+If cooperate drove collisions at the `collective_groups` rate (0.276 each),
+`living_settlement`'s 37 would predict ~10. It produces none — so something
+scenario-specific to `collective_groups` is required, and it is not known what.
+
+Not investigated: deliberately out of scope for the audit that found it. Cheap
+next step is to dump the two colliding events per incident with their
+`proposer_engine_id`, `order_index` and action types — the existing probe
+(`backend/tools/_probe_ownership_f2_f3.py`) already collects the grouping and
+needs only the per-incident detail printed.
 
 ---
 
@@ -467,7 +503,9 @@ disposition vocabulary per `ARCHITECTURE-SPINE.md` §Capability delivery lifecyc
 | F8 dead end | **VERIFIED, and worse than recorded** — zero proposals in 1,000 organic ticks | `collective_groups` | none | **needs a ruling** — is 7C organically inert by design, or broken? | Ryan; probe *why* nothing is proposed if it matters |
 | F9 structure sound | **VERIFIED** | all | none | no action — recorded as a counterexample | — |
 | F10 no ownership tests | **VERIFIED** | all | tests only — hash-neutral | **DONE 2026-07-26** | none; extend coverage as new domains land |
-| F11 `energy` cross-entity writer | **VERIFIED** — `living_agent_social.py:435-437`, `cooperate` branch only, non-conserving (+40 target / −20 actor) | **frozen `living_settlement` 320: 37 `cooperate` accepted** (VERIFIED at hash `897f3f7f…3c5ab`); `collective_groups` also affected | **RE-BASELINE-CLASS** — the frozen baseline already encodes +740 units of invented energy; correcting conservation moves the hash | DEFERRED to core-integrity stage (writes person entities) | Ryan: authorise a re-baseline before any fix; confirm the MEDIUM re-rating |
+| F11 `energy` cross-entity writer | **VERIFIED** — `living_agent_social.py:436-437` writes actor AND target; Table 1 row was incomplete | `living_settlement` family | n/a — registry correction, no code change | **LOW.** Row corrected; ownership half closed | none |
+| *(rescoped out of F11)* effort-transfer `+40/−20` | **VERIFIED** — measured net **−420** on frozen `living_settlement` 320, not the +740 previously stated (29/37 target gains clamp at the ceiling) | `cooperate` + `help`, both frozen baselines | re-baseline-class **only if** the arithmetic changes | **MOVED** → `memory/FINDING-EFFORT-TRANSFER-ENERGY.md`; needs a ruling, not a fix | Ryan: rule on the gradient; name the constants either way |
+| OQ-1 64 `energy` collisions | **UNKNOWN** — measured twice, cause unattributed; F11 attribution withdrawn | `collective_groups` only (0 in `living_settlement`) | unknown | **OPEN QUESTION**, not a finding | not investigated this session |
 
 **The probes did double duty, and running them first was correct — it killed a
 HIGH finding and downgraded a gate.** Adding a CAS changes which proposals Core
