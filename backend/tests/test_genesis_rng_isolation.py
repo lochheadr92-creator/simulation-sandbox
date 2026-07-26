@@ -62,11 +62,11 @@ from scenarios import get_scenario
 SEED = "living-agents-stage6"
 LINEAGE = f"{SEED}|{SCHEMA_VERSION}|{ENGINE_VERSION}"
 
-# Two bands of DELIBERATELY different width -- 27,001 vs 1,350,501 -- because
-# width is what drives the entropy-consumption difference. Held as literals on
-# purpose: this test measures the mechanism, so it must not drift when the
-# shipped default band changes.
-NARROW_BAND = (3_000, 30_000)
+# Two adult bands of DELIBERATELY different width -- 27,001 vs 1,350,501 --
+# because width is what drives the entropy-consumption difference. Held as
+# literals on purpose: this test measures RNG isolation, not lifecycle-band
+# changes, so it must not drift when the shipped default band changes.
+NARROW_BAND = (657_000, 684_000)
 WIDE_BAND = (657_000, 2_007_500)
 
 # The only field the band change is entitled to move.

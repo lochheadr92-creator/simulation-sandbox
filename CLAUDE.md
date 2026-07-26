@@ -32,13 +32,11 @@ is the index, not the brain dump. Keep it under 150 lines.
   trade, currency; unblocking 7C; institutions/governance (10); demography
   (11); player surfaces (14/15); LLM-generated canonical state.
 - Change the frozen `living_settlement` 320-tick hash
-  (`48dfec22…1b1e3b`, re-baselined 2026-07-27 from `897f3f7f…3c5ab` at stage 1
-  of the authorised age-realism re-baseline leg — genesis RNG sub-streams +
-  spawn index; see `memory/evidence/genesis-rng/SHARED-SPAWN-STREAM-2026-07-26.md`
-  "Resolution" for the gate and the attribution split. Prior lineage:
-  `897f3f7f…3c5ab` re-baselined 2026-07-25 from `84d3ad52…c32d2` at the Layer C
-  Variety Leg 1 close-out, `memory/CAPABILITY-LAYER-C-VARIETY-LEG1-UPKEEP.md`
-  §6 item 3) — re-baseline requires explicit authorisation.
+  (`9c1b9b8b…46e55d4`, authorised 2026-07-27 at age-realism stage 2: realistic
+  founder ages + engine `0.6.0` fence). Prior: `48dfec22…1b1e3b` (stage 1,
+  genesis RNG isolation), `897f3f7f…3c5ab` (Layer C Variety Leg 1), then
+  `84d3ad52…c32d2`. Gates/attribution: `memory/evidence/genesis-rng/SHARED-
+  SPAWN-STREAM-2026-07-26.md`. Re-baseline requires explicit authorisation.
 - Touch Stage 7A–7D / 8A schemas, caps, priorities, constants — extend via new
   registries, schema-version bumps, new hooks only.
 - Destructive git: reset/checkout/clean/stash-drop on the working tree,

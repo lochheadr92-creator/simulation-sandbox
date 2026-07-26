@@ -41,22 +41,15 @@ generic `diagnostics` dict merge performed by the kernel.
 """
 from domains.base import DomainEngine, DomainOutput
 from core.constants import (
-    CHILD_MAX_AGE_TICKS, ELDER_MIN_AGE_TICKS, STARVATION_HEALTH_DECAY,
+    STARVATION_HEALTH_DECAY,
     DEHYDRATION_HEALTH_DECAY, EXPOSURE_HEALTH_DECAY, AGE_DECLINE_HEALTH_DECAY,
     HEALTH_REGEN, INJURY_HEALTH_THRESHOLD, MAX_HEALTH, CRITICAL_THRESHOLD,
+    life_stage_for_age,
 )
 
 
 def lifecycle_diag_key(entity_id: str) -> str:
     return f"{entity_id}::lifecycle"
-
-
-def _life_stage(age_ticks: int) -> str:
-    if age_ticks >= ELDER_MIN_AGE_TICKS:
-        return "elder"
-    if age_ticks < CHILD_MAX_AGE_TICKS:
-        return "child"
-    return "adult"
 
 
 class LifecycleDomain(DomainEngine):
@@ -79,7 +72,7 @@ class LifecycleDomain(DomainEngine):
                 continue
 
             age = e.get("age_ticks", 0) + 1
-            life_stage = _life_stage(age)
+            life_stage = life_stage_for_age(age)
 
             causes = []
             if e.get("thirst", 0) >= CRITICAL_THRESHOLD:

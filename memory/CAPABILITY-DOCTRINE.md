@@ -24,20 +24,18 @@ Historical design documents are retired individually through the Retirement Rule
 
 ### Regression baselines
 
-- `living_settlement`: `48dfec22…1b1e3b` (re-baselined 2026-07-27, authorised at
-  stage 1 of the age-realism re-baseline leg — genesis RNG sub-streams + spawn
-  index; gate and attribution in
-  `memory/evidence/genesis-rng/SHARED-SPAWN-STREAM-2026-07-26.md`. Prior
-  baselines `897f3f7f…3c5ab` (2026-07-25, Layer C Variety Leg 1) and
-  `84d3ad52…c32d2`)
-- `collective_groups`: `659a27f3…920342` — **STALE AS OF 2026-07-27, VALUE NOT
-  YET RE-MEASURED.** The genesis sub-stream + spawn-index change is global to
-  world generation and no scenario overrides `person_age_range`, so this hash
-  has necessarily moved too. It was NOT re-baselined in stage 1: its recorded
-  invocation is 1,000 ticks, no bands were pre-registered for it, and the leg
-  prompt authorised the `living_settlement` re-baseline only. Measured and
-  recorded at the leg close-out, and only with explicit authorisation at that
-  STOP. **Do not treat the value above as a passing gate in the meantime.**
+- `living_settlement`: `9c1b9b8b…46e55d4` (re-baselined 2026-07-27 at the
+  explicitly authorised age-realism stage-2 STOP: realistic founder ages and
+  engine `0.6.0` compatibility fence). Prior baselines: `48dfec22…1b1e3b`
+  (stage 1, genesis RNG sub-streams + spawn index), `897f3f7f…3c5ab` (Layer C
+  Variety Leg 1), and `84d3ad52…c32d2`. Gate and attribution:
+  `memory/evidence/genesis-rng/SHARED-SPAWN-STREAM-2026-07-26.md`.
+- `collective_groups`: `03312018…488a6` (1,000 ticks, seed
+  `living-agents-stage6`; measured and authorised at the same stage-2 STOP).
+  This is a regression tripwire, not an endorsement of every trajectory
+  outcome. The run had zero group goals and zero norms; an exact clean-HEAD
+  `967d1208` control also had zero goals/norms, so the condition predates stage
+  2. Its discrepancy with historical Stage 8B evidence remains unexplained.
 
 Regression baselines never change without explicit user authorisation at a STOP.
 

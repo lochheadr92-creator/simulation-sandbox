@@ -14,8 +14,22 @@ as genesis accepted events, giving them causal origin like everything else.
 import copy
 
 from core.rng import DeterministicRNG
-from core.constants import MAX_HEALTH, ANIMAL_MAX_HEALTH
+from core.constants import (
+    ANIMAL_MAX_HEALTH,
+    CHILD_MAX_AGE_TICKS,
+    DAY_LENGTH_TICKS,
+    MAX_HEALTH,
+    life_stage_for_age,
+)
 from domains.living_agent_contracts import default_affordances, empty_living_agent_state
+
+
+GENESIS_ADULT_AGE_MAX_TICKS = 55 * 365 * DAY_LENGTH_TICKS
+
+
+def _default_person_age_range():
+    """Default to adult founders aged 18 through 55 years in tick units."""
+    return CHILD_MAX_AGE_TICKS, GENESIS_ADULT_AGE_MAX_TICKS
 
 
 def generate_world(seed: str, scenario):
@@ -81,7 +95,7 @@ def generate_world(seed: str, scenario):
     p_hunger = cfg.get("person_hunger_range", (100, 300))
     p_thirst = cfg.get("person_thirst_range", (100, 300))
     p_energy = cfg.get("person_energy_range", (700, 1000))
-    p_age = cfg.get("person_age_range", (3000, 30000))  # all genesis people start as adults (no birth mechanic)
+    p_age = cfg.get("person_age_range", _default_person_age_range())
     person_positions = list(cfg.get("person_positions") or [])
     person_profiles = list(cfg.get("person_profiles") or [])
     for person_index in range(cfg.get("num_people", 0)):
@@ -124,7 +138,7 @@ def generate_world(seed: str, scenario):
             "paused": None,
             "knowledge": {"known_tiles": [], "known_water_tiles": [], "known_trees": {},
                           "known_shelters": {}, "known_carcasses": {}},
-            "age_ticks": person_age_rng.randint(*p_age), "life_stage": "adult",
+            "age_ticks": person_age_rng.randint(*p_age),
             "health": MAX_HEALTH, "injury": {"injured": False, "severity": 0, "cause": None},
             "death_cause": None, "death_tick": None,
             "living_agent": living_state,
@@ -157,6 +171,11 @@ def generate_world(seed: str, scenario):
             spec.setdefault("regeneration_rule", "ecology_interval")
         elif spec["type"] == "person":
             spec.setdefault("access", "private")
+            # Normalise at the one seam every regular, profile-overridden, and
+            # extra genesis person crosses. `life_stage` is derived canonical
+            # state and must never be trusted as an independent scenario field.
+            age_ticks = spec.setdefault("age_ticks", 0)
+            spec["life_stage"] = life_stage_for_age(age_ticks)
         spec["affordances"] = default_affordances(spec)
 
     return {"width": width, "height": height, "terrain": terrain, "genesis_specs": genesis_specs}

@@ -363,7 +363,7 @@ Start a fresh session; this doc is the memory, not the context window.
 - **Step 4** — qualified full suite, repeat/replay/resume, push.
 - **Step 5** — STOP; frontier returns to Layer C social density.
 
-### Pre-registered stage-2 gate (agreed, not yet run)
+### Pre-registered stage-2 gate (agreed before the run; resolved below)
 
 Noise source is **ORDERING**, and that is now a code-read fact rather than an
 assumption: `age_ticks`'s only consumers are the genesis draw, the read-only API
@@ -373,9 +373,11 @@ so exactly 657,000 is an adult; max genesis 2,007,500 + 320 ticks stays 364,000
 below elder). So new ages can reach behaviour ONLY through
 content_hash → event-id `hash8` → commit order.
 
-- genesis diff exact via tier 2, ages only — **already proven**: tiers 1 and 2
-  compare exactly `(3_000, 30_000)` against `(657_000, 2_007_500)`, which is
-  precisely the stage-2 default change, so they *are* stage 2's genesis diff;
+- genesis value isolation exact via tier 2 — **already proven**. The original
+  fixture compared the old and new default bands. Final review exposed that an
+  override below the new child boundary must also change derived `life_stage`;
+  the mechanism fixture now uses two adult-only bands, while dedicated tests
+  pin the exact child/adult/elder boundaries and every genesis ingress path;
 - accepted within **±3%** of stage 1's 4,849 → **4,704 – 4,994**;
 - character envelope unchanged: deaths ≤ 1, rest fraction 0.25–0.45, entropy
   ≥ 1.8 bits;
@@ -399,3 +401,123 @@ content_hash → event-id `hash8` → commit order.
    effort-transfer gradient. Pre-existing, untouched, not asserted as correct.
 4. Old-trace `warn` completion is **LIKELY**, inferred from the pre-change test
    passing. Not observed; no revert was performed to check.
+
+---
+
+## RESOLUTION — stage 2 of the age-realism re-baseline, 2026-07-27
+
+Explicitly authorised at the post-recovery STOP, including both protected
+baseline updates below. `DAY_LENGTH_TICKS` remains 100; no global time-scale,
+elder-decline, birth, demography, frontend, or Layer C work entered this slice.
+
+### What shipped
+
+1. `CHILD_MAX_AGE_TICKS = 657_000` (18 years) and the existing elder boundary
+   remains `2_372_500` (65 years).
+2. Default founders draw integer ages from `657_000..2_007_500` inclusive
+   (18–55 years). No current scenario overrides `person_age_range`.
+3. One Core-owned `life_stage_for_age` classifier now governs both genesis and
+   lifecycle. Every regular, profile-overridden, and `extra_genesis_specs`
+   person crosses a final normalisation seam, so a forged/stale `life_stage`
+   cannot enter tick-zero canonical state.
+4. Engine version advanced `0.5.0 → 0.6.0`; schema stays `0.4.0`. Stored
+   `0.5.0` runs remain available for recorded replay but fail closed for
+   stepping and current-engine shadow re-simulation.
+
+### Attribution amendment — required by the compatibility fence
+
+Stage 2 establishes baselines under realistic age/life-stage semantics and the
+`0.6.0` compatibility fence. Engine version participates in the canonical
+lineage included in state hashes, so `0.5.0`-to-`0.6.0` hash changes are not
+age-only measurements. Named RNG streams are **not** re-seeded by the version
+bump: they remain keyed by `run_seed::stream_name`. Within one engine version,
+the two-tier isolation test still proves an age-band edit cannot perturb
+unrelated genesis values or unedited-entity provenance.
+
+### Protected `living_settlement` gate — all pre-registered bands PASS
+
+Final-tree command, from `backend/`:
+
+```powershell
+py -3.12 -m tools.living_agent_harness --scenario living_settlement --ticks 320 --repeat 2 --resume-at 160 --seed living-agents-stage6
+```
+
+| quantity | stage-1 baseline | pre-registered band | measured | verdict |
+|---|---:|---:|---:|---|
+| accepted events | 4,849 | 4,704–4,994 (±3%) | **4,947** | PASS |
+| deaths | 0 | ≤ 1 | **0** | PASS |
+| rest fraction | 0.3740 | 0.25–0.45 | **0.373636** (445 / 1,191) | PASS |
+| action entropy | 2.5242 bits | ≥ 1.8 bits | **2.485325 bits** | PASS |
+
+```
+final_state_hash 9c1b9b8ba28a6fa830ff141d1eea7a8755d7c13a5a62dfc94ba93a15946e55d4
+repeat_matches True | replay_matches_final_entities True
+resume_matches True (resumed at 160) | replay_state_hash == final_state_hash
+```
+
+Death measurement now counts accepted `death` events directly. The older
+`lifecycle_tick == people × ticks` proxy is only safe when no injury event
+substitutes for a lifecycle tick; it must not be reused as a general death
+counter.
+
+### Authorised `collective_groups` close-out measurement
+
+Final-tree command, from `backend/`:
+
+```powershell
+py -3.12 -m tools.living_agent_harness --scenario collective_groups --ticks 1000 --repeat 2 --seed living-agents-stage6
+```
+
+```
+final_state_hash       03312018977e518227652d4929afb643bdc6db3fc99f7a7a5ee4e055754488a6
+association_summary    25c100a257b7010397dd716a52efd19670506986a0c2aeb633fdfb8d09562f17
+group_state_summary    a8d63836b6939e16dff397bb992a3f1f9af07095f72c2cf2325a4fe8bfe9be45
+group_goal_summary     44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+group_norm_summary     44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+repeat_matches True | replay_matches_final_entities True
+replay_state_hash == final_state_hash
+```
+
+Measured trajectory: 21,015 accepted / 1,913 rejected; 6,137 actions; rest
+fraction 0.350497; entropy 2.350245 bits; 0 deaths. Lifecycle accounting is
+7,998 `lifecycle_tick` + 2 `injury` + 0 `death` = 8,000 person-ticks. Final
+state has 28 associations, 11 recognised groups, 11 shared-group states, 22
+shared facts, and zero group goals/norms. No behavioural bands were
+pre-registered for this stale baseline; this is a measured regression
+tripwire, not a claim that every historical organic behaviour remains present.
+
+The 0-goal/0-norm result predates the Stage 2 age-realism diff. An exact
+`git archive` control of clean HEAD `967d1208` (engine `0.5.0`, old default
+ages) also produced zero goals/norms: final hash
+`ee0e001c557d8bb73029cb2b164608fd6dbdc372c59c6a54889e0feccd8a397c`,
+20,215 accepted events, 1 direct death, replay equality true. Stage 2 neither
+caused nor fixed it; the discrepancy with historical Stage 8B evidence of
+seven active norms remains unexplained and is separately tracked for a future
+causality pass.
+
+### Adversarial review ledger
+
+Reviewer: separate non-Anthropic Codex/GPT-5 subagent, blind-first and
+read-only. Model-level difference from the implementing agent could not be
+confirmed; independence is therefore process/context-level, not claimed as
+model-level.
+
+| ID | Finding | Disposition | Close-out |
+|---|---|---|---|
+| AR-01 | Genesis stamped `adult` independently of overridden ages; profile and extra-person ingress could create contradictory canonical state. | **FIX** | Added one Core classifier, final all-person normalisation, and child/adult/elder plus profile/extra regressions. Reviewer reproduced both paths before the fix and withdrew the finding after recheck. |
+| BS-1 | Builder-seeded: engine-version attribution was initially described as a global RNG re-key. | **ACCEPT** | Corrected: engine version changes canonical lineage/hash context but named RNG streams remain seed-keyed. |
+| BS-2 | Builder-seeded: current zero goals/norms conflicts with historical Stage 8B evidence. | **ACCEPT** | Exact clean-HEAD control proves it predates Stage 2; exact earlier cause remains unresolved and was not expanded inside this review. |
+
+No independent blocking flaw remains.
+
+### Final verification
+
+- `py -3.12 -m compileall -q .` — PASS.
+- Focused age/genesis/version/kernel set — **28 passed**.
+- Isolated full backend suite — **435 passed, 4 skipped**, no executed failure;
+  one existing Starlette `python_multipart` pending-deprecation warning.
+- The uniquely named full-suite Mongo database was dropped and confirmed
+  absent after the run.
+- Protected living repeat/replay/resume and all four bands — PASS.
+- Collective repeat/replay and direct zero-death accounting — PASS.
+- Frontend tests not run: no frontend file or contract changed.

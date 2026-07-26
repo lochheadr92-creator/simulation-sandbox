@@ -85,9 +85,10 @@ spawn-rate, target-population, or population-balancing mechanics in Stage 6.
 - Engine/schema version changes require explicit run compatibility checks.
 - Recorded-event replay continues to apply stored mutations without consulting
   projections or current UI code.
-- Stage 6 writes new runs as engine `0.5.0`, schema `0.4.0`. Older runs are
-  recorded-replay-only in this executable and fail clearly if stepped or used
-  for current-engine shadow re-simulation.
+- Stage 6 introduced engine `0.5.0`, schema `0.4.0`. The authorised genesis-RNG
+  and age-realism re-baseline later advanced the engine to `0.6.0` without a
+  schema change. Older runs are recorded-replay-only in this executable and
+  fail clearly if stepped or used for current-engine shadow re-simulation.
 
 ## Package gates
 
@@ -124,6 +125,12 @@ spawn-rate, target-population, or population-balancing mechanics in Stage 6.
   the local validation environment because every accepted event hashes the full
   canonical snapshot. State stayed bounded; runtime optimisation is follow-up
   work, not hidden verification debt.
+- Age-realism stage 2 (2026-07-27): founder ages now default to 18–55 years,
+  child/adult/elder classification is Core-owned and shared by genesis and
+  lifecycle, and engine `0.6.0` fail-closes older runs for stepping/shadow
+  re-simulation. Final verification: 435 backend tests passed, 4 Docker-path
+  environment tests skipped; the protected 320-tick hash is recorded in
+  `CLAUDE.md` / `CAPABILITY-DOCTRINE.md`.
 
 Stage 6 is complete because every package gate passes together. This status
 does not authorise Stage 7 or player embodiment.

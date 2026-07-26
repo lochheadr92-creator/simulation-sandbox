@@ -7,6 +7,8 @@ displayed age.
 """
 from __future__ import annotations
 
+import copy
+
 from api.age_projection import (
     DAYS_PER_YEAR,
     TICKS_PER_YEAR,
@@ -14,7 +16,18 @@ from api.age_projection import (
     project_entity_age,
     project_entity_ages,
 )
-from core.constants import CHILD_MAX_AGE_TICKS, DAY_LENGTH_TICKS, ELDER_MIN_AGE_TICKS
+from core.constants import (
+    CHILD_MAX_AGE_TICKS,
+    DAY_LENGTH_TICKS,
+    ELDER_MIN_AGE_TICKS,
+    life_stage_for_age,
+)
+from scenarios import get_scenario
+from world.generator import (
+    GENESIS_ADULT_AGE_MAX_TICKS,
+    _default_person_age_range,
+    generate_world,
+)
 
 
 def test_ticks_per_year_derives_from_the_day_anchor():
@@ -79,13 +92,86 @@ def test_elder_threshold_is_a_real_human_age():
     assert age_years(ELDER_MIN_AGE_TICKS) == 65
 
 
-def test_child_threshold_still_unreachable_by_genesis():
-    """Part A deliberately did NOT re-scale CHILD_MAX_AGE_TICKS: the global
-    minimum genesis age is 3,084 ticks, only 84 above the 3,000 boundary, so
-    raising it would reclassify live agents adult -> child and move the frozen
-    hash. Re-scaled in Part B with the genesis distribution."""
-    assert CHILD_MAX_AGE_TICKS == 3000
-    assert CHILD_MAX_AGE_TICKS < 3084, (
-        "genesis minimum age has dropped to or below the child boundary; "
-        "life_stage would change and the frozen hash would move"
+def test_child_threshold_and_default_genesis_band_use_real_human_ages():
+    """Stage 2 re-scales the child boundary and default founder ages together.
+
+    The lower bound equals the child threshold deliberately: lifecycle uses a
+    strict `<`, so every founder is an adult while the child stage remains
+    unreachable until a birth path exists.
+    """
+    assert CHILD_MAX_AGE_TICKS == 18 * TICKS_PER_YEAR
+    assert GENESIS_ADULT_AGE_MAX_TICKS == 55 * TICKS_PER_YEAR
+    assert _default_person_age_range() == (
+        CHILD_MAX_AGE_TICKS,
+        GENESIS_ADULT_AGE_MAX_TICKS,
+    )
+    assert CHILD_MAX_AGE_TICKS < GENESIS_ADULT_AGE_MAX_TICKS < ELDER_MIN_AGE_TICKS
+
+
+def test_life_stage_boundaries_use_the_canonical_age_classifier():
+    assert life_stage_for_age(CHILD_MAX_AGE_TICKS - 1) == "child"
+    assert life_stage_for_age(CHILD_MAX_AGE_TICKS) == "adult"
+    assert life_stage_for_age(ELDER_MIN_AGE_TICKS - 1) == "adult"
+    assert life_stage_for_age(ELDER_MIN_AGE_TICKS) == "elder"
+
+
+def test_default_world_generation_creates_only_adult_founders_in_realistic_band():
+    world = generate_world("age-default-band", get_scenario("basic_survival"))
+    people = [spec for spec in world["genesis_specs"] if spec["type"] == "person"]
+
+    assert people, "fixture must generate people"
+    assert all(
+        CHILD_MAX_AGE_TICKS <= person["age_ticks"] <= GENESIS_ADULT_AGE_MAX_TICKS
+        for person in people
+    )
+    assert {person["life_stage"] for person in people} == {"adult"}
+
+
+def test_world_generation_derives_life_stage_from_range_and_profile_age_overrides():
+    def generated_person(age_range, profile=None):
+        scenario = copy.deepcopy(get_scenario("basic_survival"))
+        scenario.world_gen["num_people"] = 1
+        scenario.world_gen["person_age_range"] = age_range
+        scenario.world_gen["person_profiles"] = [profile] if profile else []
+        world = generate_world("age-override-band", scenario)
+        return next(spec for spec in world["genesis_specs"] if spec["type"] == "person")
+
+    child = generated_person((CHILD_MAX_AGE_TICKS - 1, CHILD_MAX_AGE_TICKS - 1))
+    elder = generated_person((ELDER_MIN_AGE_TICKS, ELDER_MIN_AGE_TICKS))
+    profile_elder = generated_person(
+        (CHILD_MAX_AGE_TICKS, CHILD_MAX_AGE_TICKS),
+        {"age_ticks": ELDER_MIN_AGE_TICKS, "life_stage": "child"},
+    )
+
+    assert (child["age_ticks"], child["life_stage"]) == (
+        CHILD_MAX_AGE_TICKS - 1,
+        "child",
+    )
+    assert (elder["age_ticks"], elder["life_stage"]) == (
+        ELDER_MIN_AGE_TICKS,
+        "elder",
+    )
+    assert (profile_elder["age_ticks"], profile_elder["life_stage"]) == (
+        ELDER_MIN_AGE_TICKS,
+        "elder",
+    )
+
+
+def test_world_generation_normalises_forged_life_stage_on_extra_people():
+    scenario = copy.deepcopy(get_scenario("basic_survival"))
+    scenario.world_gen["num_people"] = 0
+    scenario.world_gen["extra_genesis_specs"] = [{
+        "id": "extra-person",
+        "type": "person",
+        "position": {"x": 0, "y": 0},
+        "age_ticks": ELDER_MIN_AGE_TICKS,
+        "life_stage": "child",
+    }]
+
+    world = generate_world("age-extra-person", scenario)
+    person = next(spec for spec in world["genesis_specs"] if spec["type"] == "person")
+
+    assert (person["age_ticks"], person["life_stage"]) == (
+        ELDER_MIN_AGE_TICKS,
+        "elder",
     )
