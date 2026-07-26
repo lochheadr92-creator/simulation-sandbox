@@ -358,7 +358,55 @@ proximity are live — only the collective path never triggers. **Why is UNKNOWN
 and unprobed** (candidate causes: group recognition never completes, the
 `shared_storage` fact never lands, or no member carries a resource at the
 moment eligibility is evaluated). This upgrades F8 from a design question to a
-"does 7C function organically at all" question. **Still needs a ruling.**
+"does 7C function organically at all" question.
+
+### F8 RULING BRIEF
+
+**The decision:** is 7C intentionally inert, or broken?
+
+**What is not in question.** The mechanism works. `test_stage7c_group_collective.py`
+passes, and the ownership-invariant fixture builds a real deposit proposal from
+the real builder. The code is fine; the *organic preconditions* are never met.
+
+**Two candidate causes, not distinguished.** Both are UNKNOWN:
+
+1. **The registries never materialise** — `select_due_ids`
+   (`group_collective_domain.py:24-27`) returns `[]` unless *both*
+   `association-registry-000` and `group-shared-state-000` exist, so the domain
+   is never even activated. Consistent with `rejected_count: 0`.
+2. **The registries exist but eligibility never coincides** — a group is
+   recognised, but two members are never simultaneously adjacent to the shared
+   storage while carrying a resource.
+
+`rejected_count: 0` mildly favours (1): if the domain were activating and
+building proposals that then failed validation, rejections would appear. But
+proposals can also fail to be *built* (`derive_coordinated_deposits` returning
+nothing), which produces zero of both. Not decisive.
+
+| # | Option | Cost | Effect |
+|---|---|---|---|
+| **A** | Rule 7C observability-only; close F8 as intended behaviour | free | Records a claim we have not tested. Sits badly with **Rail C** — "a mechanism is not alive because a test can fire it" |
+| **B** | **Run the one distinguishing diagnostic, then rule** | one read-only probe | Ruling becomes evidence-based; see leverage below |
+| **C** | Retire 7C | destructive | Premature — mechanism is built, tested, and already DEFERRED behind F-A |
+
+**Recommendation: B**, and it is the highest-leverage cheap probe currently
+available anywhere in the audit. One read-only query — do the two registries
+exist in a `collective_groups` run, and does any group reach
+`recognition_state: recognised` with a `shared_storage` fact — plausibly
+resolves **three** open items at once:
+
+- **F8 itself**, replacing a guess with a cause.
+- **`THE-SPINE.md` §8's 7C row**, whose blocker currently reads UNKNOWN since
+  the surplus diagnosis was falsified. A real re-entry condition could replace
+  it.
+- **The last failing test in the suite.** `CORE-INTEGRITY-002`'s
+  `test_concurrent_stage7b_...` fails 4/4 at a *setup* assertion,
+  `assert registry_before.get("groups")` — the group never forms. That is the
+  same "groups do not form organically" hypothesis. If cause (1) holds, one
+  diagnosis explains both.
+
+**Still needs a ruling** — B is a recommendation about *how* to rule, not the
+ruling. Not investigated in the audit that raised it.
 
 **F9 — Structure `condition` is sound.** Recorded because it was the expected
 risk and is not one. Phase separation (wear = environment/0, repair+tend =

@@ -111,16 +111,49 @@ contrast them against the measured values.*
 3. **The pair is duplicated, not shared.** `cooperate` and `help` both hardcode
    `+40 / −20` independently. Changing one silently diverges them.
 
-## Disposition
+## RULING BRIEF
 
-**Needs a ruling from Ryan**, not a code fix:
+**The decision:** what should `cooperate` (and `help`) do to energy? Not a
+correctness question — energy is non-conserved by design — so there is no
+"correct" answer to derive. It is a design choice about incentives.
 
-- If the gradient is intended → name the constants, record the evidence beside
-  them, and this closes.
-- If it is not → it is a behaviour change, and it is **re-baseline-class**:
-  37 cooperates are baked into the frozen `living_settlement` 320 hash and 232
-  into `collective_groups`, so altering the arithmetic moves both. That needs
-  an authorised re-baseline STOP.
+**The specific thing to react to.** The actor is charged **unconditionally**
+(`max(0, e-20)`), while the target's gain is capped by headroom
+(`min(1000, e+40)`). When the target is already full, the actor pays 20 and the
+target receives 0 — a pure loss. Measured, that is the *common* case: 199 of
+269 target writes across both baselines clamped. So cooperating currently makes
+the settlement poorer in energy terms roughly three times out of four.
+
+| # | Option | Hash cost | Effect |
+|---|---|---|---|
+| **A** | **Ratify as-is.** Name the constants, record evidence beside them, share or deliberately duplicate between `cooperate`/`help`. | **none — hash-neutral** | Closes the one concrete `CLAUDE.md` violation. Behaviour unchanged. |
+| **B** | **Conserve it.** Actor −X, target +X. | **re-baseline-class** | Legible semantics ("costs me what it gives you"). Targets gain less; cooperate becomes weaker. |
+| **C** | **Charge only for energy delivered.** Cost = actual gain after the ceiling clamp. | **re-baseline-class** | Removes the perverse loss; likely what was intended. Keeps +40/−20 whenever the target has room. |
+| **D** | **Drop the energy effect.** `cooperate` becomes purely social. | **re-baseline-class** | Simplest semantics; removes cooperate's only material incentive. |
+
+B, C and D all move **both** frozen hashes (37 cooperates baked into
+`living_settlement` 320, 232 into `collective_groups`) and therefore need an
+authorised re-baseline STOP.
+
+**Recommendation: A now; revisit C inside the social-density leg.**
+
+Three reasons. (1) There is no correctness violation to fix — only an
+unexamined gradient — so nothing forces a behaviour change today. (2) The one
+real `CLAUDE.md` breach is the unevidenced constants, and A fixes exactly that
+at zero hash cost. (3) Cooperate's economics are precisely what **Layer C
+social density** will exercise; that leg gets its own probe and contract, so
+the incentive question should be decided there with evidence about how often
+cooperate actually fires and what it competes with — not speculatively now,
+paying a re-baseline for a behaviour nothing currently depends on.
+
+If A is chosen, the concrete work is small and hash-neutral: promote `+40`,
+`−20`, `+50`, `+80` to named constants with a one-line evidence comment each,
+and decide explicitly whether `cooperate` and `help` share them or diverge on
+purpose (today they are duplicated literals that will silently drift).
+
+**Note for whoever takes option C:** `max(0, …)` is dead in practice — 0 of 269
+actor writes ever hit the floor — so the two clamps are not symmetric problems.
+Only the ceiling matters.
 
 **Out of scope where it was raised.** Not fixed in the ownership audit; no code
 touched. Cross-referenced from `REGISTRY-COMPONENT-OWNERSHIP.md`, whose Table 1
