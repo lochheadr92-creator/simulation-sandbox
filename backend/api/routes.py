@@ -22,6 +22,7 @@ from core.replay_service import verify_replay, verify_determinism
 from core import history_service
 from domains.base import DomainOutput
 from domains.lifecycle_domain import lifecycle_diag_key
+from api.age_projection import project_entity_age, project_entity_ages
 from api.cognitive_projection import build_cognitive_projection
 from api.living_agent_projection import build_living_agent_projection
 from api.association_projection import build_association_projection
@@ -187,7 +188,9 @@ async def api_get_state(run_id: str):
         "current_tick": run["current_tick"], "time_phase": time_phase(run["current_tick"]),
         "status": run["status"], "last_state_hash": run["last_state_hash"],
         "width": run["width"], "height": run["height"], "terrain": run["terrain"],
-        "entities": entities,
+        # Derived age_years added on the way out only; age_ticks stays the
+        # stored truth and is untouched. See api/age_projection.py.
+        "entities": project_entity_ages(entities),
     }
 
 
@@ -211,6 +214,7 @@ async def api_get_causal(run_id: str, entity_id: str):
     entity = await db.entities.find_one({"run_id": run_id, "id": entity_id}, {"_id": 0, "run_id": 0})
     if not entity:
         raise HTTPException(404, "entity not found")
+    entity = project_entity_age(entity)
 
     diag = await db.activation_diagnostics.find_one({"run_id": run_id, "entity_id": entity_id}, {"_id": 0})
     lifecycle_diag = await db.activation_diagnostics.find_one(

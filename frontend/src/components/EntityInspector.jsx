@@ -143,8 +143,15 @@ export default function EntityInspector({ runId, entityId, refreshKey, viewMode 
       {isPerson && (
         <div data-testid="lifecycle-section">
           <h4 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-500 mb-2">Lifecycle (ageing / health)</h4>
-          <DataRow label="age_ticks" value={entity.age_ticks} />
+          {/* age_years is DERIVED in the read-only projection layer
+              (backend/api/age_projection.py); age_ticks remains the stored
+              truth and is kept below as a diagnostic, never as the age. */}
+          <DataRow
+            label="age"
+            value={entity.age_years != null ? `${entity.age_years} years` : "—"}
+          />
           <DataRow label="life_stage" value={entity.life_stage} />
+          <DataRow label="age_ticks (raw)" value={entity.age_ticks} />
           <NeedBar label="health" value={entity.health ?? 1000} danger={400} />
           <div className="flex justify-between items-center py-1.5 text-xs" data-testid="injury-status-row">
             <span className="text-zinc-500">injury</span>

@@ -30,8 +30,24 @@ RECENT_HORIZON_TICKS = 200  # rejected proposals older than (current_tick - this
                             # accepted events/commit_frames are NEVER pruned (required for replay).
 
 # --- Phase 4B: lifecycle (people ageing/health/injury/death) ---
-CHILD_MAX_AGE_TICKS = 3000       # below this age: life_stage == "child" (purely observational, no spawn path exists)
-ELDER_MIN_AGE_TICKS = 40000      # at/above this age: life_stage == "elder"
+# Age thresholds are denominated in ticks at DAY_LENGTH_TICKS * 365 = 36,500
+# ticks per year (the codebase's only time anchor). The pre-2026-07-26 values
+# were 3,000 and 40,000 -- i.e. an "elder" at 13 months old. Corrected to real
+# human ages.
+#
+# CHILD_MAX_AGE_TICKS is NOT re-scaled here, deliberately. The global minimum
+# genesis age is 3,084 ticks, only 84 above the old 3,000 boundary, so raising
+# it would reclassify live agents adult -> child and write a different
+# life_stage into canonical state -- moving the frozen hash. It is re-scaled in
+# Part B alongside the genesis distribution, where the hash moves under
+# authorisation and the change is attributable. Until then the child stage
+# stays unreachable, exactly as before: genesis spawns above it and there is no
+# birth path.
+CHILD_MAX_AGE_TICKS = 3000       # UNCHANGED in Part A -- see note above; still unreachable
+ELDER_MIN_AGE_TICKS = 2372500    # 65 years * 36,500. Was 40,000 (= 13 months).
+                                 # Hash-neutral: worst genesis max age across all
+                                 # scenarios is 28,784 and the longest scenario is
+                                 # 1,000 ticks, so nothing came near either value.
 STARVATION_HEALTH_DECAY = 3      # health lost/tick while hunger >= CRITICAL_THRESHOLD
 DEHYDRATION_HEALTH_DECAY = 4     # health lost/tick while thirst >= CRITICAL_THRESHOLD
 EXPOSURE_HEALTH_DECAY = 2        # health lost/tick while night and not sheltered
