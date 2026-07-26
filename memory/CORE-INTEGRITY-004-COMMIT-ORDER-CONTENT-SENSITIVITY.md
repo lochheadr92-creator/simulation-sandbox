@@ -138,6 +138,10 @@ one nobody should trust.
 | Gate 1 verdict: ordering carrying meaning makes the spawn index *unsafe* | mine | **WRONG INFERENCE** — measurement sound, conclusion inverted. A live ordering channel makes freezing the genesis door load-bearing, not unsafe |
 | Gate 1 stop-rule, and endorsing the forced-ordering test as discriminating | cloud session | **WRONG**, corrected **before** the result. Forced ordering could not discriminate: spawn-event `hash8` differs by age regardless of order, so both candidates predicted movement under it |
 | "Stage 2 will be small and explicable" | cloud session | **WRONG**, corrected **before** the result. Event ids embed content `hash8`, so an edited entity's spawn id changes, enters proposals as a causal parent, and perturbs ordering — stage 2 lands at noise-floor order, not near zero |
+| Genesis priorities are uniform `None`, and the index also removes a `None`-vs-`int` trap in `order_key` | this doc, pre-implementation | **WRONG on both counts**, caught by code-read **before** implementing. Priorities were uniform `-1`, and no proposal anywhere carries a present-but-`None` priority, so no `TypeError` was ever latent. The uniformity argument — and therefore the index's justification — survives; only the second billed benefit is struck. See the CORRECTION block above |
+| Entropy would move materially under a pure resampling perturbation | implied by treating it as a gated statistic | **REFUTED as a worry.** Entropy moved −0.0043 bits while single counts moved up to ±72. Distribution *shape* is far more stable than any single count — recorded as the first entropy-noise datum |
+| The `warn` regression is either (i) candidate generated-and-lost ⇒ displacement, or (ii) never generated ⇒ geometry | pre-registered fork, cloud session **and** mine, before the receipts | **BOTH WRONG — the fork was incomplete.** Decision receipts show a third outcome nobody listed: the candidate is generated, **wins** at ticks 1–2, and still never commits, because its plan is `['MOVE_TO_TARGET', 'WARN']` and the move is rejected `precondition.failed` (the scout is boxed in by campmates) until `REPAY_DEBT` replans it away. Neither selection-displacement nor geometry: **plan preemption.** Consequence caught before writing the test: a "sated scout ⇒ WARN_DANGER wins" fixture would have been **vacuous**, since winning is exactly what already happens organically. The fixture had to assert the action COMMITS, which required an adjacent target |
+| My own first reading: the re-stream moved the entities, so the geometry broke | mine, mid-investigation | **WRONG**, corrected from the genesis dump within the same investigation. `living_settlement` pins all person positions and roles, the animal, storages, tools and shelters via `person_positions` / `person_profiles` / `extra_genesis_specs`. Only the 5 trees and the RNG-drawn needs actually moved |
 
 Both corrections landed **pre-result**, which is what distinguishes them from
 rationalisation. Recorded on both sides: predictions from the cloud session and
@@ -165,16 +169,72 @@ ordering key that does not derive from `content_hash`. That is Core surgery,
 moves every hash once, and is **004's own stage** — not a rider on an age task.
 
 **Interim, authorised separately:** a genesis spawn index (`engine_priority` per
-spec; genesis priorities are currently uniform `None`, so nothing is clobbered).
-Re-billed honestly: it stabilises provenance for **unedited** entities and
-removes the `None`-vs-`int` comparison trap. **It does not make an edited
-entity's stage attributable** — event ids embed content `hash8`, so a changed
-person spawn id still enters proposals as a causal parent and still perturbs
-ordering.
+spec). Genesis priorities were uniform, so nothing is clobbered — every genesis
+proposal tied on the priority slot, which is precisely why `content_hash` was
+deciding the order. Re-billed honestly: it stabilises provenance for
+**unedited** entities, and that is its *only* benefit. **It does not make an
+edited entity's stage attributable** — event ids embed content `hash8`, so a
+changed person spawn id still enters proposals as a causal parent and still
+perturbs ordering.
+
+> **CORRECTION (2026-07-27, verified by code-read before implementing).** An
+> earlier revision of this section said genesis priorities were uniform `None`
+> and billed the index as also removing a `None`-vs-`int` comparison trap in
+> `order_key`. **Both claims are false.** `core/kernel.py` set
+> `"engine_priority": -1` on every genesis spawn proposal — uniform `-1`, not
+> `None` — and a repo-wide search finds no proposal anywhere that carries a
+> present-but-`None` priority, so `order_key`'s `.get(..., 100)` default is
+> never defeated and no `TypeError` was ever latent. The uniformity argument
+> survives unchanged (uniform `-1` ties just as uniform `None` would); only the
+> second billed benefit is struck. Recorded rather than silently edited,
+> because a finding doc that quietly drops a wrong claim is one nobody should
+> trust.
 
 **Residual property, not a solved problem:** a positional index stabilises
 ordering against *content* changes, not *composition* changes. Appending an
 entity is free; **inserting mid-spec still renumbers everything after it**.
+
+### Spawn index — IMPLEMENTED 2026-07-27 (re-baseline leg, stage 1)
+
+`core/kernel.py`, `GENESIS_SPAWN_PRIORITY_BASE + spawn_index` per genesis spec.
+Landed with the genesis RNG sub-streams in one commit: sub-streams alone left the
+ordering channel open, so the regression test for the RNG finding stayed red
+without the index.
+
+**Direct evidence of the channel, from the pre-registration run.** With only
+`person_age_range` changed and the sub-streams already in place, the unedited
+`animal-threat` entity moved:
+
+```
+creation_event_id   evt-0-12-3794366e  ->  evt-0-7-3794366e
+```
+
+`hash8` is **identical** (`3794366e`) — the animal's content never changed. Only
+its slot moved, because eight people's edited ages changed their content hashes
+and displaced it. That is this finding's mechanism isolated with zero value
+confound, and it is why an unedited entity is the sharp probe rather than an
+edited one.
+
+Verified properties, each pinned by test in
+`backend/tests/test_genesis_rng_isolation.py`:
+
+- genesis commit order is identical across two different age bands (asserted
+  content-independently, so it cannot pass by mirroring the id-assignment logic);
+- `order_index == spec position` for every genesis event — holds only while every
+  genesis proposal is accepted, so that is asserted too;
+- genesis priorities are strictly increasing and remain below every domain
+  priority.
+
+`engine_priority` is **not** stored in the accepted event record
+(`commit_pipeline.py`) — it only feeds the sort. So the index changes ordering
+and nothing else.
+
+**Post-implementation gate:** all four pre-registered bands passed; frozen
+`living_settlement` 320 hash moved
+`897f3f7f…3c5ab` → `48dfec2267b4ded7752a2f3fbdbee45a3ee6f69c8b1f62e19b6fe095741b1e3b`;
+repeat / replay / resume all True. Full detail, including the first measured
+entropy-noise datum, in
+`memory/evidence/genesis-rng/SHARED-SPAWN-STREAM-2026-07-26.md` "Resolution".
 
 ## Debt carried
 

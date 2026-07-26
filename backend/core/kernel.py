@@ -16,6 +16,39 @@ from core.commit_pipeline import run_commit_frame
 from world.generator import generate_world
 
 
+# GENESIS SPAWN INDEX.
+# Every genesis spawn proposal used to carry the same engine_priority (-1). In
+# `order_key` (core/commit_pipeline.py) that means all of
+# (requested_time=0, phase="environment", engine_priority) tie, so commit order
+# fell through to `content_hash` -- CONTENT decided the order. `order_index` is
+# then baked into the event id `evt-{tick}-{order}-{hash8}`, and
+# `_stamp_new_entity_provenance` writes that id onto every entity as
+# creation_event_id / last_event_id. Net effect: editing one person's age
+# relocated an unrelated TREE's provenance ids. Measured: with only
+# person_age_range changed, animal-threat moved evt-0-12-3794366e ->
+# evt-0-7-3794366e -- identical hash8, different slot.
+#
+# Giving each spec its position as engine_priority makes genesis order
+# POSITIONAL, so an entity whose spec did not change keeps its exact event id.
+# Because `order_index` starts at 0 for the genesis frame and every genesis
+# proposal is accepted (exogenous, no preconditions, own scope), order_index
+# then equals the spec position exactly -- pinned by test.
+#
+# The base keeps genesis numerically far below every domain priority (lowest is
+# weather at -2), so the field's "lower commits first" meaning still reads
+# correctly. This cannot reorder genesis against any domain in any case:
+# build_genesis constructs the frame's entire proposal list itself, so genesis
+# proposals are never in a frame with anything else.
+#
+# WHAT THIS DOES NOT FIX: an EDITED entity's own spawn id still changes,
+# because hash8 is a prefix of its content hash. That channel is
+# CORE-INTEGRITY-004's and is remediated in 004's own stage. This also
+# stabilises order against CONTENT changes only, not COMPOSITION changes --
+# appending a spec is free, inserting one mid-list renumbers everything after.
+# See memory/CORE-INTEGRITY-004-COMMIT-ORDER-CONTENT-SENSITIVITY.md.
+GENESIS_SPAWN_PRIORITY_BASE = -1_000_000
+
+
 def _frame(run_id, tick, entities_view, terrain, due_ids, rng, phase, night):
     f = ActivationFrame(run_id, tick, ENGINE_VERSION, phase, entities_view, terrain, due_ids, rng)
     f.night = night
@@ -29,7 +62,7 @@ def build_genesis(seed: str, scenario, lineage_key: str):
     proposals = []
     counters = {}
 
-    for spec in world["genesis_specs"]:
+    for spawn_index, spec in enumerate(world["genesis_specs"]):
         spec = dict(spec)
         explicit_id = spec.pop("id", None)
         t = spec["type"]
@@ -46,7 +79,8 @@ def build_genesis(seed: str, scenario, lineage_key: str):
             "is_exogenous": True,
             "requested_time": 0,
             "phase": "environment",
-            "engine_priority": -1,
+            # Positional, not uniform -- see GENESIS_SPAWN_PRIORITY_BASE above.
+            "engine_priority": GENESIS_SPAWN_PRIORITY_BASE + spawn_index,
             "touched_scope": [eid],
             "preconditions": [],
             "mutation": {"entity_updates": {}, "new_entities": {eid: dict(spec)}},

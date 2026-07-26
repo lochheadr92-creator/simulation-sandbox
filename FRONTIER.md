@@ -25,6 +25,17 @@ Active leg:     Layer C — SOCIAL DENSITY.  Status: NOT STARTED.
                     memory/REGISTRY-COMPONENT-OWNERSHIP.md.
                   - Rulings queued for Ryan: the effort-transfer gradient
                     (memory/FINDING-EFFORT-TRANSFER-ENERGY.md) and F8 A/B/C.
+                    Joined 2026-07-27 by the GOAL-SCORING smell, same class,
+                    for a future scoring-contract leg: REPAY_DEBT scores 27477
+                    against WARN_DANGER's 23435, so repaying a debt outranks
+                    warning a neighbour about a predator, and it preempts an
+                    in-progress warn plan. VERIFIED by decision receipts
+                    (living_settlement, seed stage6-integrated, tick 3).
+                    PRE-EXISTING -- not introduced by the genesis re-stream.
+                    Deliberately NOT acted on and NOT asserted as correct
+                    anywhere; the C-6 fixture pins survival dominance only.
+                    Evidence: the deferral row for `warn` organic firing in
+                    memory/CAPABILITY_ROADMAP.md.
                   - DEBT, load-bearing before Stage 11 touches population
                     counts: per-parameter-PER-ENTITY RNG keying. Authorised;
                     only per-parameter is implemented in world/generator.py.

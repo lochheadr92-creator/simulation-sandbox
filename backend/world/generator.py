@@ -24,7 +24,27 @@ def generate_world(seed: str, scenario):
     ground = cfg.get("ground_terrain", "grass")
     rng = DeterministicRNG(seed)
     terrain_rng = rng.stream("world_gen.terrain")
-    spawn_rng = rng.stream("world_gen.spawn")
+    # KEYED PER-PARAMETER SUB-STREAMS.
+    # A single `world_gen.spawn` stream previously fed every genesis draw, which
+    # reinstated the exact hazard core/rng.py's docstring warns about: randint
+    # pulls getrandbits(n.bit_length()) in a rejection loop, so the entropy a
+    # draw consumes depends on its RANGE WIDTH. Widening any one band therefore
+    # redrew every later value on the stream -- positions, needs, resources --
+    # producing a different starting world from a one-line diff that gave no
+    # hint of it. Measured at 174 accepted events (~3.5%) on
+    # living_settlement 320. See memory/evidence/genesis-rng/.
+    #
+    # One stream per parameter contains that: changing person_age_range now
+    # perturbs only ages. Streams are seeded from sha256(run_seed::name), so
+    # they are independent of each other and of call order.
+    placement_rng = rng.stream("world_gen.spawn.placement")
+    tree_resource_rng = rng.stream("world_gen.spawn.tree_resource")
+    person_hunger_rng = rng.stream("world_gen.spawn.person_hunger")
+    person_thirst_rng = rng.stream("world_gen.spawn.person_thirst")
+    person_energy_rng = rng.stream("world_gen.spawn.person_energy")
+    person_age_rng = rng.stream("world_gen.spawn.person_age")
+    animal_hunger_rng = rng.stream("world_gen.spawn.animal_hunger")
+    animal_energy_rng = rng.stream("world_gen.spawn.animal_energy")
 
     terrain = [[ground for _ in range(width)] for _ in range(height)]
 
@@ -41,8 +61,8 @@ def generate_world(seed: str, scenario):
 
     def random_empty_tile():
         for _ in range(1000):
-            x = spawn_rng.randint(0, width - 1)
-            y = spawn_rng.randint(0, height - 1)
+            x = placement_rng.randint(0, width - 1)
+            y = placement_rng.randint(0, height - 1)
             if terrain[y][x] != "water":
                 return x, y
         raise RuntimeError("no empty tile found during world generation")
@@ -52,7 +72,7 @@ def generate_world(seed: str, scenario):
     tree_lo, tree_hi = cfg.get("tree_resource_range", (40, 80))
     for _ in range(cfg.get("num_trees", 0)):
         x, y = random_empty_tile()
-        amount = spawn_rng.randint(tree_lo, tree_hi)
+        amount = tree_resource_rng.randint(tree_lo, tree_hi)
         genesis_specs.append({
             "type": "tree", "position": {"x": x, "y": y},
             "resource": amount, "max_resource": amount, "alive": True,
@@ -88,9 +108,9 @@ def generate_world(seed: str, scenario):
             living_state["relationships"][subject_id] = relation
         spec = {
             "type": "person", "position": {"x": x, "y": y},
-            "hunger": profile.pop("hunger", spawn_rng.randint(*p_hunger)),
-            "thirst": profile.pop("thirst", spawn_rng.randint(*p_thirst)),
-            "energy": profile.pop("energy", spawn_rng.randint(*p_energy)),
+            "hunger": profile.pop("hunger", person_hunger_rng.randint(*p_hunger)),
+            "thirst": profile.pop("thirst", person_thirst_rng.randint(*p_thirst)),
+            "energy": profile.pop("energy", person_energy_rng.randint(*p_energy)),
             "inventory": profile.pop("inventory", 0),
             "food_inventory": profile.pop("food_inventory", 0),
             "has_shelter": profile.pop("has_shelter", False),
@@ -104,7 +124,7 @@ def generate_world(seed: str, scenario):
             "paused": None,
             "knowledge": {"known_tiles": [], "known_water_tiles": [], "known_trees": {},
                           "known_shelters": {}, "known_carcasses": {}},
-            "age_ticks": spawn_rng.randint(*p_age), "life_stage": "adult",
+            "age_ticks": person_age_rng.randint(*p_age), "life_stage": "adult",
             "health": MAX_HEALTH, "injury": {"injured": False, "severity": 0, "cause": None},
             "death_cause": None, "death_tick": None,
             "living_agent": living_state,
@@ -121,7 +141,7 @@ def generate_world(seed: str, scenario):
         x, y = random_empty_tile()
         genesis_specs.append({
             "type": "animal", "position": {"x": x, "y": y},
-            "hunger": spawn_rng.randint(*a_hunger), "energy": spawn_rng.randint(*a_energy),
+            "hunger": animal_hunger_rng.randint(*a_hunger), "energy": animal_energy_rng.randint(*a_energy),
             "current_goal": "IDLE", "alive": True,
             "action": {"type": "idle", "status": "completed", "ticks_spent": 0, "flee_ticks_remaining": 0},
             "health": ANIMAL_MAX_HEALTH, "injured": False, "death_cause": None, "death_tick": None,

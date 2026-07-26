@@ -24,9 +24,20 @@ Historical design documents are retired individually through the Retirement Rule
 
 ### Regression baselines
 
-- `living_settlement`: `897f3f7f…3c5ab` (re-baselined 2026-07-25, authorised at
-  the Layer C Variety Leg 1 close-out; prior baseline `84d3ad52…c32d2`)
-- `collective_groups`: `659a27f3…920342`
+- `living_settlement`: `48dfec22…1b1e3b` (re-baselined 2026-07-27, authorised at
+  stage 1 of the age-realism re-baseline leg — genesis RNG sub-streams + spawn
+  index; gate and attribution in
+  `memory/evidence/genesis-rng/SHARED-SPAWN-STREAM-2026-07-26.md`. Prior
+  baselines `897f3f7f…3c5ab` (2026-07-25, Layer C Variety Leg 1) and
+  `84d3ad52…c32d2`)
+- `collective_groups`: `659a27f3…920342` — **STALE AS OF 2026-07-27, VALUE NOT
+  YET RE-MEASURED.** The genesis sub-stream + spawn-index change is global to
+  world generation and no scenario overrides `person_age_range`, so this hash
+  has necessarily moved too. It was NOT re-baselined in stage 1: its recorded
+  invocation is 1,000 ticks, no bands were pre-registered for it, and the leg
+  prompt authorised the `living_settlement` re-baseline only. Measured and
+  recorded at the leg close-out, and only with explicit authorisation at that
+  STOP. **Do not treat the value above as a passing gate in the meantime.**
 
 Regression baselines never change without explicit user authorisation at a STOP.
 

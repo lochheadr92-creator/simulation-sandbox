@@ -1,8 +1,9 @@
 # FINDING — genesis parameter ranges are coupled through one shared RNG stream
 
-**Status: OPEN. Needs authorisation to fix. CONFIRMED by code-read 2026-07-26.**
-Found while attempting an age re-baseline; **not an age finding**. Ages were the
-messenger.
+**Status: FIXED 2026-07-27** (re-baseline leg stage 1). CONFIRMED by code-read
+2026-07-26; fix authorised and landed with a pre-registered gate, see
+"Resolution" at the foot of this file. Found while attempting an age
+re-baseline; **not an age finding**. Ages were the messenger.
 
 ## The defect
 
@@ -113,3 +114,222 @@ do not inherit it.
   this fix. No F-06 was written: the 174-event delta measures *a different
   starting world*, not a consequence of ages, and that story must not enter the
   baseline record.
+
+---
+
+## RESOLUTION — stage 1 of the re-baseline leg, 2026-07-27
+
+Authorised as a re-baseline. Landed as ONE commit with the genesis spawn index,
+because the two changes close the two halves of the same leak and neither is
+verifiable without the other.
+
+### What shipped
+
+1. **Keyed per-parameter sub-streams** (`world/generator.py`). One stream per
+   genesis parameter — `world_gen.spawn.placement`, `.tree_resource`,
+   `.person_hunger`, `.person_thirst`, `.person_energy`, `.person_age`,
+   `.animal_hunger`, `.animal_energy`. Streams are seeded from
+   `sha256(run_seed::name)`, so they are independent of each other and of call
+   order. Closes the VALUE channel this finding is about.
+2. **Genesis spawn index** (`core/kernel.py`). Each spec's position becomes its
+   `engine_priority`, so genesis commit order is positional rather than
+   content-derived. Closes the ORDER channel — which this finding did **not**
+   identify, and which sub-streams alone do not touch. See
+   `memory/CORE-INTEGRITY-004-COMMIT-ORDER-CONTENT-SENSITIVITY.md`.
+
+### Why one commit, stated plainly
+
+Sub-streams alone leave the two-tier test's tier 1 RED: with values isolated, an
+age-band edit still relocated an *unedited* entity's provenance ids, because
+commit order still fell through to `content_hash`. The index alone would have
+left the value channel open. Splitting them would have meant committing a state
+in which the regression test for this finding fails.
+
+### Regression test
+
+`backend/tests/test_genesis_rng_isolation.py`, two tiers, both pre-registered
+with their expected colour **before** implementation:
+
+- **Tier 1** — an entity the edit never touched must come out of genesis
+  byte-identical INCLUDING provenance. Pre-registered EXPECTED RED (it was the
+  stage-1 gate); now green.
+- **Tier 2** — an edited entity may differ only in the edited value and in
+  fields whose **VALUE** is an event/proposal id, at any depth, inside lists.
+  Pre-registered EXPECTED GREEN; was green, which is what proved the
+  sub-streams work independently of the ordering fix.
+
+Predicate is the value, never a field name — a name list had already missed
+`source_event_id` once. The scrub asserts it actually fired, and fails loudly on
+an unrecognised id shape or an id-shaped dict key rather than comparing raw.
+
+### Pre-registered gate result, all four bands PASS
+
+Bands fixed before the run. Noise source is **SAMPLING** — re-streaming draws a
+genuinely different starting world, so values were expected to move. Baseline
+figures derived from committed evidence
+`memory/evidence/layer-c-leg1/upkeep_living_settlement_320_frozen_rebaseline.json`,
+not from a fresh control run.
+
+| quantity | baseline | band | measured | verdict |
+|---|---|---|---|---|
+| accepted events | 5,004 | 4,754 – 5,254 (±5%) | **4,849** (−155, −3.10%) | PASS |
+| deaths | 0 | ≤ 1 | **0** | PASS |
+| rest fraction | 0.2995 | 0.25 – 0.45 | **0.3740** | PASS |
+| entropy (`actions_by_type`) | 2.5285 bits | ≥ 1.8 | **2.5242** | PASS |
+
+Deaths measured via the exact 0-death signature `lifecycle_tick == persons ×
+ticks` (2,560 = 8 × 320). Valid because `lifecycle_domain.select_due_ids`
+filters on `alive`, so a dead person stops emitting the event.
+
+**New frozen `living_settlement` 320 hash, pasted from run output:**
+
+```
+48dfec2267b4ded7752a2f3fbdbee45a3ee6f69c8b1f62e19b6fe095741b1e3b
+(was 897f3f7f48e8bc292068d1a5a017236a293808901e3ce7736ccfb8a03903c5ab)
+
+repeat_matches True | replay_matches_final_entities True
+resume_matches True (resumed at 160) | replay_state_hash == final_state_hash
+```
+
+### FIRST MEASURED ENTROPY-NOISE DATUM
+
+No prior measurement of entropy's own noise existed, so per the leg contract
+this is recorded as a datum rather than gated tightly. Under a pure resampling
+perturbation, **entropy moved −0.0043 bits (2.5285 → 2.5242)** while individual
+counts moved by up to ±72 (`rest` +72, `move` −67, `tend` −63) and distinct
+types held at 19.
+
+Reading: the *shape* of the action distribution is far more stable than any
+single action count. This is an independent, mechanism-free reason to prefer
+entropy over `rest%` for A/B comparisons, and it arrived after the Upkeep leg's
+F-01 already argued the same thing on other grounds.
+
+### BASELINE REGISTER — Stage 6 integrated-camp trace census (2026-07-27)
+
+Moved here out of `backend/tests/test_stage6e_living_settlement.py`, which had
+been asserting it. These are **recorded data, not gates**: they describe one
+seed's trajectory, so every re-baseline is expected to move them. Nothing here
+should ever be cited as a pass/fail condition.
+
+`living_settlement`, seed `stage6-integrated`, 30 ticks, post-stage-1:
+
+```
+final_state_hash 01160b49c2eabedc7665ad3bad62cb59390ccad35c171a034acfcde0f8132e15
+total actions 176   distinct types 18
+
+apologise 1   consume 4   cooperate 1   drink 3    gather 2
+lie 1         move 68     promise 1     reconcile 1  repair 4
+repay 1       rest 40     retrieve 2    share_information 1
+store 1       tend 43     threaten 1    trade 1
+
+warn                 0        (was >=1 pre-stage-1; see the deferral row)
+reported_claim_count 0        (assertion had required >=1)
+```
+
+**`warn` horizon datum.** Recorded as a datum only, per the ruling — not a gate.
+`warn` is absent at every horizon probed on this seed: **30, 35, 40, 45, 50, 60,
+80, 100, 150, 320 ticks**. So no horizon extension recovers it, and none was
+adopted. A seed re-pin was likewise rejected.
+
+**5-seed assertion robustness** (30 ticks; seeds `stage6-integrated`,
+`living-agents-stage6`, `stage6-order`, `stage6-information`, `warn-probe-b`).
+Measured rather than assumed, because asserting seed-robustness without
+measuring it is the defect that produced three successive in-place weakenings of
+this test:
+
+| assertion | verdict |
+|---|---|
+| the 14 non-`warn` action types | SEED-ROBUST — all 5 — retained as an assertion |
+| the full 15-type census | TRACE-DEPENDENT — fails 4 of 5 — moved here |
+| `reported_claim_count >= 1` | TRACE-DEPENDENT — fails 2 of 5 — moved here |
+| `critical_interrupt` / `resumption` / `failed_plan_replan` ≥ 1 | SEED-ROBUST — retained |
+| `rejected` / `resource_depletion` / `contradicted` ≥ 1 | SEED-ROBUST — retained |
+| `weather_conditions == ["rain"]` | SEED-ROBUST — retained |
+| `deceptive_claim_count == 0` | SEED-ROBUST — retained |
+| `final_relationship_count > 8`, commitments ≥ 1 | SEED-ROBUST — retained |
+| all five capacity bounds, replay equality | SEED-ROBUST — retained |
+
+`reported_claim_count >= 1` was a **latent** failure: it had never been evaluated
+on a failing run, because the census assertion above it failed first and pytest
+short-circuits. Repairing only the assertion that shouted would have produced a
+second red run.
+
+The retained assertions are now **parametrised over two seeds**, so
+seed-robustness is enforced by the suite rather than claimed in a comment.
+
+### DEFERRAL RECORD — `warn` organic firing, scenario-dynamics-blocked
+
+Register row: `memory/CAPABILITY_ROADMAP.md`. Category is
+**scenario-dynamics-blocked**; the three records that taxonomy requires:
+
+**(a) The blocking measurement.** Decision receipts, `living_settlement`, seed
+`stage6-integrated`, 320 ticks, scout `person-007`:
+
+```
+tick 1  WARN_DANGER WINS (23299 vs REST 743)
+        plan = ['MOVE_TO_TARGET', 'WARN'], step_index 0
+        executes move -> living_move ACCEPTED
+tick 2  WARN_DANGER continues, still step_index 0
+        move REJECTED precondition.failed          <- plan stalls
+tick 3  REPLAN -> REPAY_DEBT 27477 beats WARN_DANGER 23435
+        plan abandoned before the WARN step ever runs
+
+3 offers in 320 ticks. animal in range 270/320 ticks, a person 320/320.
+```
+
+The scout at (5,6) is **boxed in by its own campmates**: reaching `person-000`
+at (4,4) requires stepping onto (4,5) or (5,5), both occupied, so
+`MOVE_TO_TARGET` can never succeed. Compare `TEND_STRUCTURE` at ticks 4–7, which
+needed four uninterrupted ticks (move, move-rejected, move-rejected, `tend`) to
+reach its terminal step. WARN_DANGER got two.
+
+This is **plan preemption** — not selection displacement (it won) and not
+geometry (the animal was in range for 270 ticks). Mechanism verified INTACT: it
+fires on another seed under the same code.
+
+**(b) The unblock condition.** A `living_settlement`-family scenario in which a
+scout's warn target is reachable — not walled off by campmate-occupied tiles.
+No dynamics change was made here; doing so would edit a Stage 6 canonical
+fixture and move further hashes for reasons unrelated to the RNG fix.
+
+**(c) No threshold was lowered to manufacture a firing.** Explicitly:
+
+- the 14 seed-robust action types are **still asserted**, on two seeds;
+- `warn` moved to a **stronger** deterministic fixture pair asserting the action
+  **commits** through `run_commit_frame`, not merely that the goal is selected —
+  which matters because the goal already wins organically and still never
+  commits, so a selection-only assertion would have been vacuous;
+- a horizon extension was **rejected** on measurement (absent through 320 ticks);
+- a seed re-pin was **rejected** as seed-shopping.
+
+**Recorded, deliberately NOT asserted as correct:** the preemptor was
+`REPAY_DEBT` (27477) — a social obligation, *not* a survival goal. So repaying a
+debt currently outranks warning a neighbour about a predator. VERIFIED by the
+receipts above, **pre-existing** (not introduced by the re-stream), and parked in
+`FRONTIER.md`'s queued rulings for a future scoring-contract leg. The negative
+fixture pins invariant C-6 survival dominance **only**, and its docstring says so.
+
+### Attribution — which effect caused what
+
+Honest split, per CORE-INTEGRITY-004:
+
+- **Value changes are the re-stream.** Every genesis draw comes from a different
+  stream, so positions, needs and tree resources all differ. This is a genuinely
+  different starting world, by design and once only.
+- **Order changes are the index.** Genesis commit order is now spec position.
+- **Trajectory changes are statistical, not attributable.** The −155 accepted
+  events and the action-mix reshuffle are the combined consequence of a different
+  starting world plus ordering noise of the magnitude 004 measured
+  (`living_rest` ±28%, accepted ±1.2%). No single action-count delta here is
+  claimed as a behaviour change, and none should be cited as one.
+
+### What is still NOT fixed
+
+- An **edited** entity's own spawn event id still changes, because `hash8` is a
+  prefix of its content hash. 004's channel, 004's stage.
+- The index stabilises order against **content** changes only, not
+  **composition** changes: appending a genesis spec is free, inserting one
+  mid-list renumbers everything after it.
+- **Per-entity RNG keying is still owed.** Only per-parameter landed. Adding a
+  person still shifts every later person's draws on that parameter's stream.
+  Debt is load-bearing before Stage 11 touches population counts.
