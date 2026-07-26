@@ -1,0 +1,6 @@
+# Evidence artifacts must survive byte-identical across clone and checkout.
+# Their sha256 digests are recorded in memory/evidence/**/MANIFEST.json, and
+# this repo is developed with core.autocrlf=true -- without this rule, checkout
+# rewrites LF to CRLF and invalidates every recorded digest, silently turning
+# an integrity check into a false alarm.
+memory/evidence/** -text
