@@ -16,8 +16,14 @@ describe("simulationControl", () => {
   test("batches more ticks at high speed", () => {
     expect(ticksPerStepCall(1)).toBe(1);
     expect(ticksPerStepCall(4)).toBe(1);
-    expect(ticksPerStepCall(14)).toBe(2);
-    expect(ticksPerStepCall(28)).toBe(4);
+    expect(ticksPerStepCall(8)).toBe(2);
+    expect(ticksPerStepCall(14)).toBe(3);
+    expect(ticksPerStepCall(28)).toBe(6);
+  });
+
+  test("reduces batch when last request was slow", () => {
+    expect(ticksPerStepCall(28, 3000)).toBe(2);
+    expect(ticksPerStepCall(28, 6000)).toBe(1);
   });
 
   test("step delay targets requested rate", () => {

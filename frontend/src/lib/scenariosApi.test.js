@@ -65,10 +65,15 @@ describe("normalizeScenariosResponse", () => {
 });
 
 describe("resolveBackendUrl", () => {
-  test("falls back when environment value is missing", () => {
-    expect(resolveBackendUrl(undefined)).toBe("http://127.0.0.1:8000");
-    expect(resolveBackendUrl("")).toBe("http://127.0.0.1:8000");
-    expect(resolveBackendUrl("   ")).toBe("http://127.0.0.1:8000");
+  test("production fallback when environment value is missing", () => {
+    expect(resolveBackendUrl("__unset__", "production")).toBe("http://127.0.0.1:8000");
+    expect(resolveBackendUrl(null, "production")).toBe("http://127.0.0.1:8000");
+  });
+
+  test("development defaults to same-origin proxy", () => {
+    expect(resolveBackendUrl("__unset__", "development")).toBe("");
+    expect(resolveBackendUrl("proxy", "production")).toBe("");
+    expect(resolveBackendUrl("", "production")).toBe("");
   });
 
   test("uses supplied value without trailing slash", () => {

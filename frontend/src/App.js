@@ -14,20 +14,16 @@ import TileInspector from "./components/TileInspector";
 import AttentionStrip from "./components/AttentionStrip";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
 import { api } from "./api";
-import {
-  DEFAULT_SPEED,
-  SPEED_PRESETS,
-  STALL_THRESHOLD_MS,
-  VISUAL_THROTTLE_MS,
-  clampSpeed,
-  measureObservedTps,
-  stepDelayMs,
-  ticksPerStepCall,
-} from "./lib/simulationControl";
+import { DEFAULT_SPEED, SPEED_PRESETS, clampSpeed } from "./lib/simulationControl";
+import { createPlaybackController } from "./lib/playbackLoop";
 import { entityDisplayName } from "./lib/presentation";
+import { ChevronDown, ChevronUp, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 const SESSION_VIEW_KEY = "sim-sandbox-view-mode";
 const SESSION_SPEED_KEY = "sim-sandbox-speed";
+const SESSION_INSPECTOR_KEY = "sim-sandbox-inspector-open";
+const SESSION_FEED_KEY = "sim-sandbox-feed-open";
+const SESSION_ATTENTION_KEY = "sim-sandbox-attention-open";
 
 function readSession(key, fallback) {
   try {
@@ -35,6 +31,14 @@ function readSession(key, fallback) {
     return v != null ? v : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function writeSession(key, value) {
+  try {
+    sessionStorage.setItem(key, String(value));
+  } catch {
+    /* ignore */
   }
 }
 
@@ -56,6 +60,7 @@ export default function App() {
   const [stalled, setStalled] = useState(false);
   const [speed, setSpeed] = useState(() => clampSpeed(Number(readSession(SESSION_SPEED_KEY, DEFAULT_SPEED)) || DEFAULT_SPEED));
   const [observedTps, setObservedTps] = useState(0);
+  const [playbackMetrics, setPlaybackMetrics] = useState(null);
   const [showNewRunModal, setShowNewRunModal] = useState(true);
   const [showLoadRunModal, setShowLoadRunModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -67,43 +72,43 @@ export default function App() {
   const [followSelected, setFollowSelected] = useState(false);
   const [backendError, setBackendError] = useState(null);
   const [inspectorTab, setInspectorTab] = useState("entity");
-  const [sidePanelOpen, setSidePanelOpen] = useState(true);
+  const [sidePanelOpen, setSidePanelOpen] = useState(() => readSession(SESSION_INSPECTOR_KEY, "true") !== "false");
+  const [feedOpen, setFeedOpen] = useState(() => readSession(SESSION_FEED_KEY, "true") !== "false");
+  const [attentionOpen, setAttentionOpen] = useState(() => readSession(SESSION_ATTENTION_KEY, "true") !== "false");
   const [narrow, setNarrow] = useState(false);
   const [groupMemberIds, setGroupMemberIds] = useState(null);
 
+  // Live refs — playback controller always reads current values
   const playingRef = useRef(false);
-  const busyRef = useRef(false);
   const speedRef = useRef(speed);
-  const runRef = useRef(run);
-  const lastTickAtRef = useRef(0);
-  const lastPaintAtRef = useRef(0);
-  const pendingStateRef = useRef(null);
-  const tickSamplesRef = useRef([]);
-  const paintTimerRef = useRef(null);
+  const runIdRef = useRef(null);
+  const lastSideRefreshAtRef = useRef(0);
+  const playbackRef = useRef(null);
 
   useEffect(() => {
     playingRef.current = isPlaying;
   }, [isPlaying]);
   useEffect(() => {
     speedRef.current = speed;
-    try {
-      sessionStorage.setItem(SESSION_SPEED_KEY, String(speed));
-    } catch {
-      /* ignore */
-    }
+    writeSession(SESSION_SPEED_KEY, speed);
   }, [speed]);
   useEffect(() => {
-    runRef.current = run;
+    runIdRef.current = run?.id ?? null;
   }, [run]);
 
   useEffect(() => {
-    try {
-      sessionStorage.setItem(SESSION_VIEW_KEY, viewMode);
-    } catch {
-      /* ignore */
-    }
+    writeSession(SESSION_VIEW_KEY, viewMode);
     if (viewMode === "diagnostics") setDiagnosticsOpen(true);
   }, [viewMode]);
+  useEffect(() => {
+    writeSession(SESSION_INSPECTOR_KEY, sidePanelOpen);
+  }, [sidePanelOpen]);
+  useEffect(() => {
+    writeSession(SESSION_FEED_KEY, feedOpen);
+  }, [feedOpen]);
+  useEffect(() => {
+    writeSession(SESSION_ATTENTION_KEY, attentionOpen);
+  }, [attentionOpen]);
 
   useEffect(() => {
     function onResize() {
@@ -114,203 +119,191 @@ export default function App() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const applyWorldState = useCallback((s, { force = false } = {}) => {
-    const now = Date.now();
-    const playing = playingRef.current;
-    const spd = speedRef.current;
-    const throttle = playing && spd >= 8 && !force;
-    if (throttle && now - lastPaintAtRef.current < VISUAL_THROTTLE_MS) {
-      pendingStateRef.current = s;
-      if (!paintTimerRef.current) {
-        paintTimerRef.current = setTimeout(() => {
-          paintTimerRef.current = null;
-          if (pendingStateRef.current) {
-            const latest = pendingStateRef.current;
-            pendingStateRef.current = null;
-            lastPaintAtRef.current = Date.now();
-            setWorldState(latest);
-            setRefreshKey((k) => k + 1);
-            recordTickSample(latest.current_tick);
-          }
-        }, VISUAL_THROTTLE_MS);
-      }
-      return;
-    }
-    lastPaintAtRef.current = now;
-    pendingStateRef.current = null;
+  const publishWorldState = useCallback((s, meta = {}) => {
     setWorldState(s);
-    setRefreshKey((k) => k + 1);
-    recordTickSample(s.current_tick);
+    setBackendError(null);
+    // Side-panel / event feed refresh is throttled while playing so they never
+    // starve the step loop (browser connection limits + heavy causal endpoints).
+    const now = performance.now();
+    const playing = playingRef.current;
+    const sideInterval = playing ? (speedRef.current >= 8 ? 750 : 400) : 0;
+    if (!playing || meta.force || now - lastSideRefreshAtRef.current >= sideInterval) {
+      lastSideRefreshAtRef.current = now;
+      setRefreshKey((k) => k + 1);
+    }
   }, []);
 
-  function recordTickSample(tick) {
-    if (tick == null) return;
-    const at = Date.now();
-    const samples = tickSamplesRef.current;
-    const last = samples[samples.length - 1];
-    if (last && last.tick === tick) {
-      // same tick — still update stall clock only if playing
-      return;
-    }
-    if (!last || tick > last.tick) {
-      lastTickAtRef.current = at;
-      samples.push({ tick, at });
-      if (samples.length > 40) samples.splice(0, samples.length - 40);
-      setObservedTps(measureObservedTps(samples));
-      setStalled(false);
-    }
-  }
-
-  const refreshState = useCallback(
-    async (runId, opts) => {
-      try {
-        const s = await api.getState(runId);
-        applyWorldState(s, opts);
-        setBackendError(null);
-        return s;
-      } catch (err) {
-        setBackendError(err?.message || "The backend could not be reached. Confirm it is running on port 8000.");
-        throw err;
-      }
-    },
-    [applyWorldState],
-  );
-
+  // Stable playback controller (created once)
   useEffect(() => {
-    if (run) refreshState(run.id, { force: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run]);
+    const controller = createPlaybackController({
+      getRunId: () => runIdRef.current,
+      isPlaying: () => playingRef.current,
+      getSpeed: () => speedRef.current,
+      step: (runId, ticks, signal) => api.step(runId, ticks, signal),
+      getState: (runId, signal) => api.getState(runId, signal),
+      onWorldState: (state, meta) => publishWorldState(state, meta),
+      onTps: (tps) => setObservedTps(tps > 0 ? tps : 0),
+      onStalled: (v) => setStalled(Boolean(v)),
+      onBusy: (v) => setBusy(Boolean(v)),
+      onMetrics: (m) => setPlaybackMetrics(m),
+      onError: (err) => {
+        const msg =
+          err?.response?.data?.detail?.detail ||
+          err?.response?.data?.detail ||
+          err?.message ||
+          "Step failed. Confirm the backend is running.";
+        setBackendError(typeof msg === "string" ? msg : JSON.stringify(msg));
+        playingRef.current = false;
+        setIsPlaying(false);
+        setStalled(true);
+      },
+      config: {
+        visualPublishMs: 80,
+        maxRetries: 2,
+      },
+    });
+    playbackRef.current = controller;
+    return () => {
+      controller.stop();
+      playbackRef.current = null;
+    };
+  }, [publishWorldState]);
 
+  // Start/stop loop when play flag changes
+  useEffect(() => {
+    const ctrl = playbackRef.current;
+    if (!ctrl) return undefined;
+    if (isPlaying && run) {
+      ctrl.start();
+    } else {
+      ctrl.stop();
+      if (!isPlaying) setObservedTps(0);
+    }
+    return undefined;
+  }, [isPlaying, run?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Initial state load when run changes
+  useEffect(() => {
+    if (!run) return undefined;
+    let cancelled = false;
+    api
+      .getState(run.id)
+      .then((s) => {
+        if (!cancelled) publishWorldState(s, { force: true });
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setBackendError(err?.message || "The backend could not be reached.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [run?.id, publishWorldState]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cognitive projection — throttled while playing; skip at high speed
   useEffect(() => {
     const selected = worldState?.entities?.find((entity) => entity.id === selectedEntityId);
     if (!run || !selected || selected.type !== "person") {
       setCognitiveProjection(null);
       return undefined;
     }
+    if (isPlaying && speed >= 14 && viewMode !== "diagnostics") {
+      // Skip heavy projection at high simple-mode speeds
+      return undefined;
+    }
     let cancelled = false;
     const expectedTick = worldState.current_tick;
+    const t = setTimeout(
+      () => {
+        api
+          .getCognitiveProjection(run.id, selected.id)
+          .then((projection) => {
+            if (!cancelled && projection.world_tick === expectedTick) setCognitiveProjection(projection);
+          })
+          .catch(() => {
+            if (!cancelled) setCognitiveProjection(null);
+          });
+      },
+      isPlaying ? 200 : 0,
+    );
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [run, worldState?.current_tick, selectedEntityId, isPlaying, speed, viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Group highlight — not every refreshKey; only when group selection changes or slow refresh
+  useEffect(() => {
+    if (!run || !selectedGroupId) {
+      setGroupMemberIds(null);
+      return undefined;
+    }
+    let cancelled = false;
     api
-      .getCognitiveProjection(run.id, selected.id)
-      .then((projection) => {
-        if (!cancelled && projection.world_tick === expectedTick) setCognitiveProjection(projection);
+      .getAssociations(run.id)
+      .then((a) => {
+        if (cancelled) return;
+        const g = (a.groups || []).find((x) => x.candidate_id === selectedGroupId);
+        setGroupMemberIds(g?.member_ids || null);
       })
       .catch(() => {
-        if (!cancelled) setCognitiveProjection(null);
+        if (!cancelled) setGroupMemberIds(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [run, worldState?.current_tick, selectedEntityId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Continuous play loop with multi-tick batches at high speed
-  useEffect(() => {
-    if (!isPlaying || !run) return undefined;
-    let cancelled = false;
-
-    async function loop() {
-      while (!cancelled && playingRef.current && runRef.current) {
-        if (busyRef.current) {
-          await sleep(20);
-          continue;
-        }
-        const spd = speedRef.current;
-        const batch = ticksPerStepCall(spd);
-        const delay = stepDelayMs(spd, batch);
-        const started = performance.now();
-        busyRef.current = true;
-        setBusy(true);
-        try {
-          await api.step(runRef.current.id, batch);
-          if (cancelled) break;
-          await refreshState(runRef.current.id);
-        } catch (err) {
-          if (!cancelled) {
-            setIsPlaying(false);
-            setBackendError(err?.message || "Step failed. Confirm the backend is running.");
-          }
-          break;
-        } finally {
-          busyRef.current = false;
-          setBusy(false);
-        }
-        const elapsed = performance.now() - started;
-        const wait = Math.max(0, delay - elapsed);
-        if (wait > 0) await sleep(wait);
-        // Stall detection
-        if (Date.now() - lastTickAtRef.current > STALL_THRESHOLD_MS) {
-          setStalled(true);
-        }
-      }
-    }
-
-    lastTickAtRef.current = Date.now();
-    loop();
-    return () => {
-      cancelled = true;
-    };
-  }, [isPlaying, run, refreshState]);
-
-  // Stall watchdog while playing
-  useEffect(() => {
-    if (!isPlaying) {
-      setStalled(false);
-      return undefined;
-    }
-    const id = setInterval(() => {
-      if (Date.now() - lastTickAtRef.current > STALL_THRESHOLD_MS) setStalled(true);
-    }, 500);
-    return () => clearInterval(id);
-  }, [isPlaying]);
+  }, [run, selectedGroupId, refreshKey]);
 
   async function handleStepOnce() {
-    if (!run || busyRef.current) return;
-    busyRef.current = true;
-    setBusy(true);
+    if (!run || !playbackRef.current) return;
     try {
-      await api.step(run.id, 1);
-      await refreshState(run.id, { force: true });
+      await playbackRef.current.stepOnce(1);
     } catch (err) {
+      if (err?.code === "BUSY") return;
       setBackendError(err?.message || "Step failed. Confirm the backend is running on port 8000.");
-    } finally {
-      busyRef.current = false;
-      setBusy(false);
     }
   }
 
   async function handlePlayPause() {
     if (!isPlaying) {
       setStalled(false);
-      lastTickAtRef.current = Date.now();
+      setBackendError(null);
+      setObservedTps(0);
+      playbackRef.current?.resetMetricsAndTps();
       setIsPlaying(true);
     } else {
       setIsPlaying(false);
+      playbackRef.current?.stop();
       try {
-        await api.pause(run.id);
+        if (run) await api.pause(run.id);
       } catch (_) {
-        /* ignore pause errors */
+        /* ignore */
       }
     }
   }
 
   function handleSpeedChange(next) {
     const s = clampSpeed(next);
-    // Snap to nearest preset when close
     const preset = SPEED_PRESETS.find((p) => p === s) || s;
     setSpeed(preset);
+    // Live via speedRef — no loop restart required
   }
 
   function handleRunReady(newRun) {
+    setIsPlaying(false);
+    playbackRef.current?.stop();
+    playbackRef.current?.resetMetricsAndTps();
     setRun(newRun);
     setSelectedEntityId(null);
     setSelectedGroupId(null);
     setSelectedTile(null);
     setCognitiveProjection(null);
-    setIsPlaying(false);
     setShowNewRunModal(false);
     setShowLoadRunModal(false);
     setBackendError(null);
     setObservedTps(0);
-    tickSamplesRef.current = [];
+    setStalled(false);
     setSidePanelOpen(true);
   }
 
@@ -359,6 +352,7 @@ export default function App() {
 
   function handleReset() {
     setIsPlaying(false);
+    playbackRef.current?.stop();
     setShowNewRunModal(true);
   }
 
@@ -372,37 +366,23 @@ export default function App() {
     return new Set(groupMemberIds);
   }, [groupMemberIds]);
 
-  // Fetch group members for canvas highlight when a group is selected
-  useEffect(() => {
-    if (!run || !selectedGroupId) {
-      setGroupMemberIds(null);
-      return undefined;
-    }
-    let cancelled = false;
-    api
-      .getAssociations(run.id)
-      .then((a) => {
-        if (cancelled) return;
-        const g = (a.groups || []).find((x) => x.candidate_id === selectedGroupId);
-        setGroupMemberIds(g?.member_ids || null);
-      })
-      .catch(() => {
-        if (!cancelled) setGroupMemberIds(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [run, selectedGroupId, refreshKey]);
-
   const selectionSummary = selectedGroupId
     ? `Group ${selectedGroupId}`
     : selectedEntityId
       ? entityDisplayName(selectedEntityId)
       : null;
 
+  const showFeed = viewMode === "simple" && run && feedOpen;
+  const showDiagnostics = diagnosticsOpen && run;
+  const showInspector = !narrow || sidePanelOpen;
+  // Desktop: collapsible inspector frees world width
+  const inspectorWidthClass = sidePanelOpen
+    ? "w-[min(340px,32vw)]"
+    : "w-0 overflow-hidden border-0";
+
   return (
     <div className="h-screen w-full flex overflow-hidden sim-shell font-sans" data-testid="app-shell">
-      <div className="flex-1 flex flex-col min-w-0 border-r border-[var(--border-subtle)]">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <ControlBar
           run={run}
           worldState={worldState}
@@ -425,34 +405,51 @@ export default function App() {
           selectedGroupId={selectedGroupId}
           diagnosticsOpen={diagnosticsOpen}
           onToggleDiagnostics={setDiagnosticsOpen}
+          playbackMetrics={playbackMetrics}
         />
 
         {backendError && (
           <div
-            className="px-4 py-2 bg-red-950/40 border-b border-red-900/50 text-xs text-red-300"
+            className="px-4 py-2 bg-red-950/40 border-b border-red-900/50 text-xs text-red-300 shrink-0"
             data-testid="backend-error-banner"
             role="alert"
           >
             {backendError}
-            <details className="mt-1 text-red-400/70">
-              <summary className="cursor-pointer">Technical details</summary>
-              <span className="font-data">
-                Confirm API base URL ({api.backendUrl}) and that the backend is running on port 8000.
-              </span>
-            </details>
+            <button
+              type="button"
+              className="ml-3 text-sky-300 underline"
+              onClick={() => setBackendError(null)}
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
         {worldState && (
-          <AttentionStrip
-            entities={worldState.entities}
-            selectedEntityId={selectedEntityId}
-            onSelectEntity={handleSelectEntity}
-          />
+          <div className="shrink-0 border-b border-[var(--border-subtle)]">
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-3 py-1 text-[10px] uppercase text-[var(--text-faint)] hover:bg-[var(--bg-surface)]"
+              onClick={() => setAttentionOpen((o) => !o)}
+              data-testid="attention-collapse-toggle"
+              aria-expanded={attentionOpen}
+            >
+              <span>Attention</span>
+              {attentionOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+            {attentionOpen && (
+              <AttentionStrip
+                entities={worldState.entities}
+                selectedEntityId={selectedEntityId}
+                onSelectEntity={handleSelectEntity}
+              />
+            )}
+          </div>
         )}
 
+        {/* WORLD — fills all remaining space */}
         <div
-          className="flex-1 bg-app relative overflow-auto flex items-center justify-center p-3 md:p-4"
+          className="flex-1 min-h-0 relative bg-[var(--bg-app)]"
           data-testid="world-canvas-container"
         >
           {worldState ? (
@@ -465,11 +462,14 @@ export default function App() {
               onSelectEntity={handleSelectEntity}
               onSelectTile={handleSelectTile}
               followSelected={followSelected}
+              onFollowChange={setFollowSelected}
               viewMode={viewMode}
               memberHighlightIds={memberHighlight}
+              isPlaying={isPlaying}
+              speed={speed}
             />
           ) : (
-            <div className="text-[var(--text-faint)] text-sm text-center max-w-sm" data-testid="no-run-placeholder">
+            <div className="absolute inset-0 flex items-center justify-center text-[var(--text-faint)] text-sm text-center max-w-sm mx-auto px-4" data-testid="no-run-placeholder">
               Create or load a run to begin observing the world.
               <p className="text-[11px] mt-2">
                 Entities act from needs and personal knowledge. Start the simulation after a run is ready.
@@ -477,27 +477,46 @@ export default function App() {
             </div>
           )}
 
-          {narrow && (
+          {/* Floating layout toggles — do not cover centre of world */}
+          <div className="absolute top-2 right-2 z-30 flex flex-col gap-1 pointer-events-auto">
             <button
               type="button"
-              className="fixed bottom-20 right-3 z-30 rounded-sm border border-[var(--border-strong)] bg-[var(--bg-panel)] px-3 py-2 text-xs text-[var(--text-primary)] shadow-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)]"
+              className="rounded-sm border border-[var(--border-strong)] bg-[var(--bg-panel)]/95 px-2 py-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] shadow"
               onClick={() => setSidePanelOpen((o) => !o)}
               data-testid="toggle-side-panel"
               aria-expanded={sidePanelOpen}
+              title={sidePanelOpen ? "Collapse inspector" : "Expand inspector"}
             >
-              {sidePanelOpen ? "Hide inspector" : selectionSummary ? `Inspector: ${selectionSummary}` : "Show inspector"}
+              {sidePanelOpen ? (
+                <span className="inline-flex items-center gap-1"><PanelRightClose className="h-3 w-3" /> Hide panel</span>
+              ) : (
+                <span className="inline-flex items-center gap-1"><PanelRightOpen className="h-3 w-3" /> Inspector</span>
+              )}
             </button>
-          )}
+            {run && viewMode === "simple" && (
+              <button
+                type="button"
+                className="rounded-sm border border-[var(--border-strong)] bg-[var(--bg-panel)]/95 px-2 py-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)] shadow"
+                onClick={() => setFeedOpen((o) => !o)}
+                data-testid="toggle-event-feed"
+                aria-expanded={feedOpen}
+              >
+                {feedOpen ? "Hide events" : "Events"}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Simple mode: compact event feed under the world */}
-        {viewMode === "simple" && run && (
+        {showFeed && (
           <div
-            className="h-40 shrink-0 border-t border-[var(--border-subtle)] bg-panel flex flex-col min-h-0"
+            className="h-32 shrink-0 border-t border-[var(--border-subtle)] bg-panel flex flex-col min-h-0"
             data-testid="simple-event-feed"
           >
-            <div className="px-3 py-1.5 text-[10px] uppercase text-[var(--text-faint)] border-b border-[var(--border-subtle)] shrink-0">
-              What changed recently
+            <div className="px-3 py-1 text-[10px] uppercase text-[var(--text-faint)] border-b border-[var(--border-subtle)] shrink-0 flex justify-between">
+              <span>What changed recently</span>
+              <button type="button" className="text-sky-400 normal-case" onClick={() => setFeedOpen(false)}>
+                Collapse
+              </button>
             </div>
             <div className="flex-1 min-h-0">
               <EventLog
@@ -512,10 +531,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Diagnostics drawer (bottom) — closable, does not cover world interaction when closed */}
-        {diagnosticsOpen && run && (
+        {showDiagnostics && (
           <div
-            className="h-52 shrink-0 border-t border-[var(--border-strong)] bg-[var(--bg-surface)] flex flex-col min-h-0"
+            className="h-44 shrink-0 border-t border-[var(--border-strong)] bg-[var(--bg-surface)] flex flex-col min-h-0"
             data-testid="diagnostics-drawer"
           >
             <div className="flex items-center justify-between px-3 py-1 border-b border-[var(--border-subtle)] shrink-0">
@@ -535,43 +553,26 @@ export default function App() {
             <div className="flex-1 min-h-0 overflow-hidden">
               <Tabs defaultValue="rejections" className="flex flex-col h-full">
                 <TabsList className="shrink-0">
-                  <TabsTrigger value="rejections" data-testid="diag-tab-rejections">
-                    Rejections
-                  </TabsTrigger>
-                  <TabsTrigger value="determinism" data-testid="diag-tab-determinism">
-                    Determinism
-                  </TabsTrigger>
-                  <TabsTrigger value="events" data-testid="diag-tab-events">
-                    Events (raw)
-                  </TabsTrigger>
-                  <TabsTrigger value="interventions" data-testid="diag-tab-interventions">
-                    Intervene
-                  </TabsTrigger>
+                  <TabsTrigger value="rejections" data-testid="diag-tab-rejections">Rejections</TabsTrigger>
+                  <TabsTrigger value="determinism" data-testid="diag-tab-determinism">Determinism</TabsTrigger>
+                  <TabsTrigger value="events" data-testid="diag-tab-events">Events (raw)</TabsTrigger>
+                  <TabsTrigger value="interventions" data-testid="diag-tab-interventions">Intervene</TabsTrigger>
                 </TabsList>
                 <div className="flex-1 overflow-y-auto min-h-0">
                   <TabsContent value="rejections">
-                    <RejectionsLog
-                      runId={run?.id}
-                      refreshKey={refreshKey}
-                      onSelectEntity={handleSelectEntity}
-                    />
+                    <RejectionsLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} />
                   </TabsContent>
                   <TabsContent value="determinism">
                     <DeterminismPanel runId={run.id} />
                   </TabsContent>
                   <TabsContent value="events">
-                    <EventLog
-                      runId={run?.id}
-                      refreshKey={refreshKey}
-                      onSelectEntity={handleSelectEntity}
-                      viewMode="diagnostics"
-                    />
+                    <EventLog runId={run?.id} refreshKey={refreshKey} onSelectEntity={handleSelectEntity} viewMode="diagnostics" />
                   </TabsContent>
                   <TabsContent value="interventions">
                     <InterventionsPanel
                       runId={run.id}
                       entities={worldState?.entities}
-                      onSubmitted={() => refreshState(run.id, { force: true })}
+                      onSubmitted={() => api.getState(run.id).then((s) => publishWorldState(s, { force: true }))}
                     />
                   </TabsContent>
                 </div>
@@ -581,50 +582,36 @@ export default function App() {
         )}
       </div>
 
-      {/* Right inspector — drawer on narrow viewports */}
-      {(!narrow || sidePanelOpen) && (
+      {/* Right inspector — collapsible; narrow becomes overlay drawer */}
+      {showInspector && (
         <aside
-          className={`sim-side-panel w-[min(400px,100%)] shrink-0 bg-panel flex flex-col h-full max-w-full border-l border-[var(--border-subtle)] ${
-            narrow ? "sim-side-panel" : ""
+          className={`sim-side-panel shrink-0 bg-panel flex flex-col h-full max-w-full border-l border-[var(--border-subtle)] transition-[width] duration-150 ${
+            narrow ? "fixed right-0 top-0 bottom-0 z-40 w-[min(100%,22rem)] shadow-xl" : inspectorWidthClass
           }`}
           data-open={sidePanelOpen ? "true" : "false"}
           data-testid="side-inspector"
         >
-          {narrow && (
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)] shrink-0">
-              <span className="text-xs text-[var(--text-primary)]">Inspector</span>
-              <button
-                type="button"
-                className="text-[10px] text-sky-400"
-                onClick={() => setSidePanelOpen(false)}
-                data-testid="close-side-panel"
-              >
-                Close
-              </button>
-            </div>
-          )}
-          <Tabs
-            value={inspectorTab}
-            onValueChange={setInspectorTab}
-            className="flex flex-col h-full min-h-0"
-          >
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)] shrink-0">
+            <span className="text-xs text-[var(--text-primary)] truncate">
+              {selectionSummary || "Inspector"}
+            </span>
+            <button
+              type="button"
+              className="text-[10px] text-sky-400"
+              onClick={() => setSidePanelOpen(false)}
+              data-testid="close-side-panel"
+            >
+              Collapse
+            </button>
+          </div>
+          <Tabs value={inspectorTab} onValueChange={setInspectorTab} className="flex flex-col h-full min-h-0">
             <TabsList>
-              <TabsTrigger value="entity" data-testid="inspector-tab-entity">
-                Entity
-              </TabsTrigger>
-              <TabsTrigger value="group" data-testid="inspector-tab-group">
-                Groups
-              </TabsTrigger>
-              <TabsTrigger value="timeline" data-testid="inspector-tab-timeline">
-                Timeline
-              </TabsTrigger>
-              <TabsTrigger value="events" data-testid="inspector-tab-events">
-                Events
-              </TabsTrigger>
+              <TabsTrigger value="entity" data-testid="inspector-tab-entity">Entity</TabsTrigger>
+              <TabsTrigger value="group" data-testid="inspector-tab-group">Groups</TabsTrigger>
+              <TabsTrigger value="timeline" data-testid="inspector-tab-timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="events" data-testid="inspector-tab-events">Events</TabsTrigger>
               {viewMode === "simple" && (
-                <TabsTrigger value="interventions" data-testid="inspector-tab-interventions">
-                  Intervene
-                </TabsTrigger>
+                <TabsTrigger value="interventions" data-testid="inspector-tab-interventions">Intervene</TabsTrigger>
               )}
             </TabsList>
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -675,7 +662,7 @@ export default function App() {
                   <InterventionsPanel
                     runId={run.id}
                     entities={worldState?.entities}
-                    onSubmitted={() => refreshState(run.id, { force: true })}
+                    onSubmitted={() => api.getState(run.id).then((s) => publishWorldState(s, { force: true }))}
                   />
                 )}
               </TabsContent>
@@ -696,8 +683,4 @@ export default function App() {
       />
     </div>
   );
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

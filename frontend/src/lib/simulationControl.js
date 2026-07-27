@@ -18,12 +18,18 @@ export const STALL_THRESHOLD_MS = 2500;
  * How many authoritative ticks to request per step call at a given speed.
  * Multi-tick batches keep high speeds advancing when single-tick RTT is high.
  * Each tick still goes through the normal Core step path.
+ * Optional lastRequestMs adapts batch size when the backend is slow.
  */
-export function ticksPerStepCall(speed) {
+export function ticksPerStepCall(speed, lastRequestMs = 0) {
   const s = Number(speed) || 1;
-  if (s >= 28) return 4;
-  if (s >= 14) return 2;
-  return 1;
+  let batch = 1;
+  if (s >= 28) batch = 6;
+  else if (s >= 14) batch = 3;
+  else if (s >= 8) batch = 2;
+  // If a single request is already multi-second, do not grow the batch further.
+  if (lastRequestMs > 2500) batch = Math.min(batch, 2);
+  if (lastRequestMs > 5000) batch = 1;
+  return batch;
 }
 
 /** Target wall-clock delay between step calls for a given speed and batch size. */
@@ -38,10 +44,18 @@ export function stepDelayMs(speed, batchSize = 1) {
  * Rolling observed ticks-per-second from recent (tick, timestamp) samples.
  * samples: Array<{ tick: number, at: number }>
  */
-export function measureObservedTps(samples, windowMs = 2000) {
+export function measureObservedTps(samples, windowMs = 2500) {
   if (!samples?.length) return 0;
   const now = samples[samples.length - 1].at;
-  const recent = samples.filter((s) => now - s.at <= windowMs);
+  let recent = samples.filter((s) => now - s.at <= windowMs);
+  // Fall back to a wider window so a single slow request does not flash "— t/s"
+  if (recent.length < 2) {
+    recent = samples.filter((s) => now - s.at <= Math.max(windowMs * 3, 8000));
+  }
+  if (recent.length < 2) {
+    // Last resort: whole buffer
+    recent = samples.slice(-8);
+  }
   if (recent.length < 2) return 0;
   const first = recent[0];
   const last = recent[recent.length - 1];

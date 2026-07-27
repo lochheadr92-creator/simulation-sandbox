@@ -40,6 +40,7 @@ export default function ControlBar({
   selectedGroupId,
   diagnosticsOpen = false,
   onToggleDiagnostics,
+  playbackMetrics = null,
 }) {
   const PhaseIcon = worldState ? PHASE_ICON[worldState.time_phase] || Sun : Sun;
   const { living, dead } = countLivingDead(worldState?.entities);
@@ -198,7 +199,14 @@ export default function ControlBar({
                     <Activity className="h-3 w-3" aria-hidden />
                     <span data-testid="requested-speed">{speed}× req</span>
                     <span className="text-[var(--text-faint)]">·</span>
-                    <span data-testid="observed-tps">{observedTps > 0 ? `${observedTps} t/s` : "— t/s"}</span>
+                    <span data-testid="observed-tps">
+                      {observedTps > 0 ? `${observedTps} t/s` : isPlaying ? "… t/s" : "— t/s"}
+                    </span>
+                    {playbackMetrics?.lastRequestMs != null && (
+                      <span className="hidden xl:inline text-[var(--text-faint)]" data-testid="playback-rtt">
+                        · {Math.round(playbackMetrics.lastRequestMs)}ms
+                      </span>
+                    )}
                   </div>
                   <div className="text-[10px]" data-testid="living-dead-counts">
                     <span className="text-emerald-400/90">{living} living</span>
