@@ -80,10 +80,33 @@ write that is **not** protected at all, and silently loses.
   A plausible candidate is that `social_cooperate` and a recipient action rarely
   co-occur in a frame in `living_settlement`, but that was not measured and is
   **not claimed**.
-- **The count discrepancy.** The registry records **64** collisions; this run
-  measured **97** at 1,000 ticks in `collective_groups`. Horizon, counting basis,
-  or drift since that note could each explain it. Recorded as a discrepancy
-  rather than assumed equivalent.
+### The 64 vs 97 discrepancy — original basis PROVEN, and it is not a scope difference
+
+The registry's original basis **is** recoverable and is method-identical to this
+run. `REGISTRY-COMPONENT-OWNERSHIP.md` "Open questions" records: *"The
+multi-writer census measured **64** same-tick / same-person / same-field `energy`
+collisions in **1,000 ticks of `collective_groups`** … reproduced identically
+across two independent probe runs."* Same scenario, same horizon, same
+same-tick/same-person/same-field basis as the 97 measured here.
+
+**So the two figures are not differently scoped — they measure different
+worlds.** OQ-1 was opened **2026-07-26**. Two authorised re-baselines landed
+**2026-07-27**, both after that measurement and both of which moved the canonical
+trajectory:
+
+- `ce49d762` — *fix(genesis): keyed RNG sub-streams + spawn index — authorised
+  re-baseline*
+- `180c43f4` — *feat(lifecycle): rebaseline realistic founder ages*
+
+CLAUDE.md records the resulting frozen-hash move `48dfec22…1b1e3b` (stage 1,
+genesis RNG isolation) → `9c1b9b8b…46e55d4` (stage 2, realistic founder ages).
+
+**Disposition: 64 is superseded by 97.** The method is unchanged; the world it
+was measured on no longer exists. The two numbers must not be equated, and the
+difference is not evidence of measurement error in either. Under
+CORE-INTEGRITY-004 — commit order is content-derived, so any perturbation
+propagates chaotically — a changed collision count across a re-baseline is the
+expected consequence, not an anomaly.
 
 ## Registry action required (not performed here)
 
