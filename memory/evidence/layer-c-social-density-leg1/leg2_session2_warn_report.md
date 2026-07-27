@@ -164,6 +164,16 @@ that closes permanently). `warn`'s counter never closes; its prerequisite fails
 because **the world stops presenting the situation** — the `animal-threat` entity
 relocates away from the camp and stays there. Same funnel shape, different cause.
 
+> **AMENDED 2026-07-27.** The contrast above is correct for the *firing* actor
+> but overstated for the population. Measured (see the amendment in
+> `leg2_session1_funnel_report.md` §5): the consumed counter closes for
+> **exactly one person of eight**; the other seven carry an **OPEN** counter for
+> the whole run and are excluded by the genesis-fixed **role** conjunct instead.
+> So for the other seven singletons the population-level blocker is the role
+> gate, not the counter, and `warn` is *less* exceptional than stated here —
+> its distinguishing feature is that even its single eligible actor is blocked
+> upstream, by the world rather than by any internal gate.
+
 Explicitly NOT concluded: that the pathway is broken. It is measurably intact and
 perfectly efficient. Low volume has not been converted into "pathway broken"
 anywhere in this report.

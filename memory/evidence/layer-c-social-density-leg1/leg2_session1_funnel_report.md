@@ -203,6 +203,40 @@ class where several contribute.
 | `trade` | **generated-but-loses, then prerequisite-never-recurs.** Genuinely two modes: lost 4 of 5 scorings to `VERIFY_INFORMATION` (`lost_by` median 8,623, min 5,593) — both are `steward`-only candidates from the same actor, and `share_information` outscores `trade`. Once `share_information`'s cap closed, `trade` won and spent its own cap at tick 5 | — | CLASSIFIED (plan-excluded, see §10) |
 | `warn` | **UNDETERMINED — the self-cap is NOT the blocker.** Cap is 2, the scout consumed 1, so the gate was open for 100% of 24,000 alive-person-ticks. The `animal-threat` entity was alive all 3,000 ticks. `warn` was still generated exactly once (tick 1), won, and committed with zero preemption | — | **INSUFFICIENT EVIDENCE** |
 
+> **CLASSIFICATION AMENDED 2026-07-27 — the counter explains ONE actor, not the
+> population.** The "consumed monotone counter" rows above are correct but were
+> stated too broadly. Resolved with explicit numbers:
+>
+> `self_cap_closed_alive_person_ticks` satisfies `closed = ticks − fireTick + 1`
+> **exactly**, for all six counter-gated actions, on **both** seeds
+> (seed 1 @3,000: promise 2,995←t6, share_information 2,997←t4, threaten
+> 2,993←t8, lie 2,995←t6, apologise 2,989←t12, reconcile 2,987←t14; seed 2
+> @1,200: promise 1,199←t2, share_information 1,197←t4, threaten 1,193←t8, lie
+> 1,191←t10, apologise 1,186←t15, reconcile 1,185←t16). An exact fit is possible
+> only if **exactly one person** carries a closed counter, from its firing tick
+> to the end of the run. The ~12.5% figure is therefore 1 actor of 8 — **not**
+> "the population is counter-blocked". VERIFIED (arithmetic on committed
+> evidence, both seeds).
+>
+> **Consequence: seven of eight persons carried an OPEN counter for the entire
+> run and never fired.** For them the counter was never the constraint, so the
+> consumed-counter classification explains non-recurrence **for the single firer
+> only** and explains nothing about the other seven.
+>
+> What blocks the other seven: the **role conjunct**. VERIFIED —
+> `stage6_role` has two read sites and **zero write sites** in
+> `backend/{core,domains,world}` (`living_settlement_domain.py:249,532`), so it
+> is genesis-fixed per person; each role occurs exactly once in the scenario;
+> and `stage_C_D_distinct_actors` measured **1** for every target on both seeds.
+> The role conjunct is therefore unconditionally false for the seven
+> non-role-holders at every tick.
+>
+> **UNKNOWN, and not measured:** whether those seven would satisfy the remaining
+> conjuncts (visibility, tick thresholds) if the role gate were absent. Full
+> per-person gate-failure decomposition exists only for `warn` (Session 2); it
+> was never built for the other six. No hypothesis is substituted for that
+> measurement here.
+
 **`warn` contradicts the plan's recorded precedent.** The plan states "warn's
 single firing was wins-but-preempted". In this run `warn` was generated once, won
 once, and committed once with **no** preemption at all. Its recurrence blocker
@@ -291,10 +325,64 @@ lowest concentration at 19–24%).
 Run-wide rejections: `precondition.failed` 5,386 (96.5% of all 5,581),
 `group_state.stale_membership` 150, `social_action.not_adjacent` 45. Between 55%
 and 66% of *winning* reference-family decisions are refused by the commit
-pipeline. UNKNOWN: what `precondition.failed` is actually failing on — the
-reason code is not decomposed further in the rejection record. Not investigated;
-out of Session 1 scope, and flagged as a candidate Session 2 or contract-phase
-question.
+pipeline.
+
+> **RESOLVED 2026-07-27 — and one claim above was wrong.** This paragraph
+> originally said "the reason code is not decomposed further in the rejection
+> record". **That was incorrect.** The decomposition has always been persisted:
+> `evaluate_preconditions` (`core/commit_pipeline.py:128`) returns
+> `f"{cond['field']}_{cond['op']}_failed"`, and `_reject` (`:337`) stores it as
+> `reason_detail`. Only `reason_code` is generic. Earlier revisions of
+> `_probe_layer_c_singleton_funnel.py` read the code and discarded the detail.
+> **No canonical change was needed to decompose it** — the probe now records
+> `reason_detail` (read-only tool change; canonical code untouched).
+>
+> **Measured, `collective_groups`, 1,200 ticks, both seeds**
+> (`leg2_precond_seed1_1200.json`, `leg2_precond_seed2_1200.json`):
+>
+> | `reason_code` | `reason_detail` | seed 1 | seed 2 |
+> |---|---|---|---|
+> | `precondition.failed` | **`living_agent_eq_failed`** | 1,389 (60.3%) | 1,466 (60.0%) |
+> | `precondition.failed` | `condition_eq_failed` | 916 (39.7%) | 979 (40.0%) |
+>
+> **Per action, every social refusal is the same one:**
+>
+> | action | rejected | `living_agent_eq_failed` | share |
+> |---|---|---|---|
+> | `cooperate` s1 / s2 | 497 / 486 | 497 / 486 | **100% / 100%** |
+> | `repay` s1 / s2 | 314 / 348 | 314 / 348 | **100% / 100%** |
+> | `request_help` s1 / s2 | 577 / 624 | 577 / 624 | **100% / 100%** |
+> | `warn` s2 | 1 | 1 | **100%** |
+>
+> **VERDICT: STRUCTURAL, not action-specific.** Every `precondition.failed` on a
+> social action, on both seeds, is the identical whole-blob `living_agent`
+> compare-and-swap failing at commit re-validation
+> (`commit_pipeline.py:476`). The split is stable across independently
+> generated worlds (60.3/39.7 vs 60.0/40.0). The residual
+> `condition_eq_failed` belongs to structure repair/tend, not to any social
+> action — a second structural CAS on a different field, not action-specific
+> either.
+>
+> This CONFIRMS and quantifies an already-documented finding rather than
+> discovering a new one: `REGISTRY-COMPONENT-OWNERSHIP.md:82` already rates
+> `living_agent.relationships` collision risk **HIGH — "(rejection, not loss —
+> CAS revalidated `commit_pipeline.py:476`)"**, and finding **F4** (`:312–316`)
+> records the asymmetric whole-blob CAS. What was not previously quantified is
+> its cost: **56–70% of all winning social decisions**, on both seeds.
+>
+> Cause is LIKELY, not VERIFIED: the mechanism consistent with a whole-blob
+> `eq` CAS is that an earlier-committed proposal in the *same frame* wrote this
+> actor's `living_agent` (social actions write the target's blob,
+> `living_agent_social.py:327,474`), so the actor's own proposal — pinned at
+> frame start by `living_settlement_domain.py:776` — no longer matches. Proving
+> which co-committing proposal did it requires per-rejection frame-ordering
+> attribution, which was NOT built. Recorded as the next measurement, not as a
+> conclusion.
+>
+> **Bearing on any future contract:** this wall is not cluster-specific. A
+> contract that raises generation for *any* social cluster meets the same
+> ~60% commit refusal, because the refused precondition is `living_agent`
+> itself, which every social proposal pins.
 
 `request_help` also loses heavily at scoring: 5,153 scored → 1,688 won (32.8%),
 with `lost_by` median 6,305 (p90 12,204).

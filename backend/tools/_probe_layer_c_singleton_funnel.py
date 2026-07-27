@@ -171,6 +171,12 @@ class ActionFunnel:
         self.other_commit_action = Counter()
         self.no_commit_record = 0
         self.rejection_reasons = Counter()
+        # `reason_code` is generic ("precondition.failed"); the NAMED reason has
+        # always been persisted alongside it as `reason_detail`
+        # (core/commit_pipeline.py:128 builds "{field}_{op}_failed", :337 stores
+        # it). Earlier revisions of this probe read only the code and discarded
+        # the decomposition. No canonical change is needed to decompose it.
+        self.rejection_details = Counter()
         self.builder_failure_reasons = Counter()
         # G cross-check (bypass detector) and H
         self.raw_committed_events = 0
@@ -242,6 +248,7 @@ class ActionFunnel:
             "lost_by_distribution": _numeric_summary(self.lost_by_values),
             "winners_when_candidate_present": _sorted_counter(self.winners_when_present),
             "commit_rejection_reasons": _sorted_counter(self.rejection_reasons),
+            "commit_rejection_details": _sorted_counter(self.rejection_details),
             "builder_failure_reasons": _sorted_counter(self.builder_failure_reasons),
             "conservation": self.conservation(),
         }
@@ -333,6 +340,8 @@ class SingletonFunnelCensus:
         self.rejected_proposal_count = 0
         self.accepted_by_type = Counter()
         self.rejected_by_reason = Counter()
+        self.rejected_by_detail = Counter()
+        self.rejected_detail_by_reason: dict[str, Counter] = defaultdict(Counter)
         self.actions_by_type = Counter()
         self.candidate_count_values: list[int] = []
         self.candidate_cap_saturated_decisions = 0
@@ -454,7 +463,10 @@ class SingletonFunnelCensus:
         rejected_by_actor_goal: dict[tuple[str, str], list[dict]] = defaultdict(list)
         for rejection in rejected:
             reason = str(rejection.get("reason_code"))
+            detail = str(rejection.get("reason_detail") or "none")
             self.rejected_by_reason[reason] += 1
+            self.rejected_by_detail[detail] += 1
+            self.rejected_detail_by_reason[reason][detail] += 1
             window.rejections[reason] += 1
             proposal = rejection.get("proposal_snapshot") or {}
             goal_id = (proposal.get("living_action") or {}).get("causal_goal_id")
@@ -628,6 +640,7 @@ class SingletonFunnelCensus:
             outcome = "commit_rejected"
             for rejection in rejected_rows:
                 funnel.rejection_reasons[str(rejection.get("reason_code"))] += 1
+                funnel.rejection_details[str(rejection.get("reason_detail") or "none")] += 1
         else:
             funnel.no_commit_record += 1
 
@@ -689,6 +702,11 @@ class SingletonFunnelCensus:
             "rejected_proposal_count": self.rejected_proposal_count,
             "accepted_by_type": _sorted_counter(self.accepted_by_type),
             "rejected_by_reason": _sorted_counter(self.rejected_by_reason),
+            "rejected_by_detail": _sorted_counter(self.rejected_by_detail),
+            "rejected_detail_by_reason": {
+                reason: _sorted_counter(counter)
+                for reason, counter in sorted(self.rejected_detail_by_reason.items())
+            },
             "actions_by_type": _sorted_counter(self.actions_by_type),
             "candidate_count_distribution": _numeric_summary(self.candidate_count_values),
             "candidate_goals_per_decision_cap": LIVING_LIMITS.candidate_goals_per_decision,
