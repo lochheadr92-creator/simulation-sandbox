@@ -715,6 +715,30 @@ class LivingSettlementDomain(DomainEngine):
                 "energy": actor_after["energy"], "knowledge": knowledge,
                 "paused_living_plan": paused_plan,
             })
+            # OQ-1 CONTAINMENT EXPERIMENT (not a composition fix). Evidence:
+            # memory/evidence/layer-a-living-agent-cas/OQ1-ENERGY-COLLISION-RESOLUTION.md
+            #
+            # The `energy` written above is ABSOLUTE, derived from
+            # `entity["energy"]` -- the FRAME-START read -- and this is the last
+            # energy writer in 97/97 measured collisions. It lands on proposals
+            # from BOTH builders, so it also covers social actions.
+            # `build_physical_action_proposal` pins only `alive`
+            # (`living_agent_actions.py:294-296`), so nothing detects another
+            # proposal changing this actor's energy earlier in the same frame:
+            # a cross-entity `cooperate` grants +40 and this write silently
+            # erases it (frame-start 565 -> cooperate commits 605 -> this write
+            # lands 640 from the stale 565).
+            #
+            # This precondition makes the stale write FAIL CLOSED rather than
+            # lose the benefit silently. It does NOT compose the two effects;
+            # correct composition needs delta semantics in Core, which is
+            # blocked because `actor_after` (carrying this absolute energy) is
+            # read back below to derive `fatigue`/`comfort` pressures inside
+            # this same proposal.
+            proposal.setdefault("preconditions", []).append({
+                "entity_id": entity_id, "field": "energy", "op": "eq",
+                "value": entity.get("energy"),
+            })
             if decision_kind == "critical_interrupt":
                 action["interrupted_plan_id"] = prior_plan.get("plan_id")
                 action["interruption_reason"] = "critical_survival_pressure"
