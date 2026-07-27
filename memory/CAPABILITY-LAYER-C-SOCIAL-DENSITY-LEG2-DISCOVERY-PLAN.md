@@ -254,6 +254,53 @@ leg** — it records the blocker and stops.
 > and the player can see why, because the person who answers is the person who
 > was closest.
 
+### RATIFIED CONTRACT — R1 (2026-07-27)
+
+**Ratified rule.** For `REQUEST_HELP` **only**: from the existing eligible
+visible-person set, select the person at minimum existing spatial distance from
+the requester; on an equal-distance tie, select the lowest deterministic entity
+ID within that nearest cohort. Existing ID ordering survives **only** as a
+deterministic equal-distance tiebreak. Eligibility is unchanged; `RESPOND_HELP`
+is unchanged; `warn` is unchanged; no shared helper is extracted.
+
+| ratified parameter | value | derived from |
+|---|---|---|
+| **N** (distinct actors) | **8** | MIN distinct shadow-selected persons per window, across windows and both seeds |
+| **decision-stage concentration ceiling** | **0.528** | MAX shadow top-person share |
+
+**Three-way verdict (binding).** Surface 1 fails → **REJECT**. Surface 1 passes
+but committed `cooperate` actors ≤ 3 on either acceptance seed → **INCONCLUSIVE**
+(Layer A throughput blocks player-visible proof; **no Layer A remedy inside this
+leg**). Both pass → **ACCEPTED**.
+
+**Player story (requester-side).** Today every hungry villager calls the same
+name; one villager answers between two-thirds and four-fifths of all calls and
+five of the eight never help anyone. After this change a hungry villager calls to
+whoever is actually near them, so help comes from across the camp — and the
+player can see why, because the person who answers is the person who was closest.
+
+**N comparator caveat.** `repay` and `request_help` reach 8/8 but are not
+targeting-gated on the actor side. `cooperate`'s actor role is CONFERRED BY
+SELECTION, so 8 bounds what the world can do, not what the responder role can.
+
+**Two DIFFERENT surfaces — do not conflate.**
+- *Selection-side calibration* (where N=8 and 0.528 come from): a read-only
+  shadow over **baseline, unmodified** runs, measuring **who gets ASKED**.
+- *Decision-stage acceptance* (what the gate tests): **modified** runs, measuring
+  **who DECIDES `cooperate`**. Being asked confers eligibility; it does not
+  guarantee a decision. Measured baseline conversion is lossy — seed 1 had 6
+  distinct persons asked but only **3** ever decided `cooperate`.
+
+**Population-ceiling / death-fragility risk.** N=8 equals the full population, so
+the gate has no headroom for a death. Seed 2 loses one person during window 1
+(`alive_person_ticks` 1,434 of a possible 1,600).
+
+**R2 deferred.** A state-derived tiebreak is **out of scope for this leg** and is
+recorded as a *character-quality* limitation, not a participation one: measured
+tiebreak reach headroom is **zero** (R1 reaches 8; the cohort union is 8), and
+100% of R1's widening is attributable to the distance filter. R2 would rebalance
+frequency only.
+
 #### R1 SHADOW RESULT (executed 2026-07-27; evidence `leg2_r1_target_shadow_seed{1,2}_1200.json`)
 
 **Neutrality VERIFIED, both seeds.** The shadow reproduced the committed
