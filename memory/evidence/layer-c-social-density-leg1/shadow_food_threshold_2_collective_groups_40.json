@@ -1,0 +1,477 @@
+{
+  "capture_events": false,
+  "checkpoint_results": {
+    "40": {
+      "census": {
+        "accepted_by_type": {
+          "expire_signal": 138,
+          "flee": 5,
+          "graze": 35,
+          "lifecycle_tick": 320,
+          "living_consume": 6,
+          "living_drink": 7,
+          "living_gather": 2,
+          "living_move": 74,
+          "living_repair": 5,
+          "living_rest": 114,
+          "living_retrieve": 1,
+          "living_tend": 51,
+          "social_apologise": 1,
+          "social_cooperate": 1,
+          "social_lie": 1,
+          "social_promise": 1,
+          "social_reconcile": 1,
+          "social_request_help": 1,
+          "social_share_information": 1,
+          "social_threaten": 1,
+          "social_trade": 1,
+          "social_warn": 1,
+          "structure_wear": 16,
+          "update_association_registry": 40,
+          "update_group_shared_state": 14,
+          "weather_transition": 2
+        },
+        "accepted_event_count": 840,
+        "action_entropy_bits": 2.237876,
+        "action_type_count": 18,
+        "actions_by_type": {
+          "apologise": 1,
+          "consume": 6,
+          "cooperate": 1,
+          "drink": 7,
+          "gather": 2,
+          "lie": 1,
+          "move": 74,
+          "promise": 1,
+          "reconcile": 1,
+          "repair": 5,
+          "request_help": 1,
+          "rest": 114,
+          "retrieve": 1,
+          "share_information": 1,
+          "tend": 51,
+          "threaten": 1,
+          "trade": 1,
+          "warn": 1
+        },
+        "alive_person_ticks": 320,
+        "base_store_candidate_actor_count": 0,
+        "candidate_gate_counts": {
+          "decision_opportunities": 320,
+          "shared_storage_visible": 313
+        },
+        "candidate_gate_counts_by_actor": {
+          "person-000": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-001": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-002": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-003": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-004": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-005": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-006": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 39
+          },
+          "person-007": {
+            "decision_opportunities": 40,
+            "shared_storage_visible": 40
+          }
+        },
+        "carried_food_histogram_at_decision": {
+          "0": 118,
+          "1": 145,
+          "2": 57
+        },
+        "causal_classification": "A_FOOD_NEVER_REACHES_3",
+        "examples": {
+          "shadow_store_candidate": [
+            {
+              "actor_id": "person-000",
+              "actual_score": 24419,
+              "actual_winner": "DRINK_WATER",
+              "shadow_store_score": 14004,
+              "shadow_would_win": false,
+              "tick": 1
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 26672,
+              "actual_winner": "HELP_PERSON",
+              "shadow_store_score": 14080,
+              "shadow_would_win": false,
+              "tick": 1
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 24519,
+              "actual_winner": "DRINK_WATER",
+              "shadow_store_score": 13816,
+              "shadow_would_win": false,
+              "tick": 2
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 26748,
+              "actual_winner": "HELP_PERSON",
+              "shadow_store_score": 14018,
+              "shadow_would_win": false,
+              "tick": 2
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 1365,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13882,
+              "shadow_would_win": true,
+              "tick": 3
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 26748,
+              "actual_winner": "HELP_PERSON",
+              "shadow_store_score": 14079,
+              "shadow_would_win": false,
+              "tick": 3
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 1365,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13888,
+              "shadow_would_win": true,
+              "tick": 4
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 26748,
+              "actual_winner": "HELP_PERSON",
+              "shadow_store_score": 14079,
+              "shadow_would_win": false,
+              "tick": 4
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 1365,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13888,
+              "shadow_would_win": true,
+              "tick": 5
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 21275,
+              "actual_winner": "PROMISE_HELP",
+              "shadow_store_score": 13903,
+              "shadow_would_win": false,
+              "tick": 5
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 1433,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13888,
+              "shadow_would_win": true,
+              "tick": 6
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 21275,
+              "actual_winner": "PROMISE_HELP",
+              "shadow_store_score": 13903,
+              "shadow_would_win": false,
+              "tick": 6
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13894,
+              "shadow_would_win": true,
+              "tick": 7
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13902,
+              "shadow_would_win": true,
+              "tick": 7
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13892,
+              "shadow_would_win": true,
+              "tick": 8
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13901,
+              "shadow_would_win": true,
+              "tick": 8
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13898,
+              "shadow_would_win": true,
+              "tick": 9
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13901,
+              "shadow_would_win": true,
+              "tick": 9
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13904,
+              "shadow_would_win": true,
+              "tick": 10
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 743,
+              "actual_winner": "REST",
+              "shadow_store_score": 13900,
+              "shadow_would_win": true,
+              "tick": 10
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 2054,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13910,
+              "shadow_would_win": true,
+              "tick": 11
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 1925,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13899,
+              "shadow_would_win": true,
+              "tick": 11
+            },
+            {
+              "actor_id": "person-000",
+              "actual_score": 2005,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13905,
+              "shadow_would_win": true,
+              "tick": 12
+            },
+            {
+              "actor_id": "person-001",
+              "actual_score": 23191,
+              "actual_winner": "TEND_STRUCTURE",
+              "shadow_store_score": 13850,
+              "shadow_would_win": false,
+              "tick": 12
+            }
+          ],
+          "storage_actions": [
+            {
+              "action_type": "retrieve",
+              "actor_id": "person-006",
+              "quantity": 1,
+              "resource_kind": "food",
+              "targets": [
+                "storage-camp"
+              ],
+              "tick": 7
+            }
+          ]
+        },
+        "first_shared_storage_fact_tick": null,
+        "person_ticks": 320,
+        "postscore_store_candidate_actor_count": 0,
+        "rejected_by_reason": {
+          "group_state.stale_membership": 2,
+          "precondition.failed": 50
+        },
+        "rejected_proposal_count": 52,
+        "selected_store_actor_count": 0,
+        "selected_store_committed_actions": {},
+        "selected_store_final_actions": {},
+        "selected_store_plan_statuses": {},
+        "selected_store_rejections": {},
+        "shadow_store_candidate": {
+          "actual_candidate_count_distribution": {
+            "count": 56,
+            "max": 5,
+            "mean": 2.107,
+            "median": 2,
+            "min": 1,
+            "p25": 1,
+            "p75": 3,
+            "p90": 3
+          },
+          "actual_minus_shadow_score_distribution": {
+            "count": 56,
+            "max": 12730,
+            "mean": -2629.446,
+            "median": -11974,
+            "min": -13187,
+            "p25": -13109,
+            "p75": 9341,
+            "p90": 10703
+          },
+          "actual_winners": {
+            "DRINK_WATER": 4,
+            "EAT_CARRIED": 1,
+            "HELP_PERSON": 4,
+            "PROMISE_HELP": 2,
+            "REST": 17,
+            "TEND_STRUCTURE": 28
+          },
+          "distinct_would_win_actor_count": 2,
+          "food_threshold": 2,
+          "joint_opportunity_count": 56,
+          "opportunities_by_actor": {
+            "person-000": 17,
+            "person-001": 39
+          },
+          "shadow_score_distribution": {
+            "count": 56,
+            "max": 14080,
+            "mean": 13892.304,
+            "median": 13872,
+            "min": 13816,
+            "p25": 13859,
+            "p75": 13903,
+            "p90": 13942
+          },
+          "would_win_by_actor": {
+            "person-000": 12,
+            "person-001": 19
+          },
+          "would_win_count": 31
+        },
+        "shared_storage_fact_ever_formed": false,
+        "shared_storage_fact_group_ids": [],
+        "shared_storage_fact_targets": [],
+        "storage_action_actor_count": 1,
+        "storage_actions_by_resource": {
+          "food": 1
+        },
+        "storage_actions_by_type": {
+          "retrieve": 1
+        },
+        "storage_targets": [
+          "storage-camp"
+        ],
+        "store_action_actor_count": 0,
+        "store_candidate_lost_by_distribution": {
+          "count": 0,
+          "max": null,
+          "mean": null,
+          "median": null,
+          "min": null,
+          "p25": null,
+          "p75": null,
+          "p90": null
+        },
+        "store_candidate_score_distribution": {
+          "count": 0,
+          "max": null,
+          "mean": null,
+          "median": null,
+          "min": null,
+          "p25": null,
+          "p75": null,
+          "p90": null
+        },
+        "ticks_with_shared_storage_fact": 0,
+        "visible_shared_storage_count_histogram": {
+          "0": 7,
+          "1": 313
+        },
+        "visible_shared_storage_ids": [
+          "storage-camp"
+        ],
+        "winners_when_store_candidate_present": {}
+      },
+      "elapsed_seconds": 20.22,
+      "final_state_hash": "95ce1ac893bcf8ff66fcdf0567ed4f0d6c6f9a5595df199c2fb72de37c0b3fab",
+      "replay_matches_entities": true,
+      "replay_state_hash": "95ce1ac893bcf8ff66fcdf0567ed4f0d6c6f9a5595df199c2fb72de37c0b3fab",
+      "tick": 40,
+      "world": {
+        "active_group_goal_count": 0,
+        "active_group_norm_count": 0,
+        "alive_person_count": 8,
+        "death_count": 0,
+        "group_goal_count": 0,
+        "group_norm_count": 0,
+        "person_count": 8,
+        "recognised_group_count": 9,
+        "shared_group_fact_categories": {
+          "shared_shelter": 13
+        },
+        "shared_group_state_count": 9,
+        "storages": {
+          "storage-camp": {
+            "access": "shared",
+            "collective_processed_key_count": 0,
+            "contents": {
+              "food": 0,
+              "wood": 12
+            }
+          },
+          "storage-private": {
+            "access": "private",
+            "collective_processed_key_count": 0,
+            "contents": {
+              "food": 4,
+              "wood": 2
+            }
+          }
+        }
+      }
+    }
+  },
+  "checkpoints": [
+    40
+  ],
+  "elapsed_seconds": 20.29,
+  "engine_version": "0.6.0",
+  "final_classification": "A_FOOD_NEVER_REACHES_3",
+  "final_state_hash": "95ce1ac893bcf8ff66fcdf0567ed4f0d6c6f9a5595df199c2fb72de37c0b3fab",
+  "genesis_rejection_count": 0,
+  "last_completed_checkpoint": 40,
+  "lineage_key": "living-agents-stage6|0.4.0|0.6.0",
+  "probe": "layer-c-social-density-leg1-organic-reachability",
+  "replay_matches_entities": true,
+  "scenario_id": "collective_groups",
+  "schema_version": "0.4.0",
+  "seed": "living-agents-stage6",
+  "shadow_food_threshold": 2,
+  "status": "complete",
+  "ticks": 40
+}
