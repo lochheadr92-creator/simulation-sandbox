@@ -152,6 +152,118 @@ REGISTRY-COMPONENT-OWNERSHIP.md BEFORE implementation; extend-only (no sealed
 Stage 6 scorer/mutations edits; C-6 survival dominance); no guessed constants
 — N and floors from the probe (Invariant 12(b)).
 
+### SELECTED CANDIDATE (2026-07-27) — widen `cooperate` ACTOR participation
+
+**Approved in principle by Ryan, option (a): targeting is the lever. Acceptance
+stays strictly on actor participation; pair effects are observation only. No
+implementation authorised. Frozen-hash authorisation WITHHELD.**
+
+**Root cause (VERIFIED).** `cooperate` eligibility is *conferred by being asked*:
+`build_social_action_proposal:338-347` creates the `request_help` commitment with
+`creator_id = requester`, `beneficiary_id = target`, and `RESPOND_HELP`
+(`living_settlement_domain.py:334-344`) gates on `beneficiary_id == entity_id`.
+`REQUEST_HELP` (`:324`) selects `visible_person_ids[0]` — the alphabetically
+lowest visible id. Measured `cooperate` commits follow the sort prefix exactly:
+`person-000` 256 / `person-001` 50 / `person-002` 12 (seed 1) and 241 / 104 / 12
+(seed 2). The caste hypothesis is FALSIFIED — the blocker is a placeholder
+tiebreak inside Layer C, not `stage6_role` and not `living_action_counts`.
+
+**Change surface — exactly one, VERIFIED by grep.** `target_id =
+visible_person_ids[0]` is a DUPLICATED expression, not a shared helper: separate
+assignments at `:324` (REQUEST_HELP), `:402` (warn, PARKED), `:413` (lie), `:436`
+(share_information), `:451` (trade), `:460` (threaten). Editing `:324` touches
+REQUEST_HELP only. **SCOPE GUARD:** the shared variable `visible_person_ids =
+sorted(people)` (`:259`) must NOT be modified — re-sorting it would silently
+touch all six sites including PARKED `warn`.
+
+#### Pre-registration (written BEFORE any run)
+
+**2a — candidate rules considered.** Perception already exposes, per observed
+person: `observed_subject_id`, `distance` (Manhattan, computed at
+`living_agent_cognition.py:240`), `confidence`, `properties`. Observer state adds
+`relationships` (familiarity / trust / affection / kinship /
+perceived_reliability), `commitments`, `memories`.
+
+| rule | reads | parameter-free | Behaviour-Bible | assessment |
+|---|---|---|---|---|
+| **R1 nearest visible** (min `distance`, tie lowest id) | observation `distance` | **YES** | PASS — spatial state | **selected** |
+| R2 highest trust | `relationships[].trust` | YES | PASS | rich-get-richer risk: asking whom you trust raises trust → may NARROW |
+| R3 kinship-first | `relationships[].kinship` | YES | PASS | kinship is genesis-fixed → narrows to siblings; reproduces the caste pattern just falsified |
+| R4 most familiar | `relationships[].familiarity` | YES | PASS | same feedback risk as R2 |
+| R5 least-recently-asked | prior request targets | YES | PASS | needs NEW retained state (`decision_history` is compact, bounded 12, records no target) → not extend-only |
+| R6 perceived reliability | `relationships[].perceived_reliability` | YES | PASS | same feedback risk as R2 |
+| R7 nearest, tie-broken by trust | distance + trust | YES | PASS | strictly larger surface than R1 for no established gain |
+| — random among visible | RNG | n/a | **FAIL** | disqualified on sight — diversity must trace to state, not noise |
+
+**2b — pre-registered rule: R1, nearest visible person, tie-break lowest id.**
+Chosen because: (i) parameter-free, so Invariant 12(b) is satisfied trivially;
+(ii) it reads a field perception already computes — no new state, no registry, no
+schema bump, maximally extend-only; (iii) it is the most defensible *behavioural*
+reading of the placeholder — a hungry person calls to whoever is actually near
+them, i.e. agents acting on their own perception, squarely Layer C's charter;
+(iv) it widens through spatial dynamics that already vary, whereas R2/R4/R6 risk
+narrowing via feedback and R3 is genesis-fixed. **BINDING: if R1 fails its
+pre-registered check, that is a RESULT — no second candidate in the same
+session.**
+
+**2c — N derivation METHOD (number NOT chosen here).**
+
+1. Shadow over the **unmodified baseline** run, both seeds, 1,200 ticks: at every
+   decision where `REQUEST_HELP` was actually generated, additionally compute
+   `argmin distance` over the observed person set (tie lowest id). Log it; never
+   use it.
+2. Per 1,000-tick window, count **distinct shadow-selected persons**.
+3. **N := the MINIMUM of that distinct-count across all windows and both seeds**
+   — the worst window, matching "fires in EVERY 1,000-tick window".
+4. **Concentration ceiling := the MAXIMUM shadow top-person share** across
+   windows and seeds; a modified run must come in at or below it.
+5. **If the shadow distinct-count is ≤ 3 in any window, R1 does not widen → the
+   pre-registered check FAILS, report and stop.**
+
+*Comparator caveat:* `repay` and `request_help` reach 8/8, but neither is
+targeting-gated on the actor side — everyone gets hungry, everyone incurs
+obligations. `cooperate`'s actor role is CONFERRED BY SELECTION, so 8 bounds what
+the world can do, not what the responder role can. N therefore comes from the
+responder-side distribution above, not from that comparator.
+
+*Non-circularity, for the record:* N is derived from **baseline (unmodified)**
+state via a read-only shadow that never influences selection; validation would
+run against a **modified** trajectory. Different runs, different datasets — the
+derivation cannot be tuned to its own validation.
+
+#### Acceptance classification (replaces the earlier two-surface split)
+
+| outcome | verdict |
+|---|---|
+| Surface 1 fails to widen decision-stage actors | **REJECT** |
+| Surface 1 passes, but committed actors remain ≤ 3 on EITHER seed | **INCONCLUSIVE** — Layer A throughput blocks player-visible proof |
+| Both surfaces pass | eligible for contract ratification |
+
+Rationale: as first written the leg could pass its own gate while a player sees
+nothing change, because ~56–70% of widened decisions are refused at the
+whole-blob `living_agent` CAS. That collides with project rule 1 (GAMEPLAY
+FIRST). **INCONCLUSIVE is NOT a licence to attempt any Layer A remedy inside this
+leg** — it records the blocker and stops.
+
+#### Player story (requester-side)
+
+> Today every hungry villager calls the same name. One villager answers between
+> two-thirds and four-fifths of all calls, and five of the eight never help
+> anyone. After this change a hungry villager calls to whoever is actually near
+> them, so help comes from across the camp instead of from one perpetual carer —
+> and the player can see why, because the person who answers is the person who
+> was closest.
+
+#### Derivability status (checked BEFORE commissioning any probe)
+
+The counterfactual "which person would rule R have selected instead" is **NOT
+COMPUTABLE** from captured evidence for any state-derived rule: no run record
+holds per-(tick, observer) visible-person sets, positions, or relationship maps.
+`causal_neighbourhoods[*].target_ids` gives ACTUAL targets for ≤32 committed
+firings only; the warn probe's `nearest_person_distance` is scout-only,
+distribution-form, and carries no identities. A Step-3 shadow probe is therefore
+REQUIRED to execute 2c.
+
 ## Phase 3 — Implementation slices
 
 One purpose per commit, capability gates between slices. Paired visibility
