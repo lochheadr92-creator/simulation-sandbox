@@ -214,11 +214,33 @@ instrument by design. This is exactly the Session 2 trigger condition.
 
 ## 6. Seed-sensitivity note
 
-Pending — the pre-registered ~1,200-tick comparison seed
-(`living-agents-stage6-alt`) is a separate diagnostic run. Result to be appended
-to this file as `leg2_session1_funnel_seedalt_1200.json` when it completes. Until
-then, **every claim in this report is single-seed** and, per CORE-INTEGRITY-004,
-single-run action-count deltas are untrustworthy at tens-of-percent scale.
+**NOT RUN — no result.** The pre-registered ~1,200-tick comparison seed
+(`living-agents-stage6-alt`) was launched three times during this session and
+terminated externally each time; the final attempt was stopped ~7 minutes in,
+before the tick-1,000 checkpoint, so no partial output exists. No
+`leg2_session1_funnel_seedalt_1200.json` was produced. Recorded as a gap, not as
+a null result — nothing about seed sensitivity was measured either way.
+
+**Consequence: every measured claim in this report is single-seed**, and per
+CORE-INTEGRITY-004 single-run action-count deltas are untrustworthy at
+tens-of-percent scale. The plan's purpose for this run — separating seed-specific
+pathology from structure — is therefore **unmet**, and remains open.
+
+Scope of the exposure, stated precisely so it is not overstated or understated:
+
+- **Not seed-exposed:** the self-cap mechanism. `living_action_counts` having one
+  read site, one write site, increment-only with no decrement/reset/decay, and
+  each role occurring exactly once in the scenario, are properties of committed
+  code and of the scenario definition. No seed changes them.
+- **Seed-exposed:** every number. Firing ticks (1–14), the `trade` vs
+  `share_information` scoring margins, all reference-family rates, all
+  concentration and unique-actor figures, the 55–66% commit-pipeline attrition,
+  and the `group_state` headroom curve.
+- **Seed-exposed and load-bearing:** `warn`'s INSUFFICIENT EVIDENCE verdict rests
+  on a single observation (C/D = 1) in a single seed. A second seed is the
+  cheapest way to learn whether one generation in 3,000 ticks is characteristic
+  or seed-specific, and it should be obtained before Session 2 designs a
+  semantic-opportunity definition around it.
 
 What single-seed status does *not* threaten: the self-cap mechanism is a
 structural property of committed code (one read site, one write site,
@@ -380,7 +402,7 @@ consumed counter. For `warn` the finding is that Session 1 cannot answer it.
 | `leg2_session1_neutrality_300.json` | neutrality gate, both claims, all compared fields |
 | `leg2_session1_lifecycle_map.md` | deliverable 2, per-family lifecycle map |
 | `leg2_session1_funnel_collective_groups_3000.json` | primary run: full funnels, conservation, windows, causal neighbourhoods, examples |
-| `leg2_session1_funnel_seedalt_1200.json` | comparison seed diagnostic (pending) |
+| `leg2_session1_funnel_seedalt_1200.json` | **not produced** — comparison seed never completed (§6) |
 | `leg2_session1_funnel_report.md` | this report |
 | `backend/tools/_probe_layer_c_singleton_funnel.py` | the probe |
 | `backend/tools/_probe_capture_events_neutrality.py` | the neutrality gate |
