@@ -254,6 +254,62 @@ leg** — it records the blocker and stops.
 > and the player can see why, because the person who answers is the person who
 > was closest.
 
+#### R1 SHADOW RESULT (executed 2026-07-27; evidence `leg2_r1_target_shadow_seed{1,2}_1200.json`)
+
+**Neutrality VERIFIED, both seeds.** The shadow reproduced the committed
+unmodified Phase 3 hashes byte-for-byte —
+`4efe6c5080704633fd5806e70ee9560b79a7294664caca0d5228cd3e108d2a21` (seed 1) and
+`8d900c97dbf349ed0ff583003963d4c9367bb836f43a31d91bb1bc33014669ca` (seed 2),
+`replay_matches_entities: true` on both.
+
+**Pre-registered derivation executed as written:**
+
+| quantity | value |
+|---|---|
+| **N** := MIN distinct shadow-selected persons per 1,000-tick window, across windows and both seeds | **8** |
+| **concentration ceiling** := MAX shadow top-person share | **0.5278** |
+| FAIL check — any window ≤ 3 distinct | **False → R1 PASSES** |
+
+| | baseline (actual) distinct / top share | R1 shadow distinct / top share |
+|---|---|---|
+| seed 1 w0 | 6 / 0.8013 | **8** / 0.3646 |
+| seed 1 w1 | **3** / 0.7856 | **8** / 0.3604 |
+| seed 2 w0 | 7 / 0.7391 | **8** / 0.3663 |
+| seed 2 w1 | 5 / 0.6701 | **8** / 0.5278 |
+
+**Cohort-min vs global-min decomposition** (added after the rule was
+pre-registered; measures how much of the change is distance vs the surviving
+lowest-id tie-break):
+
+| bucket | seed 1 | seed 2 |
+|---|---|---|
+| `tiebreak_reproduces_baseline` (global-min inside cohort) | 1,072 (43.6%) | 1,276 (50.0%) |
+| `tied_global_min_excluded` — distance did the work | 874 (35.6%) | 657 (25.8%) |
+| `unique_nearest_differs_from_global_min` | 401 (16.3%) | 449 (17.6%) |
+| `unique_nearest_same_as_global_min` | 111 (4.5%) | 168 (6.6%) |
+
+Cohort-size histograms show ties are the norm — a unique nearest person occurs in
+only 512/2,458 (seed 1) and 617/2,550 (seed 2) decisions, so the tie-break is
+*active* in roughly three-quarters of all decisions.
+
+**Tie-break headroom: ZERO on both seeds.** Persons reached by R1's lowest-id
+tie-break = 8; persons appearing in any nearest cohort = 8. A state-derived R2
+tie-break could not reach anyone R1 does not already reach; it could only
+rebalance frequency.
+
+**Structural note (VERIFIED by construction, not merely observed):** R1 can
+differ from baseline *only* when the distance filter excludes the global-minimum
+id, because the lowest-id tie-break always re-selects that id whenever it remains
+in the cohort. Therefore **100% of the widening is attributable to the distance
+filter and 0% to the tie-break.** The tie-break's residual effect is to *dampen*
+widening and leave an alphabetical gradient (seed 1 shadow: `person-000` 894 …
+`person-006` 53).
+
+**Caution on N.** The pre-registered method returned N = 8, which equals the full
+population, so the gate has no headroom for a death. Seed 2 loses one person
+during window 1. Recorded as a property of the derivation, not a reason to change
+a pre-registered method.
+
 #### Derivability status (checked BEFORE commissioning any probe)
 
 The counterfactual "which person would rule R have selected instead" is **NOT

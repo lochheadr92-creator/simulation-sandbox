@@ -1,0 +1,759 @@
+{
+  "census": {
+    "actual_by_person": {
+      "person-000": 1533,
+      "person-001": 851,
+      "person-002": 137,
+      "person-003": 7,
+      "person-004": 10,
+      "person-005": 6,
+      "person-006": 6
+    },
+    "actual_distinct_persons": 7,
+    "actual_target_distance_distribution": {
+      "count": 2550,
+      "max": 4,
+      "mean": 0.7404,
+      "median": 1,
+      "min": 0
+    },
+    "cohort_member_appearances": {
+      "person-000": 743,
+      "person-001": 1239,
+      "person-002": 1201,
+      "person-003": 1154,
+      "person-004": 899,
+      "person-005": 1202,
+      "person-006": 840,
+      "person-007": 1063
+    },
+    "cohort_size_histogram": {
+      "1": 617,
+      "2": 416,
+      "3": 379,
+      "4": 429,
+      "5": 360,
+      "6": 204,
+      "7": 145
+    },
+    "cohort_union_distinct_persons": 8,
+    "cohort_union_persons": [
+      "person-000",
+      "person-001",
+      "person-002",
+      "person-003",
+      "person-004",
+      "person-005",
+      "person-006",
+      "person-007"
+    ],
+    "decomposition": {
+      "tied_global_min_excluded_distance_did_the_work": 657,
+      "tied_global_min_in_cohort_tiebreak_reproduces_baseline": 1276,
+      "unique_nearest_differs_from_global_min": 449,
+      "unique_nearest_same_as_global_min": 168
+    },
+    "decomposition_note": "unique_nearest_* = cohort of 1, so DISTANCE alone decided and the tie-break was inert. tied_global_min_in_cohort_... = the distance filter kept the baseline target and the lowest-id tie-break re-selected it, so R1 REPRODUCES baseline on those decisions. tied_global_min_excluded_... = distance removed the baseline target and the tie-break only resolved a residual set.",
+    "divergence_examples": [
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-004"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 0,
+        "shadow_target": "person-004",
+        "tick": 2,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 3,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 3,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 2,
+        "shadow_target": "person-003",
+        "tick": 4,
+        "tie_count": 2,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 3,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-001",
+          "person-003",
+          "person-004"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 2,
+        "shadow_target": "person-001",
+        "tick": 5,
+        "tie_count": 3,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 4,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-007"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 2,
+        "shadow_target": "person-007",
+        "tick": 6,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 3,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002",
+          "person-007"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 1,
+        "shadow_target": "person-002",
+        "tick": 7,
+        "tie_count": 2,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 3,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002",
+          "person-007"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 1,
+        "shadow_target": "person-002",
+        "tick": 8,
+        "tie_count": 2,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-006"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 1,
+        "shadow_target": "person-006",
+        "tick": 36,
+        "tie_count": 1,
+        "visible_person_count": 5
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-006"
+        ],
+        "requester": "person-001",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 46,
+        "tie_count": 2,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-001",
+          "person-006"
+        ],
+        "requester": "person-003",
+        "shadow_distance": 0,
+        "shadow_target": "person-001",
+        "tick": 49,
+        "tie_count": 2,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 83,
+        "tie_count": 3,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 1,
+        "shadow_target": "person-003",
+        "tick": 84,
+        "tie_count": 3,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 3,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 2,
+        "shadow_target": "person-003",
+        "tick": 85,
+        "tie_count": 3,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 3,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-006",
+        "shadow_distance": 2,
+        "shadow_target": "person-003",
+        "tick": 86,
+        "tie_count": 3,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 88,
+        "tie_count": 3,
+        "visible_person_count": 6
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 89,
+        "tie_count": 3,
+        "visible_person_count": 6
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 90,
+        "tie_count": 3,
+        "visible_person_count": 6
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 91,
+        "tie_count": 3,
+        "visible_person_count": 6
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-007"
+        ],
+        "requester": "person-002",
+        "shadow_distance": 0,
+        "shadow_target": "person-007",
+        "tick": 94,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-002",
+        "tick": 94,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-007"
+        ],
+        "requester": "person-002",
+        "shadow_distance": 0,
+        "shadow_target": "person-007",
+        "tick": 95,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-002",
+        "tick": 95,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-001",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006",
+          "person-007"
+        ],
+        "requester": "person-002",
+        "shadow_distance": 0,
+        "shadow_target": "person-001",
+        "tick": 96,
+        "tie_count": 6,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-001",
+          "person-002",
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-001",
+        "tick": 96,
+        "tie_count": 6,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-003",
+          "person-004",
+          "person-005",
+          "person-006"
+        ],
+        "requester": "person-001",
+        "shadow_distance": 0,
+        "shadow_target": "person-003",
+        "tick": 97,
+        "tie_count": 4,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-007"
+        ],
+        "requester": "person-002",
+        "shadow_distance": 0,
+        "shadow_target": "person-007",
+        "tick": 99,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-002",
+        "tick": 99,
+        "tie_count": 1,
+        "visible_person_count": 4
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-007"
+        ],
+        "requester": "person-002",
+        "shadow_distance": 0,
+        "shadow_target": "person-007",
+        "tick": 100,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-002",
+        "tick": 100,
+        "tie_count": 1,
+        "visible_person_count": 7
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 0,
+        "shadow_target": "person-002",
+        "tick": 101,
+        "tie_count": 1,
+        "visible_person_count": 4
+      },
+      {
+        "actual_distance": 2,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002"
+        ],
+        "requester": "person-007",
+        "shadow_distance": 1,
+        "shadow_target": "person-002",
+        "tick": 102,
+        "tie_count": 1,
+        "visible_person_count": 3
+      },
+      {
+        "actual_distance": 1,
+        "actual_target": "person-000",
+        "global_min_id": "person-000",
+        "global_min_in_cohort": false,
+        "nearest_cohort": [
+          "person-002",
+          "person-004",
+          "person-005",
+          "person-006"
+        ],
+        "requester": "person-003",
+        "shadow_distance": 0,
+        "shadow_target": "person-002",
+        "tick": 105,
+        "tie_count": 4,
+        "visible_person_count": 7
+      }
+    ],
+    "divergence_rate": 0.4325,
+    "divergent_decisions": 1103,
+    "pre_registered_rule": "R1 = argmin(observation.distance, observed_subject_id)",
+    "request_help_decisions_with_target": 2550,
+    "run_fail_any_window_le_3": false,
+    "run_shadow_max_top_person_share": 0.5278,
+    "run_shadow_min_distinct_per_window": 8,
+    "shadow_by_person": {
+      "person-000": 743,
+      "person-001": 867,
+      "person-002": 358,
+      "person-003": 156,
+      "person-004": 157,
+      "person-005": 127,
+      "person-006": 91,
+      "person-007": 51
+    },
+    "shadow_distinct_persons": 8,
+    "shadow_target_distance_distribution": {
+      "count": 2550,
+      "max": 3,
+      "mean": 0.2169,
+      "median": 0,
+      "min": 0
+    },
+    "tie_decisions": 1933,
+    "tiebreak_headroom": {
+      "note": "The gap bounds what a state-derived tie-break (a separately pre-registered R2) could buy WITHOUT changing the distance filter. Zero gap means the tie-break is not costing reach.",
+      "reachable_by_any_tiebreak_within_cohorts": 8,
+      "reached_by_R1_lowest_id_tiebreak": 8
+    },
+    "visible_person_count_distribution": {
+      "count": 2550,
+      "max": 7,
+      "mean": 6.3988,
+      "median": 7,
+      "min": 1
+    },
+    "windows_actual": [
+      {
+        "by_person": {
+          "person-000": 1459,
+          "person-001": 465,
+          "person-002": 25,
+          "person-003": 7,
+          "person-004": 8,
+          "person-005": 4,
+          "person-006": 6
+        },
+        "distinct_persons": 7,
+        "selections": 1974,
+        "top_person": "person-000",
+        "top_person_count": 1459,
+        "top_person_share": 0.7391,
+        "window_index": 0
+      },
+      {
+        "by_person": {
+          "person-000": 74,
+          "person-001": 386,
+          "person-002": 112,
+          "person-004": 2,
+          "person-005": 2
+        },
+        "distinct_persons": 5,
+        "selections": 576,
+        "top_person": "person-001",
+        "top_person_count": 386,
+        "top_person_share": 0.6701,
+        "window_index": 1
+      }
+    ],
+    "windows_cohort_union_distinct": [
+      {
+        "distinct_persons": 8,
+        "window_index": 0
+      },
+      {
+        "distinct_persons": 8,
+        "window_index": 1
+      }
+    ],
+    "windows_shadow": [
+      {
+        "by_person": {
+          "person-000": 723,
+          "person-001": 563,
+          "person-002": 266,
+          "person-003": 110,
+          "person-004": 126,
+          "person-005": 98,
+          "person-006": 47,
+          "person-007": 41
+        },
+        "distinct_persons": 8,
+        "selections": 1974,
+        "top_person": "person-000",
+        "top_person_count": 723,
+        "top_person_share": 0.3663,
+        "window_index": 0
+      },
+      {
+        "by_person": {
+          "person-000": 20,
+          "person-001": 304,
+          "person-002": 92,
+          "person-003": 46,
+          "person-004": 31,
+          "person-005": 29,
+          "person-006": 44,
+          "person-007": 10
+        },
+        "distinct_persons": 8,
+        "selections": 576,
+        "top_person": "person-001",
+        "top_person_count": 304,
+        "top_person_share": 0.5278,
+        "window_index": 1
+      }
+    ]
+  },
+  "checkpoints": {
+    "1000": {
+      "elapsed_seconds": 398.843,
+      "final_state_hash": "a6a25cb2dacb5df03fa58d047c14c3445594871a6bbfc946133b52b1c1981484",
+      "replay_matches_entities": true,
+      "tick": 1000
+    },
+    "1200": {
+      "elapsed_seconds": 471.936,
+      "final_state_hash": "8d900c97dbf349ed0ff583003963d4c9367bb836f43a31d91bb1bc33014669ca",
+      "replay_matches_entities": true,
+      "tick": 1200
+    },
+    "250": {
+      "elapsed_seconds": 90.548,
+      "final_state_hash": "014bbd78c8e4f598ad464b82e2458e6d7fd18eb4e0f0592e54b50aa232c911de",
+      "replay_matches_entities": true,
+      "tick": 250
+    },
+    "500": {
+      "elapsed_seconds": 188.51,
+      "final_state_hash": "b3d66f526fe6c0128a1a78b5f4ce46f7d2be64a0789b35ce795c09d3bf834905",
+      "replay_matches_entities": true,
+      "tick": 500
+    },
+    "750": {
+      "elapsed_seconds": 285.216,
+      "final_state_hash": "57f53a6e60121ed03b39565684fce6d042033270004d6c9634bb0562f179213e",
+      "replay_matches_entities": true,
+      "tick": 750
+    }
+  },
+  "elapsed_seconds": 471.967,
+  "engine_version": "0.6.0",
+  "final_state_hash": "8d900c97dbf349ed0ff583003963d4c9367bb836f43a31d91bb1bc33014669ca",
+  "instrumentation": {
+    "monkeypatched_functions": [
+      "domains.living_settlement_domain.build_settlement_candidates"
+    ],
+    "note": "The real candidate list is returned untouched; the shadow selection is computed, logged, and never used.",
+    "shadow_only": true
+  },
+  "last_completed_checkpoint": 1200,
+  "neutrality": {
+    "committed_baseline_hash": "8d900c97dbf349ed0ff583003963d4c9367bb836f43a31d91bb1bc33014669ca",
+    "comparable": true,
+    "shadow_is_inert": true,
+    "this_run_final_state_hash": "8d900c97dbf349ed0ff583003963d4c9367bb836f43a31d91bb1bc33014669ca",
+    "verdict": "NEUTRAL"
+  },
+  "plan": "memory/CAPABILITY-LAYER-C-SOCIAL-DENSITY-LEG2-DISCOVERY-PLAN.md",
+  "pre_registration_commit": "a1a0ea68",
+  "probe": "layer-c-social-density-leg2-request-help-target-shadow",
+  "replay_matches_entities": true,
+  "run_id": "probe-layer-c-request-help-target-shadow",
+  "scenario_id": "collective_groups",
+  "schema_version": "0.4.0",
+  "seed": "living-agents-stage6-alt",
+  "status": "complete",
+  "ticks": 1200
+}
