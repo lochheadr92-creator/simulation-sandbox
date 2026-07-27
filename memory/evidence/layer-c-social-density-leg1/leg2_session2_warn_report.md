@@ -143,6 +143,20 @@ run. The hypothesis is refuted by the instrument built to allow refuting it.
 **`warn` converts every opportunity it receives, end to end, with zero loss at
 every stage. It receives one in 3,000 ticks.**
 
+> **CORRECTED 2026-07-27 by the second-seed diagnostic**
+> (`leg2_seed2_diagnostic_report.md`). The conversion claim above holds on THIS
+> seed but is **not** a general property. On seed `living-agents-stage6-alt` the
+> single opportunity converted A→B→C→D→E — candidate generated, scored 23,329,
+> and won its decision — then failed at commit with `precondition.failed`,
+> giving **zero** `warn` commits. Conversion efficiency is a **seed-sensitive
+> quantity**, not a mechanism invariant.
+>
+> The classification below is **unaffected and was CORROBORATED** cross-seed:
+> the counter stays open on both seeds, `animal_observed` is the sole binding
+> conjunct on both (≥99.9% failure), and the nearest-animal distance band is
+> near-identical (median 11 vs 12, same min 1 / max 13). The commit rejection
+> sits downstream of the mechanism under test.
+
 **Classification: never-generated — semantic-opportunity absence.** This is a
 *different mechanism* from the other seven singletons. Those are
 prerequisite-never-recurs via a **consumed monotone counter** (an internal gate
