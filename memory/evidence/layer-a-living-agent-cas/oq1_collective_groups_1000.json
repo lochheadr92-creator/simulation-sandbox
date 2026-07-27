@@ -1,0 +1,1016 @@
+{
+  "census": {
+    "collisions": 97,
+    "events_writing_energy": 7137,
+    "examples": [
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 640,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 565,
+        "tick": 4,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-4-82-16116d11",
+            "event_type": "social_cooperate",
+            "value": 605,
+            "writer_actor": "person-001"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-4-83-3abf5abc",
+            "event_type": "living_rest",
+            "value": 640,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 965,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 970,
+        "tick": 69,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-69-1501-55c5c312",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-69-1503-e7ca0de7",
+            "event_type": "living_move",
+            "value": 965,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 940,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 945,
+        "tick": 74,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-74-1608-1dc1307c",
+            "event_type": "social_cooperate",
+            "value": 985,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-74-1609-207032bc",
+            "event_type": "living_move",
+            "value": 940,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 925,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 930,
+        "tick": 77,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-77-1678-0cd460cd",
+            "event_type": "social_cooperate",
+            "value": 970,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "drink",
+            "event_id": "evt-77-1682-aa73b75a",
+            "event_type": "living_drink",
+            "value": 925,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 990,
+        "tick": 82,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-82-1789-76bf95a9",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-82-1790-f5ef02fa",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 84,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-84-1828-4760140d",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-84-1831-df0c45c4",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-004",
+        "final_energy": 980,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 985,
+        "tick": 100,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-100-2134-9d022f9c",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-100-2135-a2d69d78",
+            "event_type": "living_move",
+            "value": 980,
+            "writer_actor": "person-004"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-003",
+        "final_energy": 960,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 965,
+        "tick": 113,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-113-2420-ec4141bd",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-113-2421-f33adca1",
+            "event_type": "living_move",
+            "value": 960,
+            "writer_actor": "person-003"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-003",
+        "final_energy": 985,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 990,
+        "tick": 122,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-122-2611-1c39a6b7",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "tend",
+            "event_id": "evt-122-2616-da518f55",
+            "event_type": "living_tend",
+            "value": 985,
+            "writer_actor": "person-003"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-003",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 125,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-125-2677-b1548fbc",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-125-2681-f372e56b",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-003"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 960,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 965,
+        "tick": 225,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-225-4710-a9935cb4",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "consume",
+            "event_id": "evt-225-4711-ab989449",
+            "event_type": "living_consume",
+            "value": 960,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-005",
+        "final_energy": 950,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 955,
+        "tick": 226,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-226-4733-15101858",
+            "event_type": "social_cooperate",
+            "value": 995,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-226-4737-47437b46",
+            "event_type": "living_move",
+            "value": 950,
+            "writer_actor": "person-005"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 940,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 945,
+        "tick": 228,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-228-4779-6acde6cb",
+            "event_type": "social_cooperate",
+            "value": 985,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "tend",
+            "event_id": "evt-228-4784-b8152da4",
+            "event_type": "living_tend",
+            "value": 940,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 950,
+        "tick": 229,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-229-4801-e05d6de0",
+            "event_type": "social_cooperate",
+            "value": 990,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-229-4802-f49e1004",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 230,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-230-4824-044ec8f0",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-230-4831-f30521af",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-005",
+        "final_energy": 990,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 233,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-233-4883-2342a5cc",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-233-4885-dfd93f87",
+            "event_type": "living_move",
+            "value": 990,
+            "writer_actor": "person-005"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 235,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-235-4920-344004d5",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-235-4922-8869a79e",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 990,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 236,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-236-4945-6c968bdf",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-236-4951-efd00888",
+            "event_type": "living_move",
+            "value": 990,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 990,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 242,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-242-5071-8f9d9652",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-242-5072-b9142ef6",
+            "event_type": "living_move",
+            "value": 990,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 985,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 990,
+        "tick": 243,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-243-5092-172eae25",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "tend",
+            "event_id": "evt-243-5096-947d1326",
+            "event_type": "living_tend",
+            "value": 985,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-004",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 314,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-314-6497-03e4a4db",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-314-6500-ad15e497",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-004"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 970,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 975,
+        "tick": 319,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-319-6596-337aca58",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-319-6597-428cd733",
+            "event_type": "living_move",
+            "value": 970,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 960,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 965,
+        "tick": 321,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-321-6646-12290970",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "consume",
+            "event_id": "evt-321-6648-5b45c245",
+            "event_type": "living_consume",
+            "value": 960,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 324,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-324-6717-978062e3",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-324-6718-b70c60f3",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 990,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 326,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-326-6766-3aacaf24",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-326-6770-efedde57",
+            "event_type": "living_move",
+            "value": 990,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 980,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 985,
+        "tick": 328,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-328-6806-3e6f0dc6",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-328-6807-613b68e3",
+            "event_type": "living_move",
+            "value": 980,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 410,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-410-8572-66d34d5d",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-410-8575-e5cc0762",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 970,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 975,
+        "tick": 461,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-461-9633-0e57f92d",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-461-9635-70d0b060",
+            "event_type": "living_move",
+            "value": 970,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-000",
+        "final_energy": 900,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 905,
+        "tick": 462,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-462-9655-9f5f6c26",
+            "event_type": "social_cooperate",
+            "value": 945,
+            "writer_actor": "person-001"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-462-9658-d547d51e",
+            "event_type": "living_move",
+            "value": 900,
+            "writer_actor": "person-000"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-000",
+        "final_energy": 895,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 900,
+        "tick": 463,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-463-9674-6324426a",
+            "event_type": "social_cooperate",
+            "value": 940,
+            "writer_actor": "person-001"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-463-9675-8d8228b2",
+            "event_type": "living_move",
+            "value": 895,
+            "writer_actor": "person-000"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 965,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 970,
+        "tick": 465,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-465-9721-8a24cc1c",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "consume",
+            "event_id": "evt-465-9724-d107a47d",
+            "event_type": "living_consume",
+            "value": 965,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 945,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 950,
+        "tick": 466,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-466-9743-05a40b98",
+            "event_type": "social_cooperate",
+            "value": 990,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-466-9744-0aed789f",
+            "event_type": "living_move",
+            "value": 945,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 995,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 470,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-470-9830-06426cdd",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-470-9833-8710644b",
+            "event_type": "living_rest",
+            "value": 995,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 985,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 990,
+        "tick": 472,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-472-9873-803df307",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-472-9875-b002d086",
+            "event_type": "living_move",
+            "value": 985,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-007",
+        "final_energy": 975,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 980,
+        "tick": 474,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-474-9907-1cb90aa4",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "tend",
+            "event_id": "evt-474-9908-48ef1ef7",
+            "event_type": "living_tend",
+            "value": 975,
+            "writer_actor": "person-007"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-002",
+        "final_energy": 990,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 995,
+        "tick": 476,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-476-9955-009d4a94",
+            "event_type": "social_cooperate",
+            "value": 1000,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-476-9958-5338df1d",
+            "event_type": "living_move",
+            "value": 990,
+            "writer_actor": "person-002"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-001",
+        "final_energy": 715,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 720,
+        "tick": 502,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-502-10518-12fc6de7",
+            "event_type": "social_cooperate",
+            "value": 760,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-502-10520-49a2d6d8",
+            "event_type": "living_move",
+            "value": 715,
+            "writer_actor": "person-001"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-001",
+        "final_energy": 705,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 710,
+        "tick": 504,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-504-10557-0827c817",
+            "event_type": "social_cooperate",
+            "value": 750,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-504-10559-798ae788",
+            "event_type": "living_move",
+            "value": 705,
+            "writer_actor": "person-001"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-001",
+        "final_energy": 810,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 735,
+        "tick": 515,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-515-10808-8ff236d1",
+            "event_type": "social_cooperate",
+            "value": 775,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "rest",
+            "event_id": "evt-515-10810-abca1284",
+            "event_type": "living_rest",
+            "value": 810,
+            "writer_actor": "person-001"
+          }
+        ]
+      },
+      {
+        "distinct_written_values": 2,
+        "entity_id": "person-001",
+        "final_energy": 805,
+        "final_equals_last_writer": true,
+        "pre_frame_energy": 810,
+        "tick": 516,
+        "writers": [
+          {
+            "action_type": "cooperate",
+            "event_id": "evt-516-10830-1112c2b8",
+            "event_type": "social_cooperate",
+            "value": 850,
+            "writer_actor": "person-000"
+          },
+          {
+            "action_type": "move",
+            "event_id": "evt-516-10832-30a11eb7",
+            "event_type": "living_move",
+            "value": 805,
+            "writer_actor": "person-001"
+          }
+        ]
+      }
+    ],
+    "final_minus_pre_frame_energy": {
+      "-5": 70,
+      "0": 14,
+      "15": 1,
+      "20": 2,
+      "40": 1,
+      "45": 2,
+      "5": 2,
+      "75": 5
+    },
+    "frames": 1000,
+    "outcome": {
+      "all_writers_wrote_same_value": 1,
+      "final_equals_last_writer": 97
+    },
+    "self_vs_cross_entity": {
+      "mixed_self_and_cross": 97
+    },
+    "writer_action_combinations": {
+      "cooperate+consume": 6,
+      "cooperate+drink": 1,
+      "cooperate+gather": 1,
+      "cooperate+move": 43,
+      "cooperate+rest": 27,
+      "cooperate+tend": 19
+    },
+    "writer_event_types": {
+      "living_consume": 6,
+      "living_drink": 1,
+      "living_gather": 1,
+      "living_move": 43,
+      "living_rest": 27,
+      "living_tend": 19,
+      "social_cooperate": 97
+    },
+    "writers_per_collision": {
+      "2": 97
+    }
+  },
+  "elapsed_seconds": 392.41,
+  "engine_version": "0.6.0",
+  "final_state_hash": "03312018977e518227652d4929afb643bdc6db3fc99f7a7a5ee4e055754488a6",
+  "probe": "oq1-energy-collision-attribution",
+  "replay_matches_entities": true,
+  "scenario_id": "collective_groups",
+  "schema_version": "0.4.0",
+  "seed": "living-agents-stage6",
+  "status": "complete",
+  "ticks": 1000
+}
