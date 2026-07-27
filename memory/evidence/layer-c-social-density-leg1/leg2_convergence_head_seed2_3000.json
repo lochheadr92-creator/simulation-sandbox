@@ -1,0 +1,54 @@
+{
+  "engine_version": "0.6.0",
+  "final_state_hash": "3a23839ea6960a7af3d852b20c1173a3edb68c0d528895699a29beea47f20cbd",
+  "probe": "layer-c-leg2-group-formation-convergence",
+  "scenario_id": "collective_groups",
+  "schema_version": "0.4.0",
+  "seed": "living-agents-stage6-alt",
+  "status": "complete",
+  "ticks": 3000,
+  "windows": [
+    {
+      "alive_people": 8,
+      "cooperate_cumulative": 301,
+      "cooperate_in_window": 301,
+      "elapsed_seconds": 348.2,
+      "group_candidates": 13,
+      "recognised_groups": 13,
+      "request_help_cumulative": 212,
+      "request_help_in_window": 212,
+      "shared_group_states": 13,
+      "update_group_shared_state_cumulative": 686,
+      "update_group_shared_state_in_window": 686,
+      "window_end_tick": 1000
+    },
+    {
+      "alive_people": 7,
+      "cooperate_cumulative": 524,
+      "cooperate_in_window": 223,
+      "elapsed_seconds": 688.2,
+      "group_candidates": 16,
+      "recognised_groups": 16,
+      "request_help_cumulative": 383,
+      "request_help_in_window": 171,
+      "shared_group_states": 16,
+      "update_group_shared_state_cumulative": 715,
+      "update_group_shared_state_in_window": 29,
+      "window_end_tick": 2000
+    },
+    {
+      "alive_people": 6,
+      "cooperate_cumulative": 803,
+      "cooperate_in_window": 279,
+      "elapsed_seconds": 1068.4,
+      "group_candidates": 18,
+      "recognised_groups": 18,
+      "request_help_cumulative": 616,
+      "request_help_in_window": 233,
+      "shared_group_states": 16,
+      "update_group_shared_state_cumulative": 1083,
+      "update_group_shared_state_in_window": 368,
+      "window_end_tick": 3000
+    }
+  ]
+}

@@ -301,6 +301,69 @@ tiebreak reach headroom is **zero** (R1 reaches 8; the cohort union is 8), and
 100% of R1's widening is attributable to the distance filter. R2 would rebalance
 frequency only.
 
+#### AMENDED ACCEPTANCE GATES (ruling 2026-07-27) — supersedes the two-surface split
+
+**Horizon.** Acceptance runs at **3,000 ticks** per required seed and scenario,
+using exactly three complete windows: 1–1,000, 1,001–2,000, 2,001–3,000. The
+1,200-tick runs were calibration/diagnostic only; their 200-tick partial window
+is NOT an acceptance window. 3,000 ticks is the contract's ratified horizon, not
+an extension.
+
+**Surface crossing corrected (VERIFIED).** N=8 and 0.528 were derived from
+counterfactual `REQUEST_HELP` *target selections*, not from actual winning
+`cooperate` decisions. They therefore belong to a **selection/mechanism**
+surface and must NOT be applied to decision-stage `cooperate` actors.
+
+**SURFACE 0 — `REQUEST_HELP` targeting mechanism.** Per complete window, the
+*required survivor set* = identities of all people alive at the END of that
+window. Every survivor must appear **at least once** as an actual selected
+`REQUEST_HELP` target in that window — an **identity-based** gate, so a count may
+not pass by including someone who died while omitting a living person. Actual
+top-target concentration must be **≤ 0.528** in every complete window.
+Operationally `N_window` = people alive at window end, capped at the scenario
+population ceiling of 8. This must NOT be weakened via minimum concurrent
+population, average population, alive-person-ticks, or whole-run union coverage.
+The dynamic survivor denominator is **not** permission to cause deaths — C-6
+remains a separate binding gate.
+
+**SURFACE 1 — actual `cooperate` decision participation.** Verified baseline is
+**3** distinct `cooperate` actors across both prior seeds. No decision-stage N or
+ceiling was ever calibrated, so none is invented and no selection-side value is
+imported. Operational threshold: **≥ 4 distinct winning `cooperate` actors per
+complete window** — the smallest strict improvement over the verified baseline of
+3. Reported but NOT gated: per-actor winning counts, decision-stage top-actor
+concentration, absolute winning-decision count, and the selected-target →
+winning-actor conversion.
+
+**SURFACE 2 — committed player-visible result.** Distinct committed `cooperate`
+actors must **exceed 3** on every required seed. Also reported: per-actor
+committed counts, committed top-actor concentration, absolute committed count,
+refusal rate, refusal-reason histogram, and unique ordered pairs (observation
+only).
+
+**Binding classification, applied in order:**
+
+| # | condition | verdict |
+|---|---|---|
+| A | Surface 0 fails | **REJECT** — R1 failed to reproduce its calibrated targeting effect |
+| B | Surface 0 passes, Surface 1 fails | **INCONCLUSIVE — ASK→DECIDE conversion blocks decision-stage proof** |
+| C | Surfaces 0 and 1 pass, Surface 2 fails | **INCONCLUSIVE — Layer A throughput blocks player-visible proof** |
+| D | Surfaces 0, 1 and 2 pass | **ACCEPTED** |
+
+A survival-dominance, character-envelope, determinism, or unattributable-hash
+failure independently blocks acceptance regardless of the three surfaces. Neither
+INCONCLUSIVE verdict licenses a repair to Layer A, or to scoring, motivation,
+eligibility, goals, priorities, or any Stage 6 path, inside this leg.
+
+**Death claim, stated precisely.** A person dying partway through a window does
+not by itself make eight distinct window-level actors impossible, if that person
+acted before dying. But any *later* window beginning with seven people cannot
+contain eight distinct living actors, so a fixed decision-stage N=8 is
+structurally incompatible with a surviving population below eight. The
+identity-based end-of-window survivor set removes that false impossibility
+without hiding survival regressions; C-6 still decides whether the death itself
+is acceptable.
+
 #### R1 SHADOW RESULT (executed 2026-07-27; evidence `leg2_r1_target_shadow_seed{1,2}_1200.json`)
 
 **Neutrality VERIFIED, both seeds.** The shadow reproduced the committed
