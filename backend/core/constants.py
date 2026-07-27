@@ -104,6 +104,20 @@ UPKEEP_IDLE_TAIL_TICKS = 5               # trailing decision_history entries che
 # below the lowest survival-triggered base (1200).
 TEND_STRUCTURE_BASE_SCORE = 120
 
+# --- Layer C social density Leg 1: shared-storage intent eligibility ---
+# STORE_SURPLUS's eligibility gate was the inline literal 3. Measured dead: a
+# 5,000-tick collective_groups control (seed living-agents-stage6) recorded
+# carried_food_histogram_at_decision = {'0': 35878, '1': 1579, '2': 64} over
+# 37,521 decision opportunities -- carried food NEVER reached 3, so zero
+# STORE_SURPLUS candidates were ever generated despite shared storage being
+# visible on 33,683 of those decisions. 2 is the highest value the trajectory
+# actually attains, and it preserves the same keep-one-unit guarantee that
+# FOOD_TRANSFER_SURPLUS below encodes for the transfer path: one unit stored
+# out of two leaves the actor one. Score, ordering, target selection and the
+# one-unit transfer quantity are deliberately unchanged.
+# Evidence: memory/CAPABILITY-LAYER-C-SOCIAL-DENSITY-LEG1.md sections 3-4.
+STORE_SURPLUS_MIN_FOOD = 2
+
 # --- Phase 5B: giver-owned food transfer ---
 FOOD_TRANSFER_QUANTITY = 1        # this phase permits exactly one meat unit per transfer
 FOOD_TRANSFER_SURPLUS = 2         # giver retains one unit after a transfer

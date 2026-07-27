@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 
 from core.constants import (
+    STORE_SURPLUS_MIN_FOOD,
     STRUCTURE_TEND_CONDITION_CEILING,
     STRUCTURE_TEND_CONDITION_FLOOR,
     TEND_STRUCTURE_BASE_SCORE,
@@ -390,7 +391,7 @@ def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowl
         (storage_id, obs) for storage_id, obs in sorted(storages.items())
         if (obs.get("properties") or {}).get("access") in ("public", "shared")
     ), None)
-    if shared_storage and resources.get("food", 0) >= 3:
+    if shared_storage and resources.get("food", 0) >= STORE_SURPLUS_MIN_FOOD:
         target_id, obs = shared_storage
         candidates.append(_candidate(
             "STORE_SURPLUS", "store", 1350,
