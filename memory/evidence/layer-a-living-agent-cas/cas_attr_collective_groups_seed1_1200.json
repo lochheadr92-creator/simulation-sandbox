@@ -1,0 +1,1311 @@
+{
+  "census": {
+    "attributed": 1389,
+    "attribution_rate": 1.0,
+    "disjoint_share_of_classified": 0.0362,
+    "examples": [
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-001",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-001",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 1,
+        "writer_action": "warn",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-1-34-21b617c0",
+        "writer_event_type": "social_warn"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-001",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 1,
+        "writer_action": "warn",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-1-34-21b617c0",
+        "writer_event_type": "social_warn"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-001",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 2,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-2-51-55210a6f",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-001",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 3,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-3-69-4ae4761b",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "promise",
+        "rejected_actor": "person-001",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 5,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-5-108-8f82bbf6",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-007",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 64,
+        "writer_action": "tend",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-64-1382-2211918a",
+        "writer_event_type": "living_tend"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-007",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 65,
+        "writer_action": "rest",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-65-1414-a95c7947",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-007",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 66,
+        "writer_action": "move",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-66-1435-08c86df0",
+        "writer_event_type": "living_move"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 68,
+        "writer_action": "move",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-68-1481-b3f60ceb",
+        "writer_event_type": "living_move"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 76,
+        "writer_action": "consume",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-76-1658-02de1159",
+        "writer_event_type": "living_consume"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 78,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-78-1701-4abaa955",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 79,
+        "writer_action": "repay",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-79-1717-58bb1e3e",
+        "writer_event_type": "social_repay"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 79,
+        "writer_action": "repay",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-79-1717-58bb1e3e",
+        "writer_event_type": "social_repay"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 79,
+        "writer_action": "repay",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-79-1717-58bb1e3e",
+        "writer_event_type": "social_repay"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 80,
+        "writer_action": "request_help",
+        "writer_actor": "person-006",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-80-1745-99d6afd1",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "disjoint",
+        "overlap_keys": [],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 80,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-80-1744-871521d9",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-006",
+        "pinned_is_own_blob": true,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 81,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-81-1767-97560534",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 81,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-81-1767-97560534",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "repay",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 82,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-82-1789-76bf95a9",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 83,
+        "writer_action": "repay",
+        "writer_actor": "person-006",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-83-1807-457c1571",
+        "writer_event_type": "social_repay"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 83,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-83-1809-a4f456eb",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-003",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 84,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-84-1828-4760140d",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 84,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-84-1828-4760140d",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 85,
+        "writer_action": "request_help",
+        "writer_actor": "person-006",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-85-1852-0142aaa0",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 85,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-85-1855-b530795a",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-003",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 85,
+        "writer_action": "request_help",
+        "writer_actor": "person-006",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-85-1852-0142aaa0",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 86,
+        "writer_action": "request_help",
+        "writer_actor": "person-006",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-86-1871-11867124",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 86,
+        "writer_action": "tend",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-86-1872-4d148d32",
+        "writer_event_type": "living_tend"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-003",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 86,
+        "writer_action": "request_help",
+        "writer_actor": "person-006",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-86-1871-11867124",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 87,
+        "writer_action": "request_help",
+        "writer_actor": "person-003",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-87-1891-086d6b4f",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 87,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-87-1894-66210aa0",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 87,
+        "writer_action": "request_help",
+        "writer_actor": "person-003",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-87-1891-086d6b4f",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": true,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 88,
+        "writer_action": "request_help",
+        "writer_actor": "person-003",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-88-1908-4f3ff682",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "relationships"
+        ],
+        "pinned_entity": "person-007",
+        "pinned_is_own_blob": false,
+        "rejected_action": "cooperate",
+        "rejected_actor": "person-000",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 88,
+        "writer_action": "rest",
+        "writer_actor": "person-007",
+        "writer_changed_keys": [
+          "causal_links",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-88-1911-bd786467",
+        "writer_event_type": "living_rest"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 88,
+        "writer_action": "request_help",
+        "writer_actor": "person-003",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-88-1908-4f3ff682",
+        "writer_event_type": "social_request_help"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 89,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-89-1927-2ad4fb24",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-003",
+        "pinned_is_own_blob": true,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-003",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 89,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-89-1927-2ad4fb24",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-003",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 89,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-89-1927-2ad4fb24",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-000",
+        "pinned_is_own_blob": false,
+        "rejected_action": "request_help",
+        "rejected_actor": "person-006",
+        "rejected_would_change_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "tick": 90,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-90-1950-459864f2",
+        "writer_event_type": "social_cooperate"
+      },
+      {
+        "classification": "overlapping",
+        "overlap_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "pinned_entity": "person-003",
+        "pinned_is_own_blob": true,
+        "rejected_action": "repay",
+        "rejected_actor": "person-003",
+        "rejected_would_change_keys": [
+          "causal_links",
+          "commitments",
+          "current_decision",
+          "decision_history",
+          "last_updated_tick",
+          "memories",
+          "pressures",
+          "relationships",
+          "wants"
+        ],
+        "tick": 90,
+        "writer_action": "cooperate",
+        "writer_actor": "person-000",
+        "writer_changed_keys": [
+          "commitments",
+          "relationships"
+        ],
+        "writer_count_in_frame": 1,
+        "writer_event_id": "evt-90-1950-459864f2",
+        "writer_event_type": "social_cooperate"
+      }
+    ],
+    "living_agent_eq_failed": 1389,
+    "overlap_classification": {
+      "disjoint": 65,
+      "overlapping": 1731
+    },
+    "overlap_keys": {
+      "commitments": 1650,
+      "relationships": 1731
+    },
+    "pinned_entity_role": {
+      "other_entity_blob": 1241,
+      "own_blob": 555
+    },
+    "recoverable_if_field_scoped_cas": 427,
+    "rejected_action_types": {
+      "cooperate": 497,
+      "promise": 1,
+      "repay": 314,
+      "request_help": 577
+    },
+    "rejected_would_change_living_agent_keys": {
+      "causal_links": 555,
+      "commitments": 1796,
+      "current_decision": 555,
+      "decision_history": 555,
+      "last_updated_tick": 555,
+      "memories": 477,
+      "pressures": 555,
+      "relationships": 1796,
+      "wants": 555
+    },
+    "subkey_classification": {
+      "genuine_conflict_same_subkey": 1369,
+      "independent_different_subkeys": 362
+    },
+    "subkey_disjoint_by_key": {
+      "commitments": 791,
+      "relationships": 944
+    },
+    "subkey_independent_share": 0.2091,
+    "subkey_overlap_by_key": {
+      "commitments": 859,
+      "relationships": 787
+    },
+    "subkey_shared_names_top": {
+      "commitments:commitment-1a82e0ec23090a57": 6,
+      "commitments:commitment-1e17aff458ccb4ca": 7,
+      "commitments:commitment-3b83297550b77bb5": 6,
+      "commitments:commitment-567383278ea6012e": 6,
+      "commitments:commitment-613bd4ee632bd82b": 6,
+      "commitments:commitment-66b385bb55caf228": 7,
+      "commitments:commitment-9687c7a10a80ac66": 6,
+      "commitments:commitment-a185c18a4b20e518": 6,
+      "commitments:commitment-a3e0ee43d653a3cf": 6,
+      "commitments:commitment-eb1543f4e7d658a5": 6,
+      "commitments:commitment-f3ae7be82ced6510": 6,
+      "commitments:commitment-fb969464a2f6047b": 6,
+      "relationships:person-000": 389,
+      "relationships:person-001": 131,
+      "relationships:person-002": 112,
+      "relationships:person-003": 21,
+      "relationships:person-004": 44,
+      "relationships:person-005": 21,
+      "relationships:person-006": 14,
+      "relationships:person-007": 55
+    },
+    "total_rejections": 2382,
+    "unattributed": 0,
+    "unattributed_examples": [],
+    "writer_action_types": {
+      "consume": 6,
+      "cooperate": 547,
+      "drink": 1,
+      "gather": 1,
+      "move": 44,
+      "repay": 408,
+      "request_help": 695,
+      "rest": 58,
+      "tend": 34,
+      "warn": 2
+    },
+    "writer_changed_living_agent_keys": {
+      "causal_links": 684,
+      "commitments": 1650,
+      "current_decision": 684,
+      "decision_history": 684,
+      "last_updated_tick": 684,
+      "memories": 604,
+      "pressures": 684,
+      "relationships": 1731,
+      "wants": 684
+    },
+    "writer_event_types": {
+      "living_consume": 6,
+      "living_drink": 1,
+      "living_gather": 1,
+      "living_move": 44,
+      "living_rest": 58,
+      "living_tend": 34,
+      "social_cooperate": 547,
+      "social_repay": 408,
+      "social_request_help": 695,
+      "social_warn": 2
+    },
+    "writers_per_failing_condition": {
+      "1": 1792,
+      "2": 4
+    }
+  },
+  "elapsed_seconds": 524.94,
+  "engine_version": "0.6.0",
+  "final_state_hash": "4efe6c5080704633fd5806e70ee9560b79a7294664caca0d5228cd3e108d2a21",
+  "positive_control": {
+    "committed_baseline_hash": "4efe6c5080704633fd5806e70ee9560b79a7294664caca0d5228cd3e108d2a21",
+    "matches": true
+  },
+  "probe": "living-agent-cas-attribution",
+  "replay_matches_entities": true,
+  "scenario_id": "collective_groups",
+  "schema_version": "0.4.0",
+  "seed": "living-agents-stage6",
+  "status": "complete",
+  "ticks": 1200
+}
