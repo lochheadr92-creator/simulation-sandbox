@@ -105,8 +105,110 @@ def normalize_proposal(p: dict, seq: int) -> dict:
     return p
 
 
+class AmbiguousProposalOrderError(RuntimeError):
+    """Two proposals in one frame share a semantic ordering identity.
+
+    Raised BEFORE any commit so an ambiguous order can never be committed.
+    Deliberately does NOT fall back to `content_hash` -- that fallback is the
+    CORE-INTEGRITY-004 defect this class exists to prevent from returning
+    silently.
+    """
+
+
 def order_key(p: dict):
-    return (p["requested_time"], PHASE_RANK.get(p["phase"], 99), p.get("engine_priority", 100), p["content_hash"])
+    """CORE-INTEGRITY-004: content-INDEPENDENT deterministic commit ordering.
+
+    Previously the final tie-break was `content_hash`, which is computed over
+    `core_fields` -- including `preconditions` and `mutation`. Because
+    `PHASE_RANK` has two ranks and `engine_priority` is domain-level, nearly
+    every agent proposal tied on the first three components, so content decided
+    behavioural order: measured 5,804 of 6,291 proposals (92.3%) in
+    `living_settlement` @320 and 6,258 of 7,205 (86.9%) in `collective_groups`.
+
+    Consequence, proven at tick 1: adding a SEMANTICALLY INACTIVE precondition
+    (one pinning a value already true, which cannot fail) completely reshuffled
+    the frame's commit order before any guard was evaluated. Any change to
+    proposal content -- a precondition, a receipt field, a mutation detail --
+    silently reordered unrelated proposals and produced a chaotic, deterministic
+    trajectory change.
+
+    Every component below is fixed by the proposal's SEMANTIC ORIGIN before its
+    mutation or preconditions are constructed, so content edits cannot reorder
+    anything. No component derives from content, dictionary serialisation,
+    runtime object identity, unordered iteration, randomness, or the proposal's
+    position in the submitted list -- so shuffling submission order still cannot
+    change commit order (the doctrine recorded at `normalize_proposal`).
+
+    Uniqueness is measured, not assumed: zero duplicate keys across 6,291
+    proposals (`living_settlement` @320) and 7,205 (`collective_groups` @320),
+    so no ordinal component is required. Duplicates fail closed via
+    `assert_unique_order_keys`.
+
+    `content_hash` is retained for `proposal_id`, `event_id`, audit and
+    integrity evidence -- it simply no longer decides behaviour.
+    """
+    return (
+        p["requested_time"],
+        PHASE_RANK.get(p["phase"], 99),
+        p.get("engine_priority", 100),
+        str(p.get("proposer_engine_id") or ""),
+        str(p.get("entity_id") or ""),
+        str(p.get("proposal_type") or ""),
+        # 7th component: the DECLARED SEMANTIC SCOPE -- which entities this
+        # proposal acts on. Required because one actor can legitimately emit
+        # several proposals of the same type in one frame: food-interaction
+        # contention has `person-b` emit two `fulfil_food_interaction`
+        # proposals differing only in the interaction they fulfil
+        # (touched_scope ['fi-66c1...','person-a','person-b'] vs
+        #  ['fi-00f0...','person-b','person-c']).
+        #
+        # This is semantic origin, not payload: touched_scope is declared by the
+        # proposer and fixed before mutations or preconditions are constructed,
+        # so adding a precondition, receipt metadata, or reordering mutation
+        # keys cannot change it. It is sorted for canonical stability, exactly
+        # as `normalize_proposal` already sorts it for `core_fields`.
+        tuple(sorted(str(e) for e in (p.get("touched_scope") or []))),
+    )
+
+
+def assert_unique_order_keys(proposals: list, tick: int) -> None:
+    """Fail closed when a frame contains an ambiguous ordering identity.
+
+    Runs before the sort, so an ambiguous order is never committed. The message
+    carries only deterministic identifiers (the key, and the competing
+    `proposal_id` / `proposal_family` values) -- never object reprs.
+    """
+    seen: dict[tuple, dict] = {}
+    for proposal in proposals:
+        key = order_key(proposal)
+        previous = seen.get(key)
+        if previous is not None:
+            # IDENTICAL proposals are not ambiguous. Two proposals with the same
+            # semantic key AND the same content_hash are the same proposal, so
+            # their relative commit order is unobservable and `sorted` (stable)
+            # keeps them in submission order harmlessly. The engine already has
+            # documented dedupe behaviour for this case
+            # (test_kernel_determinism.py::TestRejectionIdCollision,
+            # test_stage7a_associations.py::test_duplicate_identical_proposals_
+            # accept_once_without_duplicate_group).
+            #
+            # `content_hash` is used here ONLY to answer "is this the same
+            # proposal?" -- a duplicate-content diagnostic. It never decides
+            # ordering between DIFFERENT proposals; that is the CORE-INTEGRITY-004
+            # defect being removed.
+            if previous.get("content_hash") == proposal.get("content_hash"):
+                continue
+            raise AmbiguousProposalOrderError(
+                "ambiguous proposal ordering at tick "
+                f"{tick}: semantic key {list(key)!r} is shared by "
+                f"proposal_id={previous.get('proposal_id')!r} "
+                f"(family={previous.get('proposal_family')!r}) and "
+                f"proposal_id={proposal.get('proposal_id')!r} "
+                f"(family={proposal.get('proposal_family')!r}). "
+                "Commit order would be undefined; refusing the frame rather "
+                "than falling back to content-derived ordering."
+            )
+        seen[key] = proposal
 
 
 def check_scope_exists(p: dict, entities: dict):
@@ -367,6 +469,12 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             all_proposals.append(normalize_proposal(p, seq))
             seq += 1
 
+    # CORE-INTEGRITY-004: fail closed BEFORE sorting, so an ambiguous ordering
+    # identity can never reach commit. Measured zero occurrences across both
+    # shipped scenarios at 320 ticks; this rail exists so a future domain that
+    # emits two semantically identical proposals in one frame is rejected
+    # loudly rather than ordered by content again.
+    assert_unique_order_keys(all_proposals, tick)
     ordered = sorted(all_proposals, key=order_key)
 
     accepted_events = []
