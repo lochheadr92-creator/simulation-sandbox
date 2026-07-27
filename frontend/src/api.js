@@ -29,6 +29,8 @@ export const api = {
   getCausal: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/causal`).then((r) => r.data),
   getCognitiveProjection: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/cognitive-projection`).then((r) => r.data),
   getLivingAgentProjection: (runId, entityId) => axios.get(`${BASE}/runs/${runId}/entities/${entityId}/living-agent`).then((r) => r.data),
+  getAssociations: (runId) => axios.get(`${BASE}/runs/${runId}/associations`).then((r) => r.data),
+  getGroupState: (runId) => axios.get(`${BASE}/runs/${runId}/group-state`).then((r) => r.data),
   submitIntervention: (runId, type, payload) =>
     axios.post(`${BASE}/runs/${runId}/interventions`, { type, payload }).then((r) => r.data),
   verifyReplay: (runId) => axios.post(`${BASE}/runs/${runId}/replay/verify`).then((r) => r.data),

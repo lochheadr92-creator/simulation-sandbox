@@ -2,22 +2,144 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-app: #0c0b0a;
+  --bg-panel: #141210;
+  --bg-surface: #1c1916;
+  --bg-hover: #2a2520;
+  --border-subtle: #2e2924;
+  --border-strong: #3f3830;
+  --text-primary: #f0ebe3;
+  --text-muted: #9a9186;
+  --text-faint: #6b635a;
+  --accent-earth: #a67c52;
+  --accent-moss: #6b8f71;
+  --accent-clay: #c4785a;
+  --accent-sky: #6ba3c4;
+  --status-running: #6b8f71;
+  --status-paused: #9a9186;
+  --status-stalled: #c4785a;
+  --focus-ring: #6ba3c4;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  background-color: #050505;
-  color: #f4f4f5;
-  font-family: "IBM Plex Sans", sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
 
 .font-data {
-  font-family: "JetBrains Mono", monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
+/* Coherent surfaces for the living-world shell */
+.bg-app {
+  background-color: var(--bg-app);
+}
+
+.bg-panel {
+  background-color: var(--bg-panel);
+}
+
+.bg-surface {
+  background-color: var(--bg-surface);
+}
+
+.sim-shell {
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.sim-panel {
+  background: var(--bg-panel);
+  border-color: var(--border-subtle);
+}
+
+.sim-surface {
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+.sim-control-bar {
+  background: linear-gradient(180deg, #161412 0%, #12100e 100%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sim-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.sim-status-dot[data-status="running"],
+.sim-status-dot[data-status="advancing"] {
+  background: var(--status-running);
+  box-shadow: 0 0 0 2px rgba(107, 143, 113, 0.25);
+}
+
+.sim-status-dot[data-status="paused"] {
+  background: var(--status-paused);
+}
+
+.sim-status-dot[data-status="stalled"] {
+  background: var(--status-stalled);
+  box-shadow: 0 0 0 2px rgba(196, 120, 90, 0.3);
+}
+
+.sim-status-dot[data-status="no-run"] {
+  background: var(--text-faint);
+}
+
+/* Need bars with subtle depth */
+.need-track {
+  height: 0.4rem;
+  background: #2a2520;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid #1a1714;
+}
+
+.need-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .need-fill,
+  .sim-fade,
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Focus visibility for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -26,9 +148,57 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: #3f3830;
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #5a5248;
+}
+
+/* Event feed: avoid layout thrash */
+.event-feed-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Inspector: stable min height so tick updates don't jump */
+.inspector-stable {
+  min-height: 12rem;
+}
+
+/* Narrow layout helpers */
+@media (max-width: 900px) {
+  .sim-side-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 40;
+    width: min(100%, 22rem);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .sim-side-panel[data-open="false"] {
+    transform: translateX(100%);
+  }
+}
+
+/* Delta flash for meaningful changes only */
+@keyframes delta-flash {
+  0% {
+    background-color: rgba(166, 124, 82, 0.35);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.delta-flash {
+  animation: delta-flash 0.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delta-flash {
+    animation: none;
+  }
 }

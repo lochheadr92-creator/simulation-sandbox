@@ -32,8 +32,8 @@ function SoftNeedBar({ label, severity, invertFill = false, value, max = 1000 })
         <span>{label}</span>
         <span className="text-zinc-300">{severity.label}</span>
       </div>
-      <div className="h-1.5 bg-zinc-800 rounded-sm overflow-hidden">
-        <div className={`h-full ${color}`} style={{ width: `${fill}%` }} />
+      <div className="need-track" role="meter" aria-label={label} aria-valuenow={value} aria-valuemin={0} aria-valuemax={max}>
+        <div className={`need-fill ${color}`} style={{ width: `${fill}%` }} />
       </div>
     </div>
   );
