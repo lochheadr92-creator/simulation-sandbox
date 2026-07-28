@@ -16,13 +16,22 @@ Status:         CONFIRMED 2026-07-27 — IMPLEMENTING. Tier A complete and green
                 replaces the inline food >= 3 gate. Contract:
                 memory/CAPABILITY-LAYER-C-SOCIAL-DENSITY-LEG1.md.
 
-                NOT yet done, and gated: the organic 5,000-tick
+                Frozen-hash ruling: RATIFIED 2026-07-28, accepted by Ryan.
+                living_settlement@320 moved 9c1b9b8b…46e55d4 →
+                4240d6a0…305de1bb; causal diff, bands and adversarial review in
+                memory/evidence/frozen-hash/. The suite now pins that baseline
+                literally (backend/tests/test_frozen_baseline_hashes.py: state
+                hash, accepted-event and frame sequence hashes, accepted and
+                rejected counts). Repeat/replay equality alone is still NOT
+                evidence a baseline held, and any FURTHER moved hash — in any
+                scenario — stays UNAUTHORISED until a STOP presents the exact
+                causal diff.
+
+                NOT yet done, and still gated: the organic 5,000-tick
                 collective_groups gate, the living-agents-stage6-alt second
-                seed, the paired threshold-3 disabled control, and the
-                frozen-hash ruling. The pytest suite pins repeat/replay
-                equality only — never a literal frozen hash — so a green suite
-                is NOT evidence a baseline held. Any moved hash stays
-                UNAUTHORISED until a STOP presents the exact causal diff.
+                seed, and the paired threshold-3 disabled control.
+                collective_groups' own post-2d68ac16 hash status is UNKNOWN —
+                it has not been measured.
 
                 Pre-registered 5,000-tick control complete (collective_groups,
                 seed living-agents-stage6, checkpoints 1,000/3,000/5,000):

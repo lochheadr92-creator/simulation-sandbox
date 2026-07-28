@@ -1,7 +1,8 @@
 # Layer C, Social Density Leg 1 — Shared-Storage Intent
 
-**Status: CONFIRMED 2026-07-27 — IMPLEMENTING (Tier A complete; organic gate
-and frozen-hash ruling NOT yet done).**
+**Status: CONFIRMED 2026-07-27 — IMPLEMENTING (Tier A complete; frozen-hash
+ruling RATIFIED 2026-07-28; organic gate, second seed and disabled control NOT
+yet done).**
 
 The threshold-only mechanism in §6 was confirmed by the user with the §9
 store-provenance amendment. Implemented so far:
@@ -15,12 +16,22 @@ store-provenance amendment. Implemented so far:
   covers the §9 Tier A items including commit-through-pipeline, the keep-one
   guarantee, survival dominance (C-6) and repeat determinism.
 
+**Frozen-hash ruling: RATIFIED 2026-07-28, explicitly accepted by the user.**
+`living_settlement@320` moved `9c1b9b8b…46e55d4` → `4240d6a0…305de1bb`. The
+STOP write-up — causal diff (single divergence at index 284, frame-14, the
+authorised STORE_SURPLUS firing), census delta, all four pre-registered bands
+passing, and the adversarial review — is
+`memory/evidence/frozen-hash/2d68ac16-LIVING-SETTLEMENT-320-RATIFICATION.md`.
+The suite now pins that baseline literally
+(`backend/tests/test_frozen_baseline_hashes.py`), so §291's requirement is met
+by an executable check rather than by documentation alone.
+
 **Still outstanding, and gated:** the organic 5,000-tick `collective_groups`
-gate, the second-seed `living-agents-stage6-alt` repeat, the paired
-threshold-3 disabled control, and the frozen-hash ruling. Any moved baseline
-hash remains UNAUTHORISED until a STOP presents the exact causal diff. Note
-that the pytest suite pins only repeat/replay equality, never a literal frozen
-hash — a green suite is therefore NOT evidence that a baseline held.
+gate, the second-seed `living-agents-stage6-alt` repeat, and the paired
+threshold-3 disabled control. `collective_groups`' own post-`2d68ac16` hash
+status is UNKNOWN — not measured. Any FURTHER moved baseline hash remains
+UNAUTHORISED until a STOP presents the exact causal diff. Repeat/replay
+equality alone is still NOT evidence that a baseline held.
 
 Frontier: `FRONTIER.md` — Layer C (Individual Agency), Social Density Leg 1.
 
@@ -286,10 +297,15 @@ the same implementation build. Failure on either seed blocks acceptance.
   moves.
 
 The current regression tripwires are `03312018…488a6` (`collective_groups`
-1,000) and `9c1b9b8b…46e55d4` (`living_settlement` 320). This behaviour change
+1,000) and — as of the 2026-07-28 ratification — `4240d6a0…305de1bb`
+(`living_settlement` 320, superseding `9c1b9b8b…46e55d4`). This behaviour change
 is re-baseline-class. Any moved hash remains **unauthorised** until a later STOP
-presents the exact causal diff and the user explicitly accepts it. The build
-must not be committed as complete before that ruling.
+presents the exact causal diff and the user explicitly accepts it. That ruling
+has been given for `living_settlement@320` only
+(`memory/evidence/frozen-hash/2d68ac16-LIVING-SETTLEMENT-320-RATIFICATION.md`);
+`collective_groups`' 1,000-tick hash has not been re-measured since `2d68ac16`
+and its status is UNKNOWN. The build must not be committed as complete before
+the remaining gates close.
 
 CORE-INTEGRITY-004 makes single-run A/B action-count magnitudes unreliable.
 Acceptance therefore rests on categorical causal events, two fixed seeds,
