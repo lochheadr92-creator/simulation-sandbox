@@ -1,123 +1,124 @@
-# Active Domain Leg 1 — Information Sharing (vertical slice)
+# Active Leg A — social actions must survive commit
 
-Declared 2026-07-28. One leg at a time. When this closes it moves to
-`memory/archive/legs/` and the next Tier 1 domain takes its place.
+Declared 2026-07-28. Supersedes the "plan continuation repair" framing, which
+was built on a wrong diagnosis. Corrected below with the evidence.
 
-## Domain objective
+## What we thought
 
-People who possess useful information can share it with nearby trusted people,
-and the receiver makes a better later decision because of it.
+A multi-step plan whose participant moves emits **no proposal at all** for two
+ticks and is then replanned away. Framing: a planner defect, fix the
+continuation branch, invariant "continue / re-approach / wait / fail / complete,
+never silence".
 
-## Trigger
+## What is actually happening (VERIFIED)
 
-- Agent A holds a knowledge fact about a resource location.
-- Agent B does not hold that fact.
-- A and B are within social range.
-- B has food or water pressure, or an intent the fact bears on.
+The plan continuation worked perfectly. person-007 generated the WARN_DANGER
+continuation candidate, it won selection, it produced a plan, and it **proposed
+`social_warn`**. The proposal was then **rejected at commit**:
 
-## Decision
+```
+tick 2  person-007
+  rejection_stage : commit_revalidation
+  reason_code     : precondition.failed
+  reason_detail   : living_agent_eq_failed
+  proposed        : social_warn
+                    "plan_continuation: selected WARN_DANGER -> warn"
+```
 
-Existing factors only — need, relationship, distance, cost, urgency, recent
-history. No new scoring model in version one. Sharing competes against the
-agent's other candidates on the existing scale; if it never wins, that is a
-finding for Session A, not a licence to invent a modifier.
+At the same tick, person-001 committed `social_cooperate` **on person-007**.
+The social proposal builder pins the participant's entire `living_agent` blob
+as a precondition; person-007's own action, built from a frame-start base,
+failed the equality check and was discarded. At tick 3 it happened again. At
+tick 4 the replanned REPAY_DEBT finally landed.
 
-## Action
+This is the documented asymmetric-CAS lost update (`OQ1-ENERGY-COLLISION-
+RESOLUTION`, `REGISTRY-COMPONENT-OWNERSHIP` F4): `build_social_action_proposal`
+CASes the whole `living_agent` blob while `build_physical_action_proposal` pins
+only `alive`.
 
-`share_information` event carrying sender, receiver, fact id, tick, provenance.
-The candidate site already exists in
-`backend/domains/living_settlement_domain.py` and fires exactly once per
-320-tick run.
+**Scale:** every rejection in the first 12 ticks of both arms is this one
+failure — 19/19 in the baseline, 18/18 with the retarget, 100%
+`precondition.failed / living_agent_eq_failed`.
 
-## State consequence
+## Why this is the leg
 
-Receiver gains the fact as a **reported** (non-direct) knowledge claim.
-`merge_knowledge_claim(knowledge, observer_id, subject_id, fact_type,
-properties, tick, provenance_kind, confidence, source_entity_id,
-source_event_id, deceptive)` in `living_agent_cognition.py:331` already does
-exactly this and already rejects `provenance_kind="direct"` for claims — the
-receive path is built, it is simply not being fed. Interaction memory records
-the exchange; relationship may shift slightly; the receiver's later navigation
-or resource choice may differ.
+A social action pins both participants. So the more social the world becomes,
+the more social actions collide, and the loser is silently discarded. **The
+world cannot become more social, because becoming more social destroys social
+actions.** That is a far better explanation for eight behaviours firing once
+per 320 ticks than any scoring or reachability theory.
 
-Facts are bounded at 120 per agent (`living_agent_cognition.py:319`).
+It also explains the retarget's paradox exactly: `social_cooperate` +145% and
+`social_repay` +175% *while* the single `warn` firing disappeared. More social
+traffic, more collisions, casualties among the rarest actions first.
 
-## Visual consequence
+And it blocks Leg 1. Information sharing is a two-participant social action. It
+will be killed whenever either participant is doing anything else that tick —
+which, in a world we are deliberately making more social, is often.
 
-- The two agents face each other and pause.
-- A brief information indicator on the exchange.
-- The receiver's knowledge panel in the Inspector gains the fact, marked
-  *reported*, with the sender named.
-- Timeline reads in plain language: *"Mara told Eli about food at (12, 7)."*
-- When the receiver later acts on it, the explanation names the source.
+Permitted under maintenance-freeze rule 1: *the current domain cannot
+activate*.
 
-## Success test
+## Scope — one invariant
 
-One observable causal chain, in a controlled scenario:
+**A social action must not be discarded because an unrelated field of a
+participant changed in the same frame.**
 
-> Eli does not know about the food source → Mara shares its location → Eli
-> travels there → Eli reaches food he would not otherwise have reached.
+Preconditions must pin what the action actually reads and modifies, not the
+whole `living_agent` blob. Two agents interacting with the same person in one
+frame is normal life, not a conflict.
 
-Control branch: same seed, sharing suppressed. Eli does not reach it.
+Out of scope: the containment guard explored in the OQ-1 arms work (it converts
+a silent loss into a visible rejection — worth having, but it does not make the
+action survive). Not a rewrite of the commit pipeline. One subsystem, per rule 7.
 
-## Failure conditions (the ones worth naming)
+## Acceptance
 
-- The opportunity never occurs.
-- The action loses every priority contest.
-- The receiver cannot store the fact.
-- The knowledge never affects a later decision.
-- The behaviour occurs but is invisible.
+**Primary metric: zero social actions discarded for `living_agent_eq_failed`
+where the concurrent change did not touch a field the action depends on.**
+Not a target social-event count.
 
----
+Deterministic cases:
 
-## Session plan
+- two agents act socially on the same third party in one frame → both survive
+  or one fails for a *stated, real* reason
+- a genuine conflict (both modifying the same field) → one fails explicitly,
+  with the field named
+- participant dies mid-frame → explicit failure, named
+- physical action on a participant of a social action → both survive
+- replay equality holds across all of the above
 
-### Session A — definition and activation ← WE ARE HERE
+Behavioural regression, the known case: person-007 selects WARN_DANGER,
+person-001 cooperates with person-007 the same tick, **both commit**. No
+`living_agent_eq_failed`, no silent replan to REPAY_DEBT.
 
-1. Build the smallest deterministic scenario that naturally needs this: ~4
-   agents, one holding a resource-location fact, one hungry and uninformed,
-   starting within social range, long enough for the knowledge to change an
-   action, nothing unrelated dominating the run. Existing scenarios are too
-   busy — `living_settlement` is 8 people and 5 trees, `wilderness_survival` is
-   6 people and 6 animals.
-2. Small opportunity probe. Log only: eligible sender, eligible receiver, the
-   relevant fact, prerequisite results, and why each opportunity was accepted
-   or rejected. **Not** a multi-stage tracer.
-3. If no opportunities appear, fix the scenario or the prerequisite logic
-   before implementing anything.
-4. Identify blockers only — do not fix them yet unless they stop activation.
+Broad run, 320 ticks: rejections by reason (expect the
+`living_agent_eq_failed` class to collapse), completed social actions,
+singleton counts, top-3 dominance, hash determinism.
 
-**Known blocker candidate.** Sharing requires A to reach B and then act — a
-multi-step plan. Measured 2026-07-28: a multi-step plan whose participant moves
-emits no proposal at all for two ticks and is replanned away. If the probe
-shows opportunities occurring but never completing, that defect is the cause,
-and fixing it is permitted under maintenance-freeze rule 1 (*the current domain
-cannot activate*) — inside this leg, not as its own project.
+## Then, in order
 
-### Session B — thin implementation
+1. **Leg B — day rhythm.** `is_night()` exists at `core/constants.py:171`; the
+   kernel and animals use it, people do not. **Soft score multipliers, not
+   behavioural bans** — a hungry person still gathers at night, an exhausted
+   one still rests at noon. Target: visible settlement rhythm, not synchronised
+   bedtime.
+2. **Leg C — threat aftermath.** Bounded alert window per
+   `animal_domain.py`'s `FLEE_PERSIST_TICKS` shape, but biasing *among* flee /
+   warn / seek-ally / protect / observe. Existing candidates only; no fear
+   system.
+3. **Leg D — signals that do something.** 681–860 expirations per 320 ticks is
+   a disconnected producer/consumer contract. Consumption requires: observable,
+   unexpired, relevant to current knowledge or needs, not already acknowledged,
+   provenance still valid. Prove one relay: signal → observer acts → observer
+   tells another → second agent acts.
+4. **Leg E — relationship causality in the Inspector.** The event that created
+   a debt, its current state, decisions it influenced, repayment or expiry. Not
+   a dashboard.
+5. **Then Leg 1 — information sharing**, and the rest of Tier 1.
 
-Opportunity, decision, event, authoritative consequence. No personality, no
-dialogue, no trust matrices, no cultural modifiers, no deception, no rumours,
-no LLM. Deterministic and correct first.
+## Retarget commit
 
-### Session C — integration
-
-The receiver must **use** the fact. A domain does not count because an event
-fired. Determinism and fork tests.
-
-### Session D — presentation
-
-Indicator, plain-language event line, selected-agent explanation, causal link
-from the share to the later action. Tested in the normal UI, not a debug view.
-
-### Session E — hardening and freeze
-
-Boundedness, regression tests, known limitations, commit, move on. Do not keep
-polishing.
-
-## Out of scope for this leg
-
-Rumours, deception, language, multi-hop propagation, fact decay, trust-weighted
-credibility. `merge_knowledge_claim` already carries a `deceptive` flag — leave
-it alone. Version one shares true resource locations between agents who are
-already near each other.
+Keep it causally separable. The retarget is target *selection*; this leg is
+commit *survival*. Same session is fine; distinguish them in the commit so
+later behavioural changes stay attributable.
