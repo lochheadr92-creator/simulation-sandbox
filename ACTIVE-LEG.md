@@ -3,6 +3,84 @@
 Declared 2026-07-28. Supersedes the "plan continuation repair" framing, which
 was built on a wrong diagnosis. Corrected below with the evidence.
 
+---
+
+## STATUS: PASS WITH LIMITATIONS — implemented at `d8f00eb6`, independently verified
+
+Verified on a clean `git archive` of `d8f00eb6` (not the implementer's worktree,
+not the dirty main checkout): **33 passed in 111.6s** across
+`test_frozen_baseline_hashes`, `test_stage6d_social_relationships`,
+`test_component_ownership_invariants`, `test_stage6e_living_settlement`.
+Replay equality holds; the hash pin moved in the same commit with census
+evidence, per `ENGINE-CONSTITUTION.md`.
+
+**What the fix achieved (VERIFIED, 320 ticks, clean tree):**
+
+| | before | after |
+|---|---:|---:|
+| `living_agent_eq_failed` rejections | **1263** | **0** |
+| accepted events | 4,868 | 5,088 |
+| `cooperate` | 55 | **152** |
+| `repay` | 44 | **94** |
+| `request_help` | 130 | 57 |
+| top-3 dominance | 74.6% | 70.6% |
+| total rejections | 1,422 | 1,320 |
+
+The whole-blob false positive is gone, and disjoint concurrent social actions
+now compose instead of colliding. Rejections that remain are path-named and
+diagnosable.
+
+**LIKELY (not verified): the help loop is closing.** `request_help` fell 73
+while `cooperate` rose 97 — consistent with requests no longer repeating
+because the response finally commits. First sign of a social loop completing
+rather than churning. Needs a causal check, not a correlation.
+
+### Open item 1 — the actor-side write was not narrowed
+
+The target write became a merge spec, but the **actor** still writes
+`updates[actor_id]["living_agent"] = actor_state` — the whole blob, from a
+frame-start base — in the base update and in all three commitment branches.
+The actor's whole-blob *pin* was removed at the same time.
+
+So the actor side now writes wholesale with nothing guarding it: if another
+agent merged a record into that actor's blob earlier in the same frame, the
+actor's own write silently reverts it. This is the "visible rejection becomes
+real data loss" trade this leg exists to avoid, currently live on one side.
+
+Fix: apply `_living_agent_write_diff` to the actor write too, and pin whatever
+the actor genuinely depends on beyond the counterpart record.
+
+### Open item 2 — one hot record carries 91% of the remaining rejections
+
+`rejection_census` after the fix:
+
+```
+living_agent.relationships.person-000_eq_failed   1049
+living_agent.relationships.person-001_eq_failed     52
+living_agent.relationships.person-002_eq_failed     17
+...all others                                    <= 12
+condition_eq_failed                                156
+```
+
+1049 of 1155 path-named rejections land on a single agent's record.
+The commit message attributes the residue to reciprocal pairs — but the
+census's own `reciprocal_pairs` field is `[]` in **both** arms, so that
+explanation is unconfirmed by the instrument that was built to test it.
+Open item 1 is the obvious suspect and should be ruled in or out first.
+
+### Open item 3 — `warn` went 1 → 0
+
+The behaviour that started this investigation is now extinct in the organic
+320-tick baseline. The fixture tests pass; the world produces none. Seven
+singletons still fire once, `warn` fires zero times. The fix multiplied the two
+already-common social actions and did nothing for the eight rare ones.
+
+This does **not** invalidate the leg — the commit-survival defect was real and
+is fixed — but the leg's own success test is not met, and the singleton family
+remains the actual product problem.
+
+---
+
 ## What we thought
 
 A multi-step plan whose participant moves emits **no proposal at all** for two
