@@ -5,19 +5,43 @@ Deterministic simulation kernel. Core owns truth; domains propose.
 Architecture work is maintenance-only: it happens when it blocks behaviour,
 safety or performance.
 
+**Domain delivery is the default activity. Maintenance is the exception.**
+
 **Authority, in order:**
 
 1. `ENGINE-CONSTITUTION.md` — the eight properties that must hold. Rarely changes.
-2. `PRODUCT-STATE.md` — what the world measurably does today.
-3. `DYNAMICS-BACKLOG.md` — what we are chasing now. The only living doc.
+2. `DYNAMICS-BACKLOG.md` — the operating model, the maintenance freeze, the domain queue.
+3. `ACTIVE-LEG.md` — the one domain being delivered right now. Read this before acting.
+4. `PRODUCT-STATE.md` — what the world measurably does today.
+
+## Maintenance freeze
+
+Maintenance is permitted **only** when: the active domain cannot activate; it
+produces incorrect authoritative state; replay breaks; data corrupts or grows
+uncontrolled; or a bug stops the user observing the behaviour. Never because
+code could be cleaner, abstractions improved, diagnostics broadened, docs
+expanded, or a future subsystem might need it. Budget: 70% domain, 20%
+integration and visualisation, 10% maintenance.
+
+No architectural audits during a leg. No refactor unless it removes a blocker
+hit twice. No new diagnostic framework unless existing tools can't explain the
+failed chain. No speculative support for future domains. One new subsystem per
+leg, maximum. Every session either moves the active causal chain forward or
+explicitly closes a blocker.
+
+## A domain is done when
+
+Reachable · Deterministic · Consequential · Integrated · Visible · Bounded.
+`PASS WITH LIMITATIONS` is a valid completion — name the limitation instead of
+widening the contract.
 
 Everything under `memory/archive/` is history. Never take the current task from
 it. `memory/evidence/` is data, still citable.
 
 ## Session start
 
-`git log --oneline -10`, `git status`, read the three docs above, restate your
-position in one paragraph, then act.
+`git log --oneline -10`, `git status`, read `ACTIVE-LEG.md` and the docs above,
+restate your position in one paragraph, then act.
 
 ## How a change is judged — the five checks
 

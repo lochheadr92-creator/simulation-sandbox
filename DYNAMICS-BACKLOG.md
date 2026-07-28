@@ -1,186 +1,141 @@
-# Dynamics implementation plan
+# Operating model — Domain Delivery Legs
 
-The only living document. Overwrite it freely; it carries no history and owes
-no audit trail. If it disagrees with an archived doc, this one wins.
+Adopted 2026-07-28. Replaces the capability-stage ladder and the
+investigate → harden → document → find-another-concern loop.
 
-## What we are building toward
+**Domain delivery is the default activity. Maintenance is the exception.**
 
-A world where things happen and have consequences; where there is a daily
-rhythm you can read off the settlement; where people have relationships you can
-follow over time; and where it surprises us.
+## The loop
 
-## The five checks (these replace the old gates)
+    choose behaviour → prove it can occur → implement thin version →
+    expose it visually → test combined behaviour → ship domain → move on
 
-Every slice must pass all five: **Visible** (a player sees it in the world,
-inspector or event history) · **Consequential** (it changes later decisions or
-state) · **Recurrent** (across time, multiple actors — one firing is not a
-behaviour) · **Diverse** (it doesn't just replace `rest` with a new dominant
-loop) · **Deterministic** (same version, seed, inputs reproduce exactly).
+A domain is only worth implementing when it completes this chain:
 
-Judged by watching the world and reading the numbers — not by event-count
-bands, not by pre-registration. Baseline to beat is in `PRODUCT-STATE.md`:
-**top-3 dominance 74.6%**, social share 20.8%, eight behaviours firing once per
-320 ticks.
+    world condition → agent opportunity → decision → action →
+    state change → memory/social consequence → visible evidence
 
----
-
-# The diagnosis this plan is built on
-
-Three actions are 74.6% of the world. Look at *which* three: `rest`, `move`,
-`tend` — all **single-step**. Now look at the eight that fire once and never
-again: warn, share_information, trade, lie, threaten, apologise, promise,
-reconcile — all **multi-step**: find a target, approach it, then act.
-
-That is not a coincidence, and it is not a content problem. Measured
-2026-07-28: person-007 selects WARN_DANGER at frame-1, moves toward
-person-001, and at frames 2–3 emits **no proposal at all** — zero rejections,
-nothing refused, just silence — then replans to REPAY_DEBT at frame-4. The
-participant had moved. **Any behaviour that needs more than one tick to
-complete dies the same way**, which is why the world is a single-step needs
-loop with decorative garnish.
-
-Everything else we could build sits behind that.
-
----
-
-# Slice A — multi-step plans survive contact with the world
-
-**Player-visible:** agents finish what they set out to do. You watch someone
-head across camp to warn a neighbour and they *arrive and warn them* instead of
-wandering off to repay a debt. The seven other multi-step social behaviours
-start appearing more than once per run.
-
-**Where:** `backend/domains/living_settlement_domain.py`, the continuation
-block around lines 600–760 (`decision_kind` = `plan_continuation` / `replan` /
-`failed_plan_replan`; `plan["status"] = "abandoned"`).
-
-**Change:** when a plan's next step cannot be proposed because the world moved
-under it (target relocated, participant occupied, distance re-opened), emit a
-**re-approach step** toward the current target position rather than emitting
-nothing. If the target is genuinely gone — dead, out of vision, invalid — fail
-the plan **explicitly** with a receipt so it is visible in the event history
-instead of silent. No new state; the plan already carries its goal, target and
-step index.
-
-**First 20 minutes:** confirm which branch swallows it. Instrument the
-continuation block for person-007 at frames 2–3 on seed `living-agents-stage6`
-and check whether a WARN candidate is generated at all. Absent ⇒ a precondition
-on the participant is failing upstream in candidate generation; present but
-unproposed ⇒ the fault is in this block. Fix follows the answer. This is inside
-the slice, not a separate phase.
-
-**Watch:** singleton count (8 → fewer), social share, top-3 dominance.
-**Rollback:** single file, revert the commit.
-
-# Slice B — people obey the day
-
-**Player-visible:** the settlement has a rhythm. At night people rest and stay
-in; by day they gather, tend and move about; social activity clusters where
-people are actually co-located. You can glance at the world and tell roughly
-what time it is.
-
-**Where:** `core/constants.py:171` already has `is_night(tick)`. The kernel
-uses it (`core/kernel.py:112`) and `animal_domain.py:33` uses it — **animals
-already live by the day cycle and people do not.** Wire it into the
-`living_settlement` candidate scoring.
-
-**Change:** a phase multiplier on existing candidate scores — REST up at night,
-gather/tend/explore up by day, social up around dusk when people converge. No
-new domain, no new state, no new events: it re-weights candidates that already
-exist. Derived from `tick`, so determinism is untouched.
-
-**Watch:** action mix per 100-tick window should now vary *with the phase*
-rather than being flat — that is the whole point, and it is also the first
-metric this project will have that shows time meaning something.
-**Rollback:** revert; scores return to phase-neutral.
-
-# Slice C — threats have an aftermath
-
-**Player-visible:** a predator comes near and the settlement visibly reacts —
-people warn each other, move away, check on the injured — and then, over the
-next dozen ticks, settles back to normal. Cause and aftermath you can follow in
-the event log.
-
-**Where:** `domains/animal_domain.py` already implements exactly this shape for
-animals: `FLEE_PERSIST_TICKS` keeps an animal fleeing for several ticks after
-the threat leaves. People have no equivalent. Mirror it in the settlement
+Anything that does not complete that chain is infrastructure, not a delivered
 domain.
 
-**Change:** an observed threat opens a bounded **alert window** on the observer
-that boosts warn / flee / help-the-injured candidates while it lasts, then
-decays. Existing observations, existing candidates, existing bounded-state
-pattern copied from a domain that already ships it.
+## Maintenance freeze (in force)
 
-**Watch:** does the action mix visibly deform around threat events and recover?
-Do multiple actors participate, or is it one agent reacting?
-**Rollback:** revert; window length is one constant.
+Maintenance is permitted **only** when one of these is true:
 
-# Slice D — signals that do something
+1. The current domain cannot activate.
+2. The current domain produces incorrect authoritative state.
+3. Deterministic replay breaks.
+4. Data corruption or uncontrolled growth occurs.
+5. A bug prevents the user from observing the behaviour.
 
-**Player-visible:** information travels. Someone sees a threat or a food source,
-tells someone, and that person acts on it — you can follow the chain in the
-event history from observation to telling to action.
+Maintenance is **not** permitted because code could be cleaner, abstractions
+could be improved, diagnostics could be broader, an edge case exists outside
+the current scenario, documentation could be fuller, or another subsystem might
+eventually need restructuring.
 
-**Where:** `domains/ecology_domain.py:155` `_expire_signal`. Signals are being
-created and expiring at **681–860 per 320 ticks** — the single largest event
-family after `lifecycle_tick`, and as far as behaviour is concerned it is
-churn. `share_information` and `VERIFY_INFORMATION` already exist and fire once
-per run.
+**Budget: 70% domain implementation · 20% integration and visualisation ·
+10% maintenance.** If maintenance exceeds roughly one session during a leg,
+stop and reassess whether the domain is too coupled or the architecture is
+fighting us.
 
-**Change:** an unexpired signal an agent has observed biases that agent's
-candidates — toward acting on it, and toward telling someone who hasn't heard
-it. This gives the eight singletons an actual reason to exist rather than a
-threshold that happens to be reachable once.
+## Anti-maintenance rules
 
-**Watch:** share_information and verify recurrence; unique actors; whether a
-signal ever produces a second-order action.
-**Rollback:** revert.
+1. No broad architectural audits during an active leg.
+2. No refactor unless it removes a blocker encountered at least twice.
+3. No new diagnostic framework unless current tools cannot explain the failed
+   chain.
+4. No documentation expansion before behaviour works.
+5. No speculative support for future domains.
+6. No domain is complete without a visible consequence.
+7. No more than one new subsystem per leg.
+8. Every session must either move the active causal chain forward or explicitly
+   close a blocker.
 
-# Slice E — relationships you can follow
+## Domain-done gate — six conditions
 
-**Player-visible:** select two people in the Inspector and see their history —
-who helped whom, what is owed, whether it was repaid, whether trust went up or
-down. The thread the world already tracks, made legible.
+**Reachable** (occurs organically in a normal scenario) · **Deterministic**
+(same seed and inputs, same authoritative results) · **Consequential** (changes
+a later decision or meaningful state) · **Integrated** (works beside existing
+domains without disabling them) · **Visible** (a normal observer can see and
+understand it) · **Bounded** (memory, events and state growth controlled).
 
-**Where:** trust and debt already drive `REQUEST_HELP` and `REPAY_DEBT`
-(request_help 130, repay 44 per 320 ticks — the machinery works). The gap is
-that none of it is visible, and nothing else consumes it.
+Perfection is not required. `PASS WITH LIMITATIONS` is a healthy completion —
+state the limitation instead of expanding the contract until every future case
+is covered.
 
-**Change:** surface per-pair relationship history in the Inspector, and let
-standing debt and low trust bias who gets asked next. Frontend plus a read
-model; no canonical state change.
+## Session cadence
 
-**Watch:** relationship changes that persist and matter; whether pairs form
-threads or churn randomly.
-**Rollback:** frontend-only revert.
+| session | output |
+|---|---|
+| A — definition and activation | causal chain defined, scenario built, prerequisites proven to occur, blockers identified |
+| B — thin implementation | opportunity, decision, event, authoritative consequence committed |
+| C — integration | memory/relationship effect wired; later behaviour demonstrably changes; determinism and fork tests |
+| D — presentation | animation or indicator, plain-language event, causal explanation, tested in the normal UI |
+| E — hardening and freeze | boundedness, regression tests, known limitations, commit, mark complete |
+
+Some domains take more than five sessions. The structure exists to stop
+investigation swallowing the leg.
 
 ---
 
-## Order, and why
+# Domain backlog
 
-**A first** — without it, every behaviour B through E adds dies the way warn
-died. It is also the smallest diff on this page.
-**B second** — cheapest visible win in the project, using a function that
-already exists and is already used by animals.
-**C then D** — both are "consequences", both copy a pattern the codebase
-already ships, both need A to survive.
-**E last** — it makes the existing relationship machinery legible, and it is
-worth more once A–D have given those relationships something to be about.
+Ranked by visible life added, not architectural sequence.
 
-## Standing items, not blocking
+## Tier 1 — existing-domain completion (do these now)
 
-- **Commit the R1 retarget.** Already built and measured: top-3 dominance
-  74.6% → 62.8%, social share 20.8% → 33.0%. Fails the retired ±3% band. Update
-  the hash pin in the same commit. Do this with Slice A, since A is what fixes
-  the `warn` regression it introduced.
-- **Run the live UI suites and merge the frontend branch.** Needed before
-  Slice E has anywhere to render.
+Existing memory, witness, trust, group and resource machinery can support all
+of these.
 
-## Known engine debts — fix only if they block the above
+1. **Information sharing** ← ACTIVE, see `ACTIVE-LEG.md`
+2. Social approach and conversation
+3. Helping and refusal
+4. Relationship adjustment
+5. Group cooperation
+6. Shared shelter maintenance
+7. Resource conflict
 
+## Tier 2 — settlement dynamics (after Tier 1 is visibly working)
+
+Task specialisation · leadership influence · informal rules · reputation ·
+exclusion and reconciliation · communal resource ownership.
+
+Two candidates already scoped and cheap, to slot in here:
+
+- **Day rhythm.** `is_night(tick)` exists at `core/constants.py:171`; the
+  kernel and `animal_domain.py:33` use it, people do not. Wiring it into
+  settlement candidate scoring gives the settlement a readable daily shape.
+- **Threat aftermath.** `animal_domain.py` already ships bounded post-threat
+  persistence (`FLEE_PERSIST_TICKS`); people have no equivalent.
+
+## Tier 3 — not yet
+
+Trade economies · politics · law · religion · warfare · generational
+inheritance · language evolution · advanced culture. These multiply integration
+complexity before the basic social loop is alive.
+
+---
+
+## Containment passes
+
+Maintenance is batched, not continuous. After every two or three completed
+domains, run one pass: remove duplicated logic, address repeated performance
+problems, simplify interfaces that multiple domains have exercised, improve
+shared diagnostics, update architecture docs, delete dead experiments.
+
+Refactoring an interface before several domains have used it is guessing.
+
+## Carried debts — do not touch unless they block the active leg
+
+- A multi-step plan whose participant moves emits no proposal for two ticks and
+  is then replanned away (measured 2026-07-28, person-007, frames 2–3, zero
+  rejections). This is the likeliest blocker for any domain requiring approach
+  before action — fix it **inside** the leg it blocks, under freeze rule 1.
 - Group-contract identity is content-dependent, so `collective_groups` has no
-  stable A/B surface. Blocks the energy-lost-update remediation only.
+  stable A/B surface.
 - Per-parameter-per-entity RNG keying is owed before anything touches
   population counts.
-- `collective_groups`' 1,000-tick hash has not been re-measured since
-  `2d68ac16`.
+- `collective_groups`' 1,000-tick hash unmeasured since `2d68ac16`.
+- The R1 retarget is built and measured (top-3 dominance 74.6% → 62.8%, social
+  share 20.8% → 33.0%) but uncommitted; it loses the single `warn` firing to
+  the plan-stall defect above.
