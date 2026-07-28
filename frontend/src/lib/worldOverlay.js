@@ -76,6 +76,30 @@ export function entityIndicators(entities, selectedEntityId, labelMode = "select
   return { labels, labelCapped: labelMode === "all" && candidates.length > OVERLAY_LIMITS.labels };
 }
 
+/**
+ * Snapshot fields required by acceptedChangeEffects so unchanged entities
+ * do not emit false injury/resource transitions.
+ */
+export function entityEffectSnapshot(entity) {
+  if (!entity) return null;
+  return {
+    id: entity.id,
+    type: entity.type,
+    alive: entity.alive,
+    position: entity.position ? { x: entity.position.x, y: entity.position.y } : null,
+    action: entity.action
+      ? { type: entity.action.type, status: entity.action.status }
+      : null,
+    injury: entity.injury
+      ? { injured: Boolean(entity.injury.injured), cause: entity.injury.cause }
+      : entity.injured != null
+        ? { injured: Boolean(entity.injured) }
+        : { injured: false },
+    food_inventory: entity.food_inventory ?? 0,
+    inventory: entity.inventory ?? 0,
+  };
+}
+
 export function acceptedChangeEffects(previousEntities, entities, enabled = true) {
   if (!enabled || !previousEntities) return [];
   const prior = new Map(previousEntities.map((entity) => [entity.id, entity]));
@@ -86,12 +110,22 @@ export function acceptedChangeEffects(previousEntities, entities, enabled = true
     if (before.position && entity.position && key(before.position) !== key(entity.position)) {
       effects.push({ type: "move", id: entity.id, from: before.position, to: entity.position });
     }
-    if (before.alive !== false && entity.alive === false) effects.push({ type: "death", id: entity.id, at: entity.position });
-    if (!before.injury?.injured && entity.injury?.injured) effects.push({ type: "injury", id: entity.id, at: entity.position });
+    if (before.alive !== false && entity.alive === false) {
+      effects.push({ type: "death", id: entity.id, at: entity.position });
+    }
+    const wasInjured = Boolean(before.injury?.injured || before.injured);
+    const isInjured = Boolean(entity.injury?.injured || entity.injured);
+    if (!wasInjured && isInjured) {
+      effects.push({ type: "injury", id: entity.id, at: entity.position });
+    }
     if (before.action?.status !== "completed" && entity.action?.status === "completed") {
       effects.push({ type: "complete", id: entity.id, at: entity.position });
     }
-    if ((entity.food_inventory || 0) > (before.food_inventory || 0) || (entity.inventory || 0) > (before.inventory || 0)) {
+    const beforeFood = before.food_inventory ?? 0;
+    const beforeInv = before.inventory ?? 0;
+    const afterFood = entity.food_inventory ?? 0;
+    const afterInv = entity.inventory ?? 0;
+    if (afterFood > beforeFood || afterInv > beforeInv) {
       effects.push({ type: "resource", id: entity.id, at: entity.position });
     }
   }

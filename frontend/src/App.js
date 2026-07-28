@@ -165,38 +165,47 @@ export default function App() {
     });
     playbackRef.current = controller;
     return () => {
-      controller.stop();
       playbackRef.current = null;
+      // Fire-and-forget settle on unmount; single-flight still applies via generation.
+      void controller.stop();
     };
   }, [publishWorldState]);
 
-  // Start/stop loop when play flag changes
+  // Start/stop loop when play flag changes. stop() is async and awaits in-flight steps.
   useEffect(() => {
     const ctrl = playbackRef.current;
     if (!ctrl) return undefined;
-    if (isPlaying && run) {
-      ctrl.start();
-    } else {
-      ctrl.stop();
-      if (!isPlaying) setObservedTps(0);
-    }
-    return undefined;
+    let cancelled = false;
+    (async () => {
+      if (isPlaying && run) {
+        await ctrl.start();
+      } else {
+        await ctrl.stop();
+        if (!cancelled && !isPlaying) setObservedTps(0);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isPlaying, run?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial state load when run changes
   useEffect(() => {
     if (!run) return undefined;
     let cancelled = false;
-    api
-      .getState(run.id)
-      .then((s) => {
+    (async () => {
+      // Ensure any prior loop has settled before loading a different run
+      await playbackRef.current?.stop();
+      if (cancelled) return;
+      try {
+        const s = await api.getState(run.id);
         if (!cancelled) publishWorldState(s, { force: true });
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!cancelled) {
           setBackendError(err?.message || "The backend could not be reached.");
         }
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -273,14 +282,23 @@ export default function App() {
       setObservedTps(0);
       playbackRef.current?.resetMetricsAndTps();
       setIsPlaying(true);
-    } else {
-      setIsPlaying(false);
-      playbackRef.current?.stop();
-      try {
-        if (run) await api.pause(run.id);
-      } catch (_) {
-        /* ignore */
+      return;
+    }
+    // Pause: flip flag first so the loop will not schedule further batches,
+    // then await stop() so the in-flight step settles and final state is published
+    // before we call the backend pause endpoint.
+    setIsPlaying(false);
+    try {
+      await playbackRef.current?.stop();
+      if (run) await api.pause(run.id);
+      // stop() already force-published final state; refresh once more after pause
+      // in case the server updates status on /pause.
+      if (run) {
+        const s = await api.getState(run.id);
+        publishWorldState(s, { force: true });
       }
+    } catch (_) {
+      /* ignore pause errors; stop() already finalized best-effort */
     }
   }
 
@@ -291,9 +309,9 @@ export default function App() {
     // Live via speedRef — no loop restart required
   }
 
-  function handleRunReady(newRun) {
+  async function handleRunReady(newRun) {
     setIsPlaying(false);
-    playbackRef.current?.stop();
+    await playbackRef.current?.stop();
     playbackRef.current?.resetMetricsAndTps();
     setRun(newRun);
     setSelectedEntityId(null);
@@ -351,9 +369,9 @@ export default function App() {
     }
   }
 
-  function handleReset() {
+  async function handleReset() {
     setIsPlaying(false);
-    playbackRef.current?.stop();
+    await playbackRef.current?.stop();
     setShowNewRunModal(true);
   }
 

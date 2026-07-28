@@ -143,26 +143,28 @@ async function main() {
   const startAt = Date.now();
   console.log("play start tick", tStart);
 
-  // Sample at ~20s and ~40s (backend-limited; still proves continuous advance)
-  await page.waitForTimeout(20000);
-  const t20 = await readTick();
-  const tps20 = await page.locator('[data-testid="observed-tps"]').textContent();
-  const status20 = await page.locator('[data-testid="run-status-badge"]').textContent();
+  // Packet-aligned partial browser window (full 120s API soak is live-playback-acceptance.mjs).
+  // Default 60s continuous ×28; ACCEPTANCE_SHORT=1 shortens for debug only.
+  const playMs = process.env.ACCEPTANCE_SHORT === "1" ? 20000 : 60000;
+  await page.waitForTimeout(Math.floor(playMs / 2));
+  const tMid = await readTick();
+  const tpsMid = await page.locator('[data-testid="observed-tps"]').textContent();
+  const statusMid = await page.locator('[data-testid="run-status-badge"]').textContent();
   await page.screenshot({ path: join(shotDir, "07-x28-after-20s.png"), fullPage: false });
-  console.log("t20", t20, tps20, status20);
+  console.log("tMid", tMid, tpsMid, statusMid);
 
-  await page.waitForTimeout(25000);
-  const t45 = await readTick();
-  const tps45 = await page.locator('[data-testid="observed-tps"]').textContent();
-  const status45 = await page.locator('[data-testid="run-status-badge"]').textContent();
+  await page.waitForTimeout(Math.ceil(playMs / 2));
+  const tEnd = await readTick();
+  const tpsEnd = await page.locator('[data-testid="observed-tps"]').textContent();
+  const statusEnd = await page.locator('[data-testid="run-status-badge"]').textContent();
   await page.screenshot({ path: join(shotDir, "08-x28-after-45s.png"), fullPage: false });
-  console.log("t45", t45, tps45, status45);
+  console.log("tEnd", tEnd, tpsEnd, statusEnd);
 
-  // Pause
+  // Pause — must stabilize ticks
   await page.locator('[data-testid="play-pause-btn"]').click();
-  await page.waitForTimeout(1500);
-  const tPause = await readTick();
   await page.waitForTimeout(2000);
+  const tPause = await readTick();
+  await page.waitForTimeout(2500);
   const tPause2 = await readTick();
   console.log("pause ticks", tPause, tPause2, "stable", tPause === tPause2);
 
@@ -183,24 +185,42 @@ async function main() {
 
   await browser.close();
 
+  const advanced = (tEnd || 0) > (tStart || 0) && (tEnd || 0) > (tMid || 0);
+  const pauseStable = tPause != null && tPause === tPause2;
+  const notStalled =
+    !/stalled/i.test(String(statusMid || "")) && !/stalled/i.test(String(statusEnd || ""));
+  const failures = [];
+  if (!advanced) failures.push("ticks did not advance across mid and end checkpoints");
+  if (!pauseStable) failures.push(`pause not stable (${tPause} vs ${tPause2})`);
+  if (!notStalled) failures.push("status showed Stalled during healthy play");
+  if (process.env.ACCEPTANCE_SHORT === "1") {
+    failures.push("ACCEPTANCE_SHORT=1 is not full browser acceptance");
+  }
+
   const report = {
     tStart,
-    t20,
-    t45,
-    advanced: (t45 || 0) > (tStart || 0),
-    pauseStable: tPause === tPause2,
-    tps20,
-    tps45,
-    status20,
-    status45,
+    tMid,
+    tEnd,
+    advanced,
+    pauseStable,
+    notStalled,
+    tpsMid,
+    tpsEnd,
+    statusMid,
+    statusEnd,
     consoleErrors: consoleErrors.slice(0, 20),
     durationMs: Date.now() - startAt,
+    failures,
     shotDir,
   };
   console.log("BROWSER_SMOKE_JSON", JSON.stringify(report, null, 2));
-  if (!report.advanced) process.exitCode = 3;
-  if (consoleErrors.length) console.warn("console errors", consoleErrors.length);
-  console.log(report.advanced ? "BROWSER_SMOKE_PASS" : "BROWSER_SMOKE_FAIL");
+  if (failures.length) {
+    console.error("BROWSER_SMOKE_FAIL", failures);
+    process.exitCode = 3;
+  } else {
+    if (consoleErrors.length) console.warn("console noise", consoleErrors.length);
+    console.log("BROWSER_SMOKE_PASS");
+  }
 }
 
 main().catch((e) => {

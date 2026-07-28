@@ -3,9 +3,10 @@
  * Never mutates domain rules — only schedules api.step / getState.
  *
  * Guarantees:
- * - At most one in-flight step at a time
- * - busy always cleared in finally
- * - While playing: next iteration is always scheduled unless pause/stop/error
+ * - At most one in-flight step at a time (including across stop/start)
+ * - busy is owned only by the request finally / settle path
+ * - stop() awaits in-flight work and publishes final state
+ * - pause does not abort the active step HTTP call (avoids server/client races)
  * - Speed is read from a live getter each iteration
  * - Temporary failures can retry with bounded backoff
  */
@@ -55,13 +56,15 @@ export function createTickSampler() {
       if (tick == null || !Number.isFinite(Number(tick))) return { advanced: false, tps: 0 };
       const t = Number(tick);
       if (lastTick != null && t <= lastTick) {
-        return { advanced: false, tps: measureObservedTps(samples.map(s => ({ tick: s.tick, at: s.at }))) };
+        return {
+          advanced: false,
+          tps: measureObservedTps(samples.map((s) => ({ tick: s.tick, at: s.at }))),
+        };
       }
       lastTick = t;
       lastAdvanceAt = at;
       samples.push({ tick: t, at });
       if (samples.length > 48) samples.splice(0, samples.length - 48);
-      // measureObservedTps expects wall Date.now-style; use relative ms consistently
       const tps = measureObservedTps(
         samples.map((s) => ({ tick: s.tick, at: s.at })),
         2500,
@@ -92,26 +95,15 @@ export function createTickSampler() {
 
 /**
  * Create a playback controller.
- *
- * @param {object} opts
- * @param {() => string|null} opts.getRunId
- * @param {() => boolean} opts.isPlaying
- * @param {() => number} opts.getSpeed
- * @param {(runId: string, ticks: number, signal?: AbortSignal) => Promise<any>} opts.step
- * @param {(runId: string, signal?: AbortSignal) => Promise<any>} opts.getState
- * @param {(state: any, meta: object) => void} opts.onWorldState
- * @param {(info: object) => void} [opts.onMetrics]
- * @param {(err: Error, info: object) => void} [opts.onError]
- * @param {(tps: number) => void} [opts.onTps]
- * @param {(stalled: boolean) => void} [opts.onStalled]
- * @param {(busy: boolean) => void} [opts.onBusy]
  */
 export function createPlaybackController(opts) {
   const cfg = { ...PLAYBACK_DEFAULTS, ...opts.config };
   let generation = 0;
   let busy = false;
   let loopPromise = null;
-  let abortCtrl = null;
+  let inFlightPromise = null;
+  let pacingCtrl = null;
+  let startChain = Promise.resolve();
   const sampler = createTickSampler();
   let consecutiveFailures = 0;
   let lastPublishAt = 0;
@@ -179,14 +171,14 @@ export function createPlaybackController(opts) {
     }
   }
 
-  async function oneIteration(signal) {
+  async function oneIteration(myGen) {
     if (busy) {
       metrics.overlapsPrevented += 1;
       return { kind: "overlap" };
     }
     const runId = opts.getRunId();
     if (!runId) return { kind: "stop", reason: "no-run" };
-    if (!opts.isPlaying()) return { kind: "pause" };
+    if (!opts.isPlaying() || generation !== myGen) return { kind: "pause" };
 
     const speed = opts.getSpeed();
     const batch = ticksPerStepCall(speed, metrics.lastRequestMs);
@@ -196,113 +188,137 @@ export function createPlaybackController(opts) {
     busy = true;
     opts.onBusy?.(true);
 
-    try {
-      metrics.requestCount += 1;
-      metrics.totalTicksRequested += batch;
+    const work = (async () => {
+      try {
+        metrics.requestCount += 1;
+        metrics.totalTicksRequested += batch;
 
-      let stepResult;
-      let attempt = 0;
-      // Bounded retry for temporary failures
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        attempt += 1;
-        try {
-          stepResult = await opts.step(runId, batch, signal);
-          consecutiveFailures = 0;
-          break;
-        } catch (err) {
-          if (err?.name === "AbortError" || signal?.aborted) throw err;
-          const retriable = isRetriableError(err);
-          if (!retriable || attempt > cfg.maxRetries) throw err;
-          consecutiveFailures += 1;
-          metrics.retries += 1;
-          const backoff = Math.min(cfg.maxRetryMs, cfg.retryBaseMs * 2 ** (attempt - 1));
-          opts.onMetrics?.({ ...metrics, phase: "retry", attempt, backoff, error: String(err?.message || err) });
-          await sleep(backoff, signal);
+        let stepResult;
+        let attempt = 0;
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          attempt += 1;
+          try {
+            // Do not pass abort signal into step: pause/stop must not cancel
+            // an in-flight authoritative request (server may still commit).
+            stepResult = await opts.step(runId, batch);
+            consecutiveFailures = 0;
+            break;
+          } catch (err) {
+            if (err?.name === "AbortError") throw err;
+            const retriable = isRetriableError(err);
+            if (!retriable || attempt > cfg.maxRetries) throw err;
+            consecutiveFailures += 1;
+            metrics.retries += 1;
+            const backoff = Math.min(cfg.maxRetryMs, cfg.retryBaseMs * 2 ** (attempt - 1));
+            opts.onMetrics?.({
+              ...metrics,
+              phase: "retry",
+              attempt,
+              backoff,
+              error: String(err?.message || err),
+            });
+            // Backoff can be interrupted by stop (pacing abort only)
+            try {
+              await sleep(backoff, pacingCtrl?.signal);
+            } catch (sleepErr) {
+              if (sleepErr?.name === "AbortError") {
+                // Still finish after retries cancelled — rethrow original path
+                throw err;
+              }
+              throw sleepErr;
+            }
+          }
         }
-      }
 
-      if (signal?.aborted || !opts.isPlaying()) {
-        return { kind: "pause" };
-      }
-
-      const tickHint = tickFromStepResult(stepResult, sampler.lastTick());
-      if (tickHint != null) {
-        const rec = sampler.record(tickHint, performance.now());
-        if (rec.advanced) {
-          metrics.totalTicksObserved += batch; // approximate
-          opts.onTps?.(rec.tps);
-          opts.onStalled?.(false);
+        const tickHint = tickFromStepResult(stepResult, sampler.lastTick());
+        if (tickHint != null) {
+          const rec = sampler.record(tickHint, performance.now());
+          if (rec.advanced) {
+            metrics.totalTicksObserved += batch;
+            opts.onTps?.(rec.tps);
+            opts.onStalled?.(false);
+          }
         }
-      }
 
-      // Fetch world snapshot (required for rendering). Prefer not to hang forever.
-      const state = await opts.getState(runId, signal);
-      if (state?.current_tick != null) {
-        const rec = sampler.record(state.current_tick, performance.now());
-        if (rec.advanced) {
-          opts.onTps?.(rec.tps);
-          opts.onStalled?.(false);
-        } else {
-          opts.onTps?.(sampler.observedTps());
+        const state = await opts.getState(runId);
+        if (state?.current_tick != null) {
+          const rec = sampler.record(state.current_tick, performance.now());
+          if (rec.advanced) {
+            opts.onTps?.(rec.tps);
+            opts.onStalled?.(false);
+          } else {
+            opts.onTps?.(sampler.observedTps());
+          }
         }
-      }
 
-      publishState(state, {
-        force: false,
-        source: "playback",
-        batch,
-        speed,
-        stepTick: tickHint,
-      });
+        // Always force-publish when generation advanced (pause/stop path)
+        const force = generation !== myGen || !opts.isPlaying();
+        publishState(state, {
+          force,
+          source: force ? "playback-final" : "playback",
+          batch,
+          speed,
+          stepTick: tickHint,
+        });
 
-      const elapsed = performance.now() - started;
-      metrics.lastRequestMs = elapsed;
-      if (elapsed > metrics.longestRequestMs) metrics.longestRequestMs = elapsed;
-      opts.onMetrics?.({
-        ...metrics,
-        phase: "ok",
-        batch,
-        speed,
-        elapsed,
-        tick: state?.current_tick ?? tickHint,
-        tps: sampler.observedTps(),
-      });
+        const elapsed = performance.now() - started;
+        metrics.lastRequestMs = elapsed;
+        if (elapsed > metrics.longestRequestMs) metrics.longestRequestMs = elapsed;
+        opts.onMetrics?.({
+          ...metrics,
+          phase: "ok",
+          batch,
+          speed,
+          elapsed,
+          tick: state?.current_tick ?? tickHint,
+          tps: sampler.observedTps(),
+        });
 
-      // Release busy BEFORE pacing delay so UI/stepOnce never look wedged
-      // while we intentionally wait for the next batch window.
-      busy = false;
-      opts.onBusy?.(false);
+        if (generation !== myGen || !opts.isPlaying()) return { kind: "pause" };
 
-      if (!opts.isPlaying()) return { kind: "pause" };
-
-      const wait = Math.max(0, delay - elapsed);
-      if (wait > 0) await sleep(wait, signal);
-      return { kind: "continue" };
-    } catch (err) {
-      if (err?.name === "AbortError" || signal?.aborted) {
-        return { kind: "pause" };
-      }
-      consecutiveFailures += 1;
-      opts.onError?.(err, { consecutiveFailures, metrics: { ...metrics } });
-      return { kind: "error", error: err };
-    } finally {
-      // Always clear if still held (error path / early return)
-      if (busy) {
+        // Release busy before pacing wait so UI is not wedged between batches
         busy = false;
         opts.onBusy?.(false);
+
+        const wait = Math.max(0, delay - elapsed);
+        if (wait > 0) {
+          try {
+            await sleep(wait, pacingCtrl?.signal);
+          } catch (err) {
+            if (err?.name === "AbortError") return { kind: "pause" };
+            throw err;
+          }
+        }
+        if (generation !== myGen || !opts.isPlaying()) return { kind: "pause" };
+        return { kind: "continue" };
+      } catch (err) {
+        if (err?.name === "AbortError") return { kind: "pause" };
+        consecutiveFailures += 1;
+        opts.onError?.(err, { consecutiveFailures, metrics: { ...metrics } });
+        return { kind: "error", error: err };
+      } finally {
+        if (busy) {
+          busy = false;
+          opts.onBusy?.(false);
+        }
       }
+    })();
+
+    inFlightPromise = work;
+    try {
+      return await work;
+    } finally {
+      if (inFlightPromise === work) inFlightPromise = null;
     }
   }
 
   async function runLoop(myGen) {
     while (generation === myGen && opts.isPlaying()) {
-      if (sampler.isStalled()) {
-        opts.onStalled?.(true);
-      }
+      if (sampler.isStalled()) opts.onStalled?.(true);
       let result;
       try {
-        result = await oneIteration(abortCtrl?.signal);
+        result = await oneIteration(myGen);
       } catch (err) {
         if (err?.name === "AbortError") break;
         opts.onError?.(err, { fatal: true });
@@ -310,50 +326,115 @@ export function createPlaybackController(opts) {
       }
       if (generation !== myGen) break;
       if (!result || result.kind === "pause" || result.kind === "stop") break;
-      if (result.kind === "error") {
-        // Visible stop — caller sets isPlaying false via onError
-        break;
-      }
+      if (result.kind === "error") break;
       if (result.kind === "overlap") {
-        await sleep(16);
+        try {
+          await sleep(16, pacingCtrl?.signal);
+        } catch (_) {
+          break;
+        }
       }
-      // continue → next iteration
     }
     flushPendingPublish();
+  }
+
+  async function settleInFlight() {
+    if (inFlightPromise) {
+      try {
+        await inFlightPromise;
+      } catch (_) {
+        /* settled */
+      }
+    }
+    if (loopPromise) {
+      try {
+        await loopPromise;
+      } catch (_) {
+        /* settled */
+      }
+    }
+  }
+
+  /**
+   * Stop playback. Awaits any in-flight step/getState, then force-publishes
+   * the latest authoritative state. Does not abort the HTTP step request.
+   */
+  async function stop() {
+    generation += 1;
+    if (pacingCtrl) {
+      try {
+        pacingCtrl.abort();
+      } catch (_) {
+        /* ignore */
+      }
+      pacingCtrl = null;
+    }
+    await settleInFlight();
+    flushPendingPublish();
+
+    // Final authoritative snapshot so UI matches server after pause
+    const runId = opts.getRunId();
+    if (runId) {
+      try {
+        const state = await opts.getState(runId);
+        if (state) {
+          if (state.current_tick != null) {
+            const rec = sampler.record(state.current_tick, performance.now());
+            opts.onTps?.(rec.tps || sampler.observedTps());
+          }
+          publishState(state, { force: true, source: "stop-finalize" });
+        }
+      } catch (_) {
+        /* best-effort finalize */
+      }
+    }
+    // busy must already be false after settle; enforce
+    if (busy) {
+      busy = false;
+      opts.onBusy?.(false);
+    }
+  }
+
+  function start() {
+    // Serialize start after any prior stop/start chain
+    startChain = startChain
+      .catch(() => {})
+      .then(async () => {
+        await settleInFlight();
+        generation += 1;
+        const myGen = generation;
+        if (pacingCtrl) {
+          try {
+            pacingCtrl.abort();
+          } catch (_) {
+            /* ignore */
+          }
+        }
+        pacingCtrl =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        consecutiveFailures = 0;
+        // Do not reset sampler on resume — keep TPS continuity unless caller resets
+        opts.onStalled?.(false);
+        loopPromise = runLoop(myGen).catch((err) => {
+          if (err?.name !== "AbortError") opts.onError?.(err, { fatal: true });
+        });
+        return loopPromise;
+      });
+    return startChain;
   }
 
   return {
     sampler,
     metrics: () => ({ ...metrics }),
     isBusy: () => busy,
-    start() {
-      // New generation cancels previous loop
-      generation += 1;
-      const myGen = generation;
-      if (abortCtrl) abortCtrl.abort();
-      abortCtrl = typeof AbortController !== "undefined" ? new AbortController() : null;
-      consecutiveFailures = 0;
-      sampler.reset();
-      opts.onTps?.(0);
-      opts.onStalled?.(false);
-      loopPromise = runLoop(myGen).catch((err) => {
-        if (err?.name !== "AbortError") opts.onError?.(err, { fatal: true });
-      });
-      return loopPromise;
-    },
-    stop() {
-      generation += 1;
-      if (abortCtrl) {
-        abortCtrl.abort();
-        abortCtrl = null;
-      }
-      flushPendingPublish();
-      busy = false;
-      opts.onBusy?.(false);
-    },
+    /** @returns {Promise<void>} */
+    start,
+    /** @returns {Promise<void>} */
+    stop,
     /** Single authoritative step while paused (or manual step). */
     async stepOnce(ticks = 1) {
-      if (busy) {
+      // Reject immediately if a step is already open (do not await it — that would deadlock callers)
+      if (busy || inFlightPromise) {
         metrics.overlapsPrevented += 1;
         throw Object.assign(new Error("Step already in progress"), { code: "BUSY" });
       }
@@ -362,25 +443,33 @@ export function createPlaybackController(opts) {
       busy = true;
       opts.onBusy?.(true);
       const started = performance.now();
+      const work = (async () => {
+        try {
+          const stepResult = await opts.step(runId, ticks);
+          const tickHint = tickFromStepResult(stepResult, sampler.lastTick());
+          if (tickHint != null) {
+            const rec = sampler.record(tickHint, performance.now());
+            opts.onTps?.(rec.tps);
+          }
+          const state = await opts.getState(runId);
+          if (state?.current_tick != null) {
+            const rec = sampler.record(state.current_tick, performance.now());
+            opts.onTps?.(rec.tps);
+          }
+          publishState(state, { force: true, source: "step-once" });
+          opts.onStalled?.(false);
+          return state;
+        } finally {
+          busy = false;
+          opts.onBusy?.(false);
+          metrics.lastRequestMs = performance.now() - started;
+        }
+      })();
+      inFlightPromise = work;
       try {
-        const stepResult = await opts.step(runId, ticks);
-        const tickHint = tickFromStepResult(stepResult, sampler.lastTick());
-        if (tickHint != null) {
-          const rec = sampler.record(tickHint, performance.now());
-          opts.onTps?.(rec.tps);
-        }
-        const state = await opts.getState(runId);
-        if (state?.current_tick != null) {
-          const rec = sampler.record(state.current_tick, performance.now());
-          opts.onTps?.(rec.tps);
-        }
-        publishState(state, { force: true, source: "step-once" });
-        opts.onStalled?.(false);
-        return state;
+        return await work;
       } finally {
-        busy = false;
-        opts.onBusy?.(false);
-        metrics.lastRequestMs = performance.now() - started;
+        if (inFlightPromise === work) inFlightPromise = null;
       }
     },
     resetMetricsAndTps() {

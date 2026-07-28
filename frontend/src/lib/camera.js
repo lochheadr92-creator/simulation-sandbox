@@ -18,17 +18,35 @@ export function clampZoom(zoom, min = 0.35, max = 4) {
   return Math.min(max, Math.max(min, z));
 }
 
-/** Fit world (worldW x worldH CSS pixels at zoom 1) into viewport. */
-export function fitCameraToWorld(worldW, worldH, viewW, viewH, padding = 12) {
+/**
+ * Fit world (worldW x worldH CSS pixels at zoom 1) into viewport.
+ * mode "contain" = entire world visible (may leave gutters).
+ * mode "cover" = fill viewport (may crop edges) — preferred for world-first UI.
+ */
+export function fitCameraToWorld(worldW, worldH, viewW, viewH, padding = 8, mode = "cover") {
   if (worldW <= 0 || worldH <= 0 || viewW <= 0 || viewH <= 0) {
     return createCameraState();
   }
   const availW = Math.max(1, viewW - padding * 2);
   const availH = Math.max(1, viewH - padding * 2);
-  const zoom = clampZoom(Math.min(availW / worldW, availH / worldH));
+  const scaleContain = Math.min(availW / worldW, availH / worldH);
+  const scaleCover = Math.max(availW / worldW, availH / worldH);
+  const zoom = clampZoom(mode === "contain" ? scaleContain : scaleCover, 0.25, 6);
   const x = (worldW * zoom - viewW) / 2;
   const y = (worldH * zoom - viewH) / 2;
   return { x, y, zoom };
+}
+
+/** Keep the world point at the centre of the viewport when size changes. */
+export function reframeCameraPreservingCenter(camera, prevViewW, prevViewH, nextViewW, nextViewH) {
+  const z = clampZoom(camera.zoom, 0.25, 6);
+  const cx = (camera.x + prevViewW / 2) / z;
+  const cy = (camera.y + prevViewH / 2) / z;
+  return {
+    zoom: z,
+    x: cx * z - nextViewW / 2,
+    y: cy * z - nextViewH / 2,
+  };
 }
 
 /** Centre camera on a world-pixel point. */

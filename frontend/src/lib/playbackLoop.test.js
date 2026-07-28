@@ -76,10 +76,91 @@ describe("createPlaybackController", () => {
     expect(steps.length).toBeGreaterThan(0);
     expect(states.length).toBeGreaterThan(0);
     playing = false;
-    ctrl.stop();
+    await ctrl.stop();
     const count = steps.length;
     await new Promise((r) => setTimeout(r, 80));
     expect(steps.length).toBe(count);
+  });
+
+  test("stop/start never overlaps in-flight steps (maxInFlight === 1)", async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    let calls = 0;
+    let playing = true;
+    let release;
+    const gate = new Promise((r) => {
+      release = r;
+    });
+
+    const ctrl = createPlaybackController({
+      getRunId: () => "run-1",
+      isPlaying: () => playing,
+      getSpeed: () => 28,
+      step: async (_id, n) => {
+        calls += 1;
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        // Step always runs to completion (server-like; ignore client abort)
+        await gate;
+        inFlight -= 1;
+        return { frames: [{ tick: calls * n }] };
+      },
+      getState: async () => ({ current_tick: calls, entities: [] }),
+      onWorldState: () => {},
+      onBusy: () => {},
+      onTps: () => {},
+      onStalled: () => {},
+      onError: () => {},
+      config: { visualPublishMs: 0, maxRetries: 0 },
+    });
+
+    void ctrl.start();
+    await flush();
+    playing = false;
+    const stopping = ctrl.stop();
+    // Attempt restart while first step is still open — must serialize
+    playing = true;
+    void ctrl.start();
+    await flush();
+    expect(inFlight).toBe(1);
+    release();
+    await stopping;
+    // Let the serialized restart begin, then stop cleanly
+    await flush();
+    playing = false;
+    await ctrl.stop();
+    expect(maxInFlight).toBe(1);
+    expect(calls).toBeGreaterThanOrEqual(1);
+  });
+
+  test("stop publishes final state after in-flight step", async () => {
+    let playing = true;
+    let resolveStep;
+    const states = [];
+    const ctrl = createPlaybackController({
+      getRunId: () => "run-1",
+      isPlaying: () => playing,
+      getSpeed: () => 4,
+      step: () =>
+        new Promise((resolve) => {
+          resolveStep = () => resolve({ frames: [{ tick: 5 }] });
+        }),
+      getState: async () => ({ current_tick: 5, entities: [], last: true }),
+      onWorldState: (s) => states.push(s),
+      onBusy: () => {},
+      onTps: () => {},
+      onStalled: () => {},
+      onError: () => {},
+      config: { visualPublishMs: 0, maxRetries: 0 },
+    });
+    ctrl.start();
+    await flush();
+    playing = false;
+    const stopP = ctrl.stop();
+    resolveStep();
+    await stopP;
+    expect(states.some((s) => s.current_tick === 5)).toBe(true);
+    expect(ctrl.isBusy()).toBe(false);
   });
 
   test("busy clears after error and stops", async () => {
@@ -107,7 +188,7 @@ describe("createPlaybackController", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(ctrl.isBusy()).toBe(false);
     expect(errors).toBeGreaterThan(0);
-    ctrl.stop();
+    await ctrl.stop();
   });
 
   test("no overlapping stepOnce while busy", async () => {
@@ -166,7 +247,7 @@ describe("createPlaybackController", () => {
     expect(attempts).toBeGreaterThan(1);
     expect(tick).toBeGreaterThan(0);
     playing = false;
-    ctrl.stop();
+    await ctrl.stop();
   });
 
   test("pause prevents further batches", async () => {
@@ -190,9 +271,9 @@ describe("createPlaybackController", () => {
     });
     ctrl.start();
     await new Promise((r) => setTimeout(r, 40));
-    const mid = steps;
     playing = false;
-    ctrl.stop();
+    await ctrl.stop();
+    const mid = steps;
     await new Promise((r) => setTimeout(r, 60));
     expect(steps).toBe(mid);
   });
@@ -226,7 +307,7 @@ describe("createPlaybackController", () => {
     // Allow first pacing sleep (~214ms at ×28) to finish, then a ×4 iteration
     await new Promise((r) => setTimeout(r, 400));
     playing = false;
-    ctrl.stop();
+    await ctrl.stop();
     // Later batches should reflect the new lower speed (batch size 1)
     expect(batches.some((b) => b === 1)).toBe(true);
   });

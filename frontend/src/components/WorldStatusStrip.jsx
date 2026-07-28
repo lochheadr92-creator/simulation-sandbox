@@ -12,10 +12,8 @@ export default function WorldStatusStrip({
   observedTps,
   collapsed = false,
 }) {
-  const summary = useMemo(
-    () => summarizeWorldActivity(worldState?.entities),
-    [worldState?.entities, worldState?.current_tick],
-  );
+  const entities = worldState?.entities;
+  const summary = useMemo(() => summarizeWorldActivity(entities), [entities]);
   const line = formatActivityLine(summary);
 
   if (!worldState || collapsed) return null;

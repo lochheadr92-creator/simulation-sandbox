@@ -1,4 +1,11 @@
-import { OVERLAY_LIMITS, acceptedChangeEffects, cognitiveLayers, entityIndicators, routeOverlay } from "./worldOverlay";
+import {
+  OVERLAY_LIMITS,
+  acceptedChangeEffects,
+  cognitiveLayers,
+  entityEffectSnapshot,
+  entityIndicators,
+  routeOverlay,
+} from "./worldOverlay";
 
 const state = {
   width: 4, height: 3,
@@ -58,4 +65,34 @@ test("labels and accepted-change effects are bounded and presentation-only", () 
   expect(acceptedChangeEffects(before, after)).toHaveLength(5);
   expect(JSON.stringify(after)).toBe(snapshot);
   expect(cognitiveLayers(state, "a", projection, false).active).toBe(false);
+});
+
+test("identical successive snapshots emit no injury/resource effects", () => {
+  const entity = {
+    id: "p",
+    type: "person",
+    alive: true,
+    position: { x: 1, y: 1 },
+    action: { type: "travel", status: "travelling" },
+    injury: { injured: true, cause: "claw" },
+    food_inventory: 3,
+    inventory: 2,
+  };
+  const prev = [entityEffectSnapshot(entity)];
+  const next = [{ ...entity, injury: { injured: true, cause: "claw" } }];
+  expect(acceptedChangeEffects(prev, next)).toEqual([]);
+});
+
+test("entityEffectSnapshot retains detector fields", () => {
+  const snap = entityEffectSnapshot({
+    id: "p",
+    injury: { injured: true },
+    food_inventory: 4,
+    inventory: 1,
+    position: { x: 2, y: 3 },
+  });
+  expect(snap.injury.injured).toBe(true);
+  expect(snap.food_inventory).toBe(4);
+  expect(snap.inventory).toBe(1);
+  expect(snap.position).toEqual({ x: 2, y: 3 });
 });

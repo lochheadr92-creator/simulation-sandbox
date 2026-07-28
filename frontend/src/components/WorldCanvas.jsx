@@ -1,11 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { acceptedChangeEffects, cognitiveLayers, routeOverlay } from "../lib/worldOverlay";
+import {
+  acceptedChangeEffects,
+  cognitiveLayers,
+  entityEffectSnapshot,
+  routeOverlay,
+} from "../lib/worldOverlay";
 import { canvasTooltipLines, describeActivity, entityDisplayName } from "../lib/presentation";
 import {
   centerCameraOn,
   createCameraState,
   fitCameraToWorld,
   lerpPos,
+  reframeCameraPreservingCenter,
   screenToTile,
   zoomAtPoint,
 } from "../lib/camera";
@@ -483,19 +489,25 @@ export default function WorldCanvas({
     const next = new Map();
     const typeById = new Map();
     const prev = targetPosRef.current;
+    const now = performance.now();
+    let anyMoved = false;
+
     for (const e of state.entities || []) {
       if (!e.position || (e.type !== "person" && e.type !== "animal")) continue;
       typeById.set(e.id, e.type);
       const old = prev.get(e.id);
-      if (old && (old.x !== e.position.x || old.y !== e.position.y)) {
+      const moved = old && (old.x !== e.position.x || old.y !== e.position.y);
+      if (moved) {
+        // Start lerp from previous authoritative tile only when it actually changed
         prevPosRef.current.set(e.id, { x: old.x, y: old.y });
-      } else if (!prevPosRef.current.has(e.id)) {
+        anyMoved = true;
+      } else {
+        // Settled / unchanged: baseline is current target (no re-lerp from stale tile)
         prevPosRef.current.set(e.id, { x: e.position.x, y: e.position.y });
       }
       next.set(e.id, { x: e.position.x, y: e.position.y });
     }
 
-    const now = performance.now();
     const trailTtl = isPlaying && speed >= 14 ? 900 : 1400;
     const segs = motionTrailSegments(prev, next, state.current_tick, 64);
     for (const s of segs) {
@@ -528,15 +540,11 @@ export default function WorldCanvas({
       ).map((effect) => ({ ...effect, expiresAt: Date.now() + 600 }));
     }
 
-    prevEntitiesRef.current = (state.entities || []).map((e) => ({
-      id: e.id,
-      type: e.type,
-      alive: e.alive,
-      position: e.position ? { ...e.position } : null,
-      action: e.action ? { type: e.action.type, status: e.action.status } : null,
-    }));
+    // Full field snapshot for the next effect comparison (injury/inventory included)
+    prevEntitiesRef.current = (state.entities || []).map((e) => entityEffectSnapshot(e));
     targetPosRef.current = next;
-    interpStartRef.current = now;
+    // Only restart interpolation clock when something actually moved
+    if (anyMoved) interpStartRef.current = now;
     tickRef.current = state.current_tick;
   }, [state, overlayOptions.animations, isPlaying, speed]);
 
@@ -544,13 +552,14 @@ export default function WorldCanvas({
     if (!state || !wrapRef.current) return;
     const { w, h } = worldPixelSize(state);
     const rect = wrapRef.current.getBoundingClientRect();
-    const cam = fitCameraToWorld(w, h, rect.width, rect.height, 8);
+    // Cover mode fills the viewport (world-first); crops edges rather than black gutters
+    const cam = fitCameraToWorld(w, h, rect.width, rect.height, 4, "cover");
     camRef.current = cam;
     setCamUi(cam);
     manualPanRef.current = false;
   }, [state]);
 
-  // ResizeObserver: fill container, handle DPR
+  // ResizeObserver: fill container, handle DPR, refit or preserve centre
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return undefined;
@@ -559,6 +568,7 @@ export default function WorldCanvas({
       if (!entry) return;
       const { width, height } = entry.contentRect;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const prev = viewSizeRef.current;
       viewSizeRef.current = { w: Math.max(1, width), h: Math.max(1, height), dpr };
       const canvas = canvasRef.current;
       if (canvas) {
@@ -567,10 +577,27 @@ export default function WorldCanvas({
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
       }
-      if (!fittedOnceRef.current && state) {
+      if (!state) return;
+      if (!fittedOnceRef.current) {
         fittedOnceRef.current = true;
         fitWorld();
+        return;
       }
+      // User has not manually framed: keep world-first cover fit on resize
+      if (!manualPanRef.current) {
+        fitWorld();
+        return;
+      }
+      // Manual camera: preserve world centre under the viewport
+      const reframed = reframeCameraPreservingCenter(
+        camRef.current,
+        prev.w,
+        prev.h,
+        Math.max(1, width),
+        Math.max(1, height),
+      );
+      camRef.current = reframed;
+      setCamUi(reframed);
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -644,13 +671,17 @@ export default function WorldCanvas({
     const target = targetPosRef.current.get(id);
     if (!target) return null;
     if (reduceMotion) return target;
-    // High speed: short lerp so motion still reads between sparse paints
     const from = prevPosRef.current.get(id);
     if (!from || (from.x === target.x && from.y === target.y)) return target;
     const dur =
       isPlaying && speed >= 14 ? 70 : isPlaying && speed >= 8 ? 110 : 180;
     const t = Math.min(1, (performance.now() - interpStartRef.current) / dur);
     const e = 1 - (1 - t) * (1 - t);
+    // Once settled, advance baseline so the next identical snapshot does not re-lerp
+    if (t >= 1) {
+      prevPosRef.current.set(id, { x: target.x, y: target.y });
+      return target;
+    }
     return lerpPos(from, target, e);
   }
 

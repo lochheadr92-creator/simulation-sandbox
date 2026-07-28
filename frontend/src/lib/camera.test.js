@@ -6,6 +6,7 @@ import {
   screenToTile,
   lerpPos,
   createCameraState,
+  reframeCameraPreservingCenter,
 } from "./camera";
 
 describe("camera", () => {
@@ -15,9 +16,22 @@ describe("camera", () => {
     expect(clampZoom(1.5)).toBe(1.5);
   });
 
-  test("fitCameraToWorld fills viewport without requiring gutters", () => {
-    const cam = fitCameraToWorld(640, 640, 800, 600, 0);
+  test("fitCameraToWorld cover fills the shorter viewport axis", () => {
+    const cam = fitCameraToWorld(640, 640, 800, 600, 0, "cover");
+    expect(cam.zoom).toBeCloseTo(800 / 640, 5);
+  });
+
+  test("fitCameraToWorld contain keeps entire world visible", () => {
+    const cam = fitCameraToWorld(640, 640, 800, 600, 0, "contain");
     expect(cam.zoom).toBeCloseTo(600 / 640, 5);
+  });
+
+  test("reframeCameraPreservingCenter keeps world centre", () => {
+    const cam = { x: 100, y: 50, zoom: 1 };
+    const next = reframeCameraPreservingCenter(cam, 200, 100, 400, 200);
+    // World centre was (200, 100) in world px; still centred in new view
+    expect(next.x + 200).toBeCloseTo(200, 5);
+    expect(next.y + 100).toBeCloseTo(100, 5);
   });
 
   test("centerCameraOn centres world point", () => {
