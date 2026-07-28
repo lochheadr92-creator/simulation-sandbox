@@ -72,6 +72,58 @@ Out of scope: the containment guard explored in the OQ-1 arms work (it converts
 a silent loss into a visible rejection — worth having, but it does not make the
 action survive). Not a rewrite of the commit pipeline. One subsystem, per rule 7.
 
+## Implementation spec (located 2026-07-28, ready to execute)
+
+**The defect, exactly.** `domains/living_agent_social.py:326-336`:
+
+```python
+touched = [actor_id]
+preconditions = [
+    {"entity_id": actor_id, "field": "alive",        "op": "eq", "value": True},
+    {"entity_id": actor_id, "field": "living_agent", "op": "eq", "value": actor.get("living_agent")},
+]
+if target:
+    updates[target_id] = {"living_agent": target_state}     # whole-blob WRITE
+    preconditions.extend([
+        {"entity_id": target_id, "field": "alive",        "op": "eq", "value": True},
+        {"entity_id": target_id, "field": "living_agent", "op": "eq", "value": target.get("living_agent")},
+    ])                                                       # whole-blob READ
+```
+
+Compare `build_physical_action_proposal` (`living_agent_actions.py:261`), which
+pins `alive` only.
+
+**Why narrowing the precondition alone is wrong.** `core/mutations.py:15`
+`apply_mutation` does `entities[eid].update(updates)` — a top-level field
+replace. `living_agent` is one field holding a dict, so the social action
+*writes the whole blob back* from a frame-start base. Loosen the precondition
+without changing the write and a concurrent change to any other sub-key is
+silently clobbered: we would trade a visible rejection for actual data loss.
+Strictly worse.
+
+**So the fix is sub-field CAS for dict-valued fields** — one coherent
+subsystem, four touch points:
+
+1. `core/commit_pipeline.py:120` `evaluate_preconditions` — accept an optional
+   `path` on a condition and compare the value at that path inside the field's
+   dict rather than the whole field. No `path` ⇒ today's behaviour exactly.
+   Failure string must name the path so rejections stay diagnosable.
+2. `core/mutations.py:15` `apply_mutation` — a merge semantic for dict-valued
+   field updates so a proposal can write only the sub-keys it changed. Keep
+   whole-field replace as the default; merge is opt-in per update.
+3. `domains/living_agent_social.py:326-336` — pin only the sub-keys the action
+   reads, write only the sub-keys it changes.
+4. `domains/living_settlement_domain.py:548` `_replace_living_preconditions` —
+   currently rewrites the `living_agent` precondition value wholesale; must
+   become path-aware or it will re-widen what step 3 narrowed.
+
+Determinism note: merge order must be deterministic (sorted keys) or invariant
+4 breaks. The frozen hash **will** move — more actions commit. Update the pin
+in the same commit and say what moved it, per `ENGINE-CONSTITUTION.md`.
+
+Do this on a clean context. It is a four-file engine change with a hash move
+and a regression suite; it should not be started at the tail of a long session.
+
 ## Acceptance
 
 **Primary metric: zero social actions discarded for `living_agent_eq_failed`
