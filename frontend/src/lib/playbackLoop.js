@@ -5,8 +5,11 @@
  * Guarantees:
  * - At most one in-flight step at a time (including across stop/start)
  * - busy is owned only by the request finally / settle path
- * - stop() awaits in-flight work and publishes final state
+ * - stop() awaits in-flight work, bounded by settleTimeoutMs, then publishes
+ *   final state — pause never blocks for the full step timeout
  * - pause does not abort the active step HTTP call (avoids server/client races)
+ * - A stall watchdog runs on a timer, so a frozen tick is reported even while
+ *   the loop is blocked inside a slow step or getState
  * - Speed is read from a live getter each iteration
  * - Temporary failures can retry with bounded backoff
  */
@@ -26,6 +29,19 @@ export const PLAYBACK_DEFAULTS = {
   maxRetryMs: 4000,
   /** How often to publish world state to React while playing (ms). */
   visualPublishMs: 80,
+  /**
+   * How often the stall watchdog samples tick progress (ms). Runs on a timer,
+   * independent of loop iteration boundaries, so a long in-flight step cannot
+   * hide a frozen tick behind an "Advancing" label.
+   */
+  stallCheckMs: 500,
+  /** How long without a tick advance counts as stalled (ms). */
+  stallThresholdMs: STALL_THRESHOLD_MS,
+  /**
+   * How long stop() waits for in-flight work before giving up and returning.
+   * Without this the pause button can block for the full step timeout.
+   */
+  settleTimeoutMs: 2500,
 };
 
 /**
@@ -45,12 +61,21 @@ export function createTickSampler() {
   const samples = [];
   let lastTick = null;
   let lastAdvanceAt = 0;
+  let startedAt = 0;
 
   return {
+    /**
+     * Mark the reference point for stall detection before any tick has arrived.
+     * Without this, a hung first step looks healthy forever.
+     */
+    begin(at = performance.now()) {
+      startedAt = at;
+    },
     reset() {
       samples.length = 0;
       lastTick = null;
       lastAdvanceAt = 0;
+      startedAt = 0;
     },
     record(tick, at = performance.now()) {
       if (tick == null || !Number.isFinite(Number(tick))) return { advanced: false, tps: 0 };
@@ -84,8 +109,11 @@ export function createTickSampler() {
       return lastTick;
     },
     isStalled(now = performance.now(), threshold = STALL_THRESHOLD_MS) {
-      if (!lastAdvanceAt) return false;
-      return now - lastAdvanceAt > threshold;
+      // Before the first advance, measure from begin() so a hung first step is
+      // reported. Falls back to "not stalled" only when neither point exists.
+      const since = lastAdvanceAt || startedAt;
+      if (!since) return false;
+      return now - since > threshold;
     },
     samples() {
       return samples.slice();
@@ -118,6 +146,39 @@ export function createPlaybackController(opts) {
     overlapsPrevented: 0,
     retries: 0,
   };
+
+  let stallWatchdog = null;
+  let stallReported = false;
+
+  /** Single funnel for stall state so the watchdog and the loop cannot desync. */
+  function reportStalled(next) {
+    const v = Boolean(next);
+    if (v === stallReported) return;
+    stallReported = v;
+    opts.onStalled?.(v);
+  }
+
+  /**
+   * Timer-based stall detection. `await` yields to the event loop, so this
+   * fires even while the loop is blocked on a slow step or getState — which is
+   * exactly when the tick is frozen and the UI would otherwise read "Advancing".
+   */
+  function startStallWatchdog() {
+    stopStallWatchdog();
+    if (!(cfg.stallCheckMs > 0)) return;
+    stallWatchdog = setInterval(() => {
+      if (!opts.isPlaying()) return;
+      reportStalled(sampler.isStalled(performance.now(), cfg.stallThresholdMs));
+    }, cfg.stallCheckMs);
+    if (typeof stallWatchdog?.unref === "function") stallWatchdog.unref();
+  }
+
+  function stopStallWatchdog() {
+    if (stallWatchdog) {
+      clearInterval(stallWatchdog);
+      stallWatchdog = null;
+    }
+  }
 
   function sleep(ms, signal) {
     return new Promise((resolve, reject) => {
@@ -231,13 +292,17 @@ export function createPlaybackController(opts) {
           }
         }
 
-        const tickHint = tickFromStepResult(stepResult, sampler.lastTick());
+        const prevTick = sampler.lastTick();
+        const tickHint = tickFromStepResult(stepResult, prevTick);
         if (tickHint != null) {
           const rec = sampler.record(tickHint, performance.now());
           if (rec.advanced) {
-            metrics.totalTicksObserved += batch;
+            // Count ticks the server actually advanced, not the batch we asked
+            // for. `totalTicksRequested` above already records the request.
+            metrics.totalTicksObserved +=
+              prevTick == null ? 1 : Math.max(0, rec.tick - prevTick);
             opts.onTps?.(rec.tps);
-            opts.onStalled?.(false);
+            reportStalled(false);
           }
         }
 
@@ -246,7 +311,7 @@ export function createPlaybackController(opts) {
           const rec = sampler.record(state.current_tick, performance.now());
           if (rec.advanced) {
             opts.onTps?.(rec.tps);
-            opts.onStalled?.(false);
+            reportStalled(false);
           } else {
             opts.onTps?.(sampler.observedTps());
           }
@@ -315,7 +380,8 @@ export function createPlaybackController(opts) {
 
   async function runLoop(myGen) {
     while (generation === myGen && opts.isPlaying()) {
-      if (sampler.isStalled()) opts.onStalled?.(true);
+      // Cheap boundary check; the watchdog timer covers the in-iteration case.
+      reportStalled(sampler.isStalled(performance.now(), cfg.stallThresholdMs));
       let result;
       try {
         result = await oneIteration(myGen);
@@ -338,21 +404,59 @@ export function createPlaybackController(opts) {
     flushPendingPublish();
   }
 
-  async function settleInFlight() {
-    if (inFlightPromise) {
-      try {
-        await inFlightPromise;
-      } catch (_) {
-        /* settled */
+  /**
+   * Wait for in-flight work, but never longer than `timeoutMs`. Unbounded
+   * waiting here made the pause button unresponsive for the whole step timeout
+   * (up to 60s) whenever the backend was slow. On timeout we stop *waiting*;
+   * the HTTP request itself is still left to finish, since the server may
+   * commit it and single-flight is enforced separately by `busy`.
+   *
+   * @returns {Promise<boolean>} true if work settled, false if it timed out.
+   */
+  async function settleInFlight(timeoutMs = cfg.settleTimeoutMs) {
+    const settled = (async () => {
+      if (inFlightPromise) {
+        try {
+          await inFlightPromise;
+        } catch (_) {
+          /* settled */
+        }
       }
-    }
-    if (loopPromise) {
-      try {
-        await loopPromise;
-      } catch (_) {
-        /* settled */
+      if (loopPromise) {
+        try {
+          await loopPromise;
+        } catch (_) {
+          /* settled */
+        }
       }
+    })();
+
+    if (!(timeoutMs > 0)) {
+      await settled;
+      return true;
     }
+
+    let timer = null;
+    const timedOut = await Promise.race([
+      settled.then(() => false),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(true), timeoutMs);
+        if (typeof timer?.unref === "function") timer.unref();
+      }),
+    ]);
+    if (timer) clearTimeout(timer);
+
+    if (timedOut) {
+      if (pacingCtrl) {
+        try {
+          pacingCtrl.abort();
+        } catch (_) {
+          /* ignore */
+        }
+      }
+      opts.onMetrics?.({ ...metrics, phase: "settle-timeout", timeoutMs });
+    }
+    return !timedOut;
   }
 
   /**
@@ -369,7 +473,7 @@ export function createPlaybackController(opts) {
       }
       pacingCtrl = null;
     }
-    await settleInFlight();
+    const didSettle = await settleInFlight();
     flushPendingPublish();
 
     // Final authoritative snapshot so UI matches server after pause
@@ -388,8 +492,13 @@ export function createPlaybackController(opts) {
         /* best-effort finalize */
       }
     }
-    // busy must already be false after settle; enforce
-    if (busy) {
+    stopStallWatchdog();
+    reportStalled(false);
+
+    // Only enforce when work actually settled. If settleInFlight timed out a
+    // request is still open and clearing busy here would break single-flight —
+    // the request's own finally releases it.
+    if (didSettle && busy) {
       busy = false;
       opts.onBusy?.(false);
     }
@@ -413,8 +522,12 @@ export function createPlaybackController(opts) {
         pacingCtrl =
           typeof AbortController !== "undefined" ? new AbortController() : null;
         consecutiveFailures = 0;
-        // Do not reset sampler on resume — keep TPS continuity unless caller resets
-        opts.onStalled?.(false);
+        // Do not reset sampler on resume — keep TPS continuity unless caller resets.
+        // begin() only moves the stall reference point, so a pause does not make
+        // the loop look instantly stalled on resume.
+        sampler.begin();
+        reportStalled(false);
+        startStallWatchdog();
         loopPromise = runLoop(myGen).catch((err) => {
           if (err?.name !== "AbortError") opts.onError?.(err, { fatal: true });
         });
@@ -457,7 +570,7 @@ export function createPlaybackController(opts) {
             opts.onTps?.(rec.tps);
           }
           publishState(state, { force: true, source: "step-once" });
-          opts.onStalled?.(false);
+          reportStalled(false);
           return state;
         } finally {
           busy = false;
@@ -475,7 +588,7 @@ export function createPlaybackController(opts) {
     resetMetricsAndTps() {
       sampler.reset();
       opts.onTps?.(0);
-      opts.onStalled?.(false);
+      reportStalled(false);
       metrics.requestCount = 0;
       metrics.totalTicksRequested = 0;
       metrics.totalTicksObserved = 0;

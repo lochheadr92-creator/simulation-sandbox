@@ -21,6 +21,8 @@ __pycache__/
 # Frontend build caches — must never be committed
 frontend/node_modules/
 frontend/node_modules/.cache/
+# Compiled bundles: reviewable diffs only, and stale hashed bundles accumulate
+frontend/build/
 
 # Timestamped backup files
 *.bak.*

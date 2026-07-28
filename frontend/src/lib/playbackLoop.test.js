@@ -312,3 +312,118 @@ describe("createPlaybackController", () => {
     expect(batches.some((b) => b === 1)).toBe(true);
   });
 });
+
+describe("stall reporting (adversarial review F1/F3)", () => {
+  test("sampler reports stalled before the first advance once begin() is set", () => {
+    const s = createTickSampler();
+    // Without begin(), an untouched sampler is not stalled.
+    expect(s.isStalled(10_000, 2500)).toBe(false);
+    s.begin(1000);
+    expect(s.isStalled(1000 + 100, 2500)).toBe(false);
+    expect(s.isStalled(1000 + 3000, 2500)).toBe(true);
+    // Once a tick lands, the advance time takes over.
+    s.record(5, 4500);
+    expect(s.isStalled(4500 + 100, 2500)).toBe(false);
+  });
+
+  test("watchdog reports a stall while a step is still in flight", async () => {
+    let playing = true;
+    const stalls = [];
+    let releaseStep = null;
+    const ctrl = createPlaybackController({
+      getRunId: () => "run-1",
+      isPlaying: () => playing,
+      getSpeed: () => 1,
+      // Never resolves until released — models a slow/hung backend step.
+      step: () =>
+        new Promise((resolve) => {
+          releaseStep = () => resolve({ frames: [{ tick: 1 }] });
+        }),
+      getState: async () => ({ current_tick: 1, entities: [] }),
+      onWorldState: () => {},
+      onBusy: () => {},
+      onTps: () => {},
+      onStalled: (v) => stalls.push(v),
+      onError: () => {},
+      config: {
+        visualPublishMs: 0,
+        maxRetries: 0,
+        stallCheckMs: 10,
+        stallThresholdMs: 30,
+        settleTimeoutMs: 50,
+      },
+    });
+
+    ctrl.start();
+    // The loop is blocked inside step() for this whole window. Before the
+    // watchdog existed, no stall could be reported here.
+    await new Promise((r) => setTimeout(r, 150));
+    expect(stalls).toContain(true);
+
+    if (releaseStep) releaseStep();
+    playing = false;
+    await ctrl.stop();
+  });
+
+  test("stop() returns promptly when the in-flight step never settles", async () => {
+    let playing = true;
+    const ctrl = createPlaybackController({
+      getRunId: () => "run-1",
+      isPlaying: () => playing,
+      getSpeed: () => 1,
+      step: () => new Promise(() => {}), // never settles
+      getState: async () => ({ current_tick: 0, entities: [] }),
+      onWorldState: () => {},
+      onBusy: () => {},
+      onTps: () => {},
+      onStalled: () => {},
+      onError: () => {},
+      config: {
+        visualPublishMs: 0,
+        maxRetries: 0,
+        stallCheckMs: 10,
+        stallThresholdMs: 30,
+        settleTimeoutMs: 60,
+      },
+    });
+
+    ctrl.start();
+    await new Promise((r) => setTimeout(r, 20));
+    playing = false;
+    const t0 = Date.now();
+    await ctrl.stop();
+    // Bounded by settleTimeoutMs, not by the step timeout.
+    expect(Date.now() - t0).toBeLessThan(1000);
+  });
+
+  test("totalTicksObserved counts server advance, not requested batch", async () => {
+    let playing = true;
+    let calls = 0;
+    const ctrl = createPlaybackController({
+      getRunId: () => "run-1",
+      isPlaying: () => playing,
+      getSpeed: () => 28, // requests a batch of 6
+      // Server only advances one tick per call.
+      step: async () => {
+        calls += 1;
+        return { frames: [{ tick: calls }] };
+      },
+      getState: async () => ({ current_tick: calls, entities: [] }),
+      onWorldState: () => {},
+      onBusy: () => {},
+      onTps: () => {},
+      onStalled: () => {},
+      onError: () => {},
+      config: { visualPublishMs: 0, maxRetries: 0 },
+    });
+
+    ctrl.start();
+    await new Promise((r) => setTimeout(r, 60));
+    playing = false;
+    await ctrl.stop();
+
+    const m = ctrl.metrics();
+    expect(m.totalTicksRequested).toBeGreaterThan(m.totalTicksObserved);
+    expect(m.totalTicksObserved).toBeLessThanOrEqual(calls);
+  });
+});
