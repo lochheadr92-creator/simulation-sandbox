@@ -8,6 +8,7 @@ from core.constants import (
     EFFORT_TRANSFER_TARGET_ENERGY_GAIN,
 )
 from core.hashing import canonical_hash
+from core.mutations import MERGE_WRAPPER_KEY
 from domains.living_agent_actions import living_action_metadata, social_signal_spec
 from domains.living_agent_cognition import merge_knowledge_claim
 from domains.living_agent_contracts import (
@@ -246,6 +247,37 @@ def _sync_resources(update: dict, resources: dict) -> None:
     update["food_inventory"] = int(resources.get("food", 0))
 
 
+def _living_agent_write_diff(before: dict, after: dict) -> dict:
+    """The sub-records of a living_agent blob that `after` actually changed,
+    as an opt-in merge spec ({MERGE_WRAPPER_KEY: {...}} in the update).
+
+    The social builder only ever modifies a PARTICIPANT'S blob at
+    relationships[subject_id] (apply_relationship_consequence's own
+    CORE-PERF-01 comment: the only per-key write is a whole-record
+    replacement) and commitments[commitment_id] (_put_commitment, same
+    shape). Writing just the changed records -- instead of the whole blob
+    from a frame-start base -- is what lets two agents act on the same
+    person in one frame: disjoint counterpart keys compose instead of
+    colliding. Records are never mutated in place under the copy-on-write
+    regime, so a shallow snapshot of the before sub-dicts is a sound diff
+    base. Note a merge cannot express eviction: if either sub-dict sits at
+    its LIMITS cap, an evicted record lingers until the owner's next compat
+    pass re-truncates (bounded, self-healing).
+    """
+    spec = {}
+    for sub_key in ("relationships", "commitments"):
+        before_records = before.get(sub_key) or {}
+        after_records = after.get(sub_key) or {}
+        changed = {
+            key: after_records[key]
+            for key in sorted(after_records)
+            if before_records.get(key) != after_records[key]
+        }
+        if changed:
+            spec[sub_key] = changed
+    return spec
+
+
 def build_social_action_proposal(
     entities: dict,
     *,
@@ -281,6 +313,10 @@ def build_social_action_proposal(
     plan.setdefault("step_index", 0)
     actor_state = compat_living_agent_state(actor.get("living_agent"), actor_id, tick)
     target_state = compat_living_agent_state(target.get("living_agent"), target_id, tick) if target else None
+    target_blob_before = {
+        "relationships": dict(target_state.get("relationships") or {}),
+        "commitments": dict(target_state.get("commitments") or {}),
+    } if target else {}
     perceived_type = "share_information" if action_type == "lie" else action_type
     if target:
         actor_state, _actor_relation, _ = apply_relationship_consequence(
@@ -323,16 +359,32 @@ def build_social_action_proposal(
         }
     }
     touched = [actor_id]
+    # Pin only what the action actually depends on: both participants alive,
+    # plus exactly the two relationship records it modifies (the counterpart
+    # record on each side, path-scoped -- never the whole blob). The old
+    # whole-blob living_agent eq pin was a false positive by construction --
+    # two agents acting on the same person wrote provably disjoint sub-keys
+    # yet one was always discarded (88.8% of baseline rejections over 320
+    # ticks: precondition.failed / living_agent_eq_failed). Disjoint
+    # concurrent writes now merge instead of colliding; a genuine reciprocal
+    # pair (both actions writing the same two records) fails honestly with
+    # the record path named. The dotted field also keeps these conditions
+    # invisible to the settlement domain's vestigial whole-blob precondition
+    # rewriter, which matches field == "living_agent" exactly.
     preconditions = [
         {"entity_id": actor_id, "field": "alive", "op": "eq", "value": True},
-        {"entity_id": actor_id, "field": "living_agent", "op": "eq", "value": actor.get("living_agent")},
     ]
     if target:
-        updates[target_id] = {"living_agent": target_state}
+        updates[target_id] = {}
         touched.append(target_id)
+        actor_record = ((actor.get("living_agent") or {}).get("relationships") or {}).get(target_id)
+        target_record = ((target.get("living_agent") or {}).get("relationships") or {}).get(actor_id)
         preconditions.extend([
             {"entity_id": target_id, "field": "alive", "op": "eq", "value": True},
-            {"entity_id": target_id, "field": "living_agent", "op": "eq", "value": target.get("living_agent")},
+            {"entity_id": actor_id, "field": f"living_agent.relationships.{target_id}",
+             "op": "eq", "value": actor_record},
+            {"entity_id": target_id, "field": f"living_agent.relationships.{actor_id}",
+             "op": "eq", "value": target_record},
         ])
 
     commitment = None
@@ -350,7 +402,6 @@ def build_social_action_proposal(
         actor_state = _put_commitment(actor_state, commitment)
         target_state = _put_commitment(target_state, commitment)
         updates[actor_id]["living_agent"] = actor_state
-        updates[target_id]["living_agent"] = target_state
     elif target and action_type in ("cooperate", "give"):
         debt = make_commitment(
             creator_id=target_id,
@@ -364,7 +415,6 @@ def build_social_action_proposal(
         actor_state = _put_commitment(actor_state, debt)
         target_state = _put_commitment(target_state, debt)
         updates[actor_id]["living_agent"] = actor_state
-        updates[target_id]["living_agent"] = target_state
         commitment = debt
     elif target and action_type == "repay":
         matches = [
@@ -384,7 +434,6 @@ def build_social_action_proposal(
         actor_state = _put_commitment(actor_state, commitment)
         target_state = _put_commitment(target_state, commitment)
         updates[actor_id]["living_agent"] = actor_state
-        updates[target_id]["living_agent"] = target_state
 
     social_exchange = None
     if target and action_type == "give":
@@ -475,7 +524,10 @@ def build_social_action_proposal(
                 direct_involvement=False,
                 source_event_id=None,
             )
-        updates[target_id]["living_agent"] = target_state
+    if target:
+        participant_write = _living_agent_write_diff(target_blob_before, target_state)
+        if participant_write:
+            updates[target_id]["living_agent"] = {MERGE_WRAPPER_KEY: participant_write}
 
     perceived_action_type = "share_information" if action_type == "lie" else action_type
     signal_message = {

@@ -1,0 +1,303 @@
+{
+  "accepted_event_count": 4868,
+  "accepted_event_sequence_hash": "f556403bc24bfb62131b0d724e8816631d2f61f8867befa51fde97f1a0db6638",
+  "actions_by_type": {
+    "apologise": 1,
+    "consume": 16,
+    "cooperate": 55,
+    "drink": 18,
+    "gather": 9,
+    "lie": 1,
+    "move": 243,
+    "promise": 1,
+    "reconcile": 1,
+    "repair": 4,
+    "repay": 44,
+    "request_help": 130,
+    "rest": 419,
+    "retrieve": 3,
+    "share_information": 1,
+    "store": 2,
+    "tend": 187,
+    "threaten": 1,
+    "trade": 1,
+    "warn": 1
+  },
+  "final_state_hash": "4240d6a088514c1c84367b03beac4712e4d33009b28f0f22748cbdac305de1bb",
+  "frame_sequence_hash": "10f77e351dbebfdc59be09b99c6faa166b79b9cce9a72a9dfd615fc91b2ef45b",
+  "person007_social_events_first20": [
+    {
+      "target": "person-001",
+      "tick": 2,
+      "type": "social_warn"
+    },
+    {
+      "target": "person-001",
+      "tick": 14,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 159,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 171,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 172,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 174,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 175,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 177,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 204,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 209,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 218,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 221,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 229,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 235,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 242,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 254,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 255,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 272,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 274,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 283,
+      "type": "social_request_help"
+    }
+  ],
+  "person007_social_rejections_first20": [
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 4,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 5,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 6,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 11,
+      "type": "living_tend"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-001",
+      "tick": 12,
+      "type": "social_repay"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-001",
+      "tick": 13,
+      "type": "social_repay"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 16,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 27,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 30,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 67,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 70,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 71,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 91,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 106,
+      "type": "living_tend"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-000",
+      "tick": 155,
+      "type": "social_request_help"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-000",
+      "tick": 156,
+      "type": "social_request_help"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-000",
+      "tick": 157,
+      "type": "social_request_help"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-000",
+      "tick": 158,
+      "type": "social_request_help"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-000",
+      "tick": 160,
+      "type": "social_request_help"
+    },
+    {
+      "detail": "living_agent_eq_failed",
+      "target": "person-000",
+      "tick": 161,
+      "type": "social_request_help"
+    }
+  ],
+  "reciprocal_pairs": [],
+  "rejected_proposal_count": 1422,
+  "rejection_census": {
+    "precondition.failed|condition_eq_failed": 156,
+    "precondition.failed|contents_eq_failed": 1,
+    "precondition.failed|living_agent_eq_failed": 1263,
+    "social_action.not_adjacent|social_action.not_adjacent": 2
+  },
+  "replay_matches_final_entities": true,
+  "replay_state_hash": "4240d6a088514c1c84367b03beac4712e4d33009b28f0f22748cbdac305de1bb",
+  "singleton_actions": {
+    "apologise": 1,
+    "lie": 1,
+    "promise": 1,
+    "reconcile": 1,
+    "share_information": 1,
+    "threaten": 1,
+    "trade": 1,
+    "warn": 1
+  },
+  "social_completed": {
+    "social_apologise": 1,
+    "social_cooperate": 55,
+    "social_lie": 1,
+    "social_promise": 1,
+    "social_reconcile": 1,
+    "social_repay": 44,
+    "social_request_help": 130,
+    "social_share_information": 1,
+    "social_threaten": 1,
+    "social_trade": 1,
+    "social_warn": 1
+  },
+  "top3_dominance": {
+    "pairs": [
+      [
+        "rest",
+        419
+      ],
+      [
+        "move",
+        243
+      ],
+      [
+        "tend",
+        187
+      ]
+    ],
+    "share": 0.746046
+  },
+  "total_living_actions": 1138
+}

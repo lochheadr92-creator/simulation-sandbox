@@ -16,6 +16,7 @@ producing a genuine, inspectable rejection with a stable reason code.
 """
 from core.hashing import canonical_hash, hash_canonical_json_string
 from core.mutations import (
+    MERGE_WRAPPER_KEY,
     apply_mutation,
     invalidate_entity_json_cache,
     snapshot_for_hash,
@@ -117,14 +118,31 @@ def check_scope_exists(p: dict, entities: dict):
     return None
 
 
+def _resolve_field(entity: dict, field: str):
+    """Resolve a condition field, optionally a dotted path into a dict-valued
+    field (e.g. "living_agent.relationships.person-007"). A dotted field walks
+    segment by segment; any missing or non-dict intermediate resolves to None.
+    Undotted fields behave exactly as before (top-level entity.get)."""
+    if "." not in field:
+        return entity.get(field)
+    value = entity
+    for segment in field.split("."):
+        if not isinstance(value, dict):
+            return None
+        value = value.get(segment)
+    return value
+
+
 def evaluate_preconditions(preconditions: list, entities: dict):
     for cond in preconditions:
         eid = cond["entity_id"]
         entity = entities.get(eid)
         if entity is None:
             return f"entity_missing:{eid}"
-        value = entity.get(cond["field"])
+        value = _resolve_field(entity, cond["field"])
         if not OPS[cond["op"]](value, cond["value"]):
+            # The failure string names the full path so a path-scoped
+            # rejection stays diagnosable to the record that collided.
             return f"{cond['field']}_{cond['op']}_failed"
     return None
 
@@ -225,6 +243,10 @@ def _stamp_living_agent_provenance(proposal: dict, mutation: dict, event_id: str
     tick = int(proposal.get("requested_time", 0))
     for update in (mutation.get("entity_updates") or {}).values():
         living = update.get("living_agent")
+        if isinstance(living, dict) and set(living) == {MERGE_WRAPPER_KEY}:
+            # Sub-key merge write (narrowed social-action target write): stamp
+            # the records inside the merge spec; apply_mutation merges them.
+            living = living.get(MERGE_WRAPPER_KEY) or {}
         if isinstance(living, dict):
             for memory in (living.get("memories") or {}).values():
                 if (memory.get("acquired_event_id") is None

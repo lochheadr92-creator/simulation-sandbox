@@ -8,8 +8,41 @@ Core applies this WITHOUT knowing what "gather" or "flee" means. This keeps
 Core domain-agnostic per doctrine: it never interprets domain semantics, only
 generic entity-container mutation. The same function is used at live commit
 time and during replay, guaranteeing identical application logic.
+
+Opt-in merge: an update value of exactly {MERGE_WRAPPER_KEY: {sub-key: ...}}
+merges the inner mapping into the entity's existing dict field (recursively:
+dict values merge per key, anything else replaces) instead of replacing the
+field wholesale. This lets a proposal write only the sub-keys it actually
+changed -- e.g. one living_agent relationship record -- so two proposals
+touching disjoint sub-keys of the same field no longer clobber each other.
+Whole-field replace stays the default; the wrapper is the only opt-in.
 """
 from core.hashing import canonical_json
+
+MERGE_WRAPPER_KEY = "__merge__"
+
+
+def _is_merge_spec(value) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == {MERGE_WRAPPER_KEY}
+        and isinstance(value[MERGE_WRAPPER_KEY], dict)
+    )
+
+
+def _deep_merge_dict(existing, spec):
+    """Copy-on-write merge: dicts merge per key into NEW dicts (sorted keys,
+    so application order is deterministic -- invariant 4); anything else is
+    replaced by the spec value wholesale. Never mutates `existing` in place:
+    committed records may still be referenced by other proposals' precondition
+    values in the same frame, and mutating them would silently rewrite those
+    pins."""
+    if isinstance(existing, dict) and isinstance(spec, dict):
+        merged = dict(existing)
+        for key in sorted(spec):
+            merged[key] = _deep_merge_dict(existing.get(key), spec[key])
+        return merged
+    return spec
 
 
 def apply_mutation(entities: dict, mutation: dict) -> None:
@@ -21,7 +54,15 @@ def apply_mutation(entities: dict, mutation: dict) -> None:
     for eid in sorted(entity_updates):
         updates = entity_updates[eid]
         if eid in entities:
-            entities[eid].update(updates)
+            entity = entities[eid]
+            for field in sorted(updates):
+                value = updates[field]
+                if _is_merge_spec(value):
+                    entity[field] = _deep_merge_dict(
+                        entity.get(field), value[MERGE_WRAPPER_KEY],
+                    )
+                else:
+                    entity[field] = value
     for eid in sorted(mutation.get("removed_entities", [])):
         entities.pop(eid, None)
 

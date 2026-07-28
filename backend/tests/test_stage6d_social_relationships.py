@@ -4,6 +4,7 @@ import copy
 from core.commit_pipeline import run_commit_frame
 from core.mutations import apply_mutation
 from domains.base import DomainOutput
+from domains.living_agent_actions import build_physical_action_proposal
 from domains.living_agent_cognition import perceive_living
 from domains.living_agent_contracts import LIMITS, SOCIAL_ACTION_TYPES, empty_living_agent_state
 from domains.living_agent_social import (
@@ -258,3 +259,148 @@ def test_concealment_does_not_create_information_route_or_bystander_reaction():
     assert accepted[0]["social_action"]["information_route"] == "concealed"
     assert not any(entity.get("type") == "signal" for entity in entities.values())
     assert entities["person-b"]["knowledge"] == empty_knowledge()
+
+
+def test_two_social_actions_on_the_same_person_in_one_frame_both_commit():
+    """Active Leg A regression: a social action must not be discarded because
+    an unrelated field of a participant changed in the same frame.
+
+    The verified defect: person-007 selects WARN_DANGER (social_warn toward
+    person-004) in the same tick that person-001 commits social_cooperate on
+    person-007. build_social_action_proposal used to pin each participant's
+    whole living_agent blob as an eq precondition, so whichever proposal
+    committed first changed person-007's blob and the other was discarded at
+    commit_revalidation with precondition.failed / living_agent_eq_failed --
+    100% of early-tick rejections -- even though the two actions write
+    provably disjoint relationship records (person-007's own warn writes
+    relationships[person-004]; the cooperate writes relationships[person-001]
+    plus one debt commitment).
+    """
+    entities = {
+        "person-007": _person("person-007", {"x": 1, "y": 1}),
+        "person-001": _person("person-001", {"x": 2, "y": 1}),
+        "person-004": _person("person-004", {"x": 1, "y": 2}),
+    }
+    warn = build_social_action_proposal(
+        entities, actor_id="person-007", action_type="warn", tick=1,
+        target_id="person-004", plan=_plan("warn"),
+        message={"claim": {
+            "subject_id": "wolf-1", "fact_type": "animal",
+            "properties": {"hostile": True}, "confidence": 800,
+        }},
+    )
+    cooperate = build_social_action_proposal(
+        entities, actor_id="person-001", action_type="cooperate", tick=1,
+        target_id="person-007", plan=_plan("cooperate"),
+    )
+    accepted, rejected, _ = run_commit_frame(
+        entities, [DomainOutput(proposals=[warn, cooperate])], 1,
+        "lineage", "run", 0, "frame-1",
+    )
+
+    # Both must commit: no living_agent_eq_failed discard (and therefore, in
+    # the live world, no silent replan of person-007's WARN_DANGER to
+    # REPAY_DEBT on the following ticks).
+    assert rejected == []
+    assert len(accepted) == 2
+
+    # Each action's own relationship consequence lands on disjoint records.
+    assert entities["person-007"]["living_agent"]["relationships"]["person-004"]["last_cause"] == "warn"
+    assert entities["person-004"]["living_agent"]["relationships"]["person-007"]["last_cause"] == "warn"
+    assert entities["person-001"]["living_agent"]["relationships"]["person-007"]["last_cause"] == "cooperate"
+    debts = entities["person-001"]["living_agent"]["commitments"].values()
+    assert any(item["commitment_kind"] == "debt" and item["status"] == "active" for item in debts)
+
+
+def test_reciprocal_social_pair_in_one_frame_fails_once_with_the_record_named():
+    """Active Leg A, genuine-collision half: person-007 warns person-001 while
+    person-001 cooperates on person-007 in the SAME frame (the verified tick-2
+    case). Both actions modify BOTH relationship records --
+    007.relationships[person-001] and 001.relationships[person-007] -- so this
+    is a real write conflict, not the false positive: exactly one proposal
+    commits, and the other fails explicitly at commit_revalidation with the
+    record path named in reason_detail -- never the old undiagnosable
+    whole-blob `living_agent_eq_failed`, and never both-commit-silently (which
+    would lose one side's relationship deltas with no retry)."""
+    entities = {
+        "person-007": _person("person-007", {"x": 1, "y": 1}),
+        "person-001": _person("person-001", {"x": 2, "y": 1}),
+    }
+    warn = build_social_action_proposal(
+        entities, actor_id="person-007", action_type="warn", tick=1,
+        target_id="person-001", plan=_plan("warn"),
+        message={"claim": {
+            "subject_id": "wolf-1", "fact_type": "animal",
+            "properties": {"hostile": True}, "confidence": 800,
+        }},
+    )
+    cooperate = build_social_action_proposal(
+        entities, actor_id="person-001", action_type="cooperate", tick=1,
+        target_id="person-007", plan=_plan("cooperate"),
+    )
+    accepted, rejected, _ = run_commit_frame(
+        entities, [DomainOutput(proposals=[warn, cooperate])], 1,
+        "lineage", "run", 0, "frame-1",
+    )
+
+    assert len(accepted) == 1
+    assert len(rejected) == 1
+    rejection = rejected[0]
+    assert rejection["rejection_stage"] == "commit_revalidation"
+    assert rejection["reason_code"] == "precondition.failed"
+    assert rejection["reason_detail"] != "living_agent_eq_failed"
+    assert rejection["reason_detail"].startswith("living_agent.relationships.")
+    assert rejection["reason_detail"].endswith("_eq_failed")
+
+    # The survivor's effects are complete on both participants: its own
+    # relationship consequence on each side plus, for cooperate, the debt.
+    survivor = accepted[0]["social_action"]
+    actor_blob = entities[survivor["actor_id"]]["living_agent"]
+    target_blob = entities[survivor["target_id"]]["living_agent"]
+    assert actor_blob["relationships"][survivor["target_id"]]["last_cause"] == survivor["action_type"]
+    assert target_blob["relationships"][survivor["actor_id"]]["last_cause"] == survivor["action_type"]
+
+
+def test_social_action_fails_named_when_a_participant_dies_mid_frame():
+    """Acceptance: participant dies mid-frame -> explicit failure, named. The
+    alive pin on both participants is what remains of the old blob CAS, and it
+    must keep firing."""
+    entities = {
+        "person-a": _person("person-a", {"x": 1, "y": 1}),
+        "person-b": _person("person-b", {"x": 2, "y": 1}),
+    }
+    proposal = build_social_action_proposal(
+        entities, actor_id="person-a", action_type="cooperate", tick=1,
+        target_id="person-b", plan=_plan("cooperate"),
+    )
+    # Another committed proposal kills the target before this one revalidates.
+    entities["person-b"]["alive"] = False
+    accepted, rejected, _ = _commit(entities, proposal, 1)
+    assert not accepted
+    assert rejected[0]["reason_code"] == "precondition.failed"
+    assert rejected[0]["reason_detail"] == "alive_eq_failed"
+
+
+def test_physical_action_on_a_social_participant_does_not_block_the_social_action():
+    """Acceptance: physical action on a participant of a social action -> both
+    survive. Physical proposals pin alive only, so a person can be helped and
+    still gather in the same frame."""
+    entities = {
+        "person-a": _person("person-a", {"x": 1, "y": 1}),
+        "person-b": _person("person-b", {"x": 2, "y": 1}),
+    }
+    cooperate = build_social_action_proposal(
+        entities, actor_id="person-a", action_type="cooperate", tick=1,
+        target_id="person-b", plan=_plan("cooperate"),
+    )
+    rest = build_physical_action_proposal(
+        entities, actor_id="person-b", action_type="rest", tick=1,
+    )
+    accepted, rejected, _ = run_commit_frame(
+        entities, [DomainOutput(proposals=[cooperate, rest])], 1,
+        "lineage", "run", 0, "frame-1",
+    )
+    assert rejected == []
+    assert len(accepted) == 2
+    relation = entities["person-a"]["living_agent"]["relationships"]["person-b"]
+    assert relation["last_cause"] == "cooperate"

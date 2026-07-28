@@ -41,17 +41,26 @@ from tools.living_agent_harness import run_living_agent_harness
 # Ratified 2026-07-28 (commit 2d68ac16, STORE_SURPLUS_MIN_FOOD 3 -> 2).
 # Supersedes 9c1b9b8ba28a6fa830ff141d1eea7a8755d7c13a5a62dfc94ba93a15946e55d4.
 # Evidence: memory/evidence/frozen-hash/2d68ac16-LIVING-SETTLEMENT-320-RATIFICATION.md
+#
+# Moved 2026-07-28 by Active Leg A (social commit-survival fix): the narrowed
+# participant write plus record-scoped pins let disjoint concurrent social
+# actions commit (accepted 4868 -> 5088) and replaced the whole-blob
+# living_agent_eq_failed false positive (1263 -> 0) with honest, path-named
+# same-record rejections (living_agent.relationships.*_eq_failed, 1155).
+# Evidence: memory/evidence/frozen-hash/leg-a-2026-07-28-baseline-census.json
+# and leg-a-2026-07-28-postfix-pins-census.json (320-tick census, clean
+# leg-a-verify worktree, replay equality holds).
 FROZEN_LIVING_SETTLEMENT_320 = (
-    "4240d6a088514c1c84367b03beac4712e4d33009b28f0f22748cbdac305de1bb"
+    "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2"
 )
 FROZEN_ACCEPTED_EVENT_SEQUENCE = (
-    "f556403bc24bfb62131b0d724e8816631d2f61f8867befa51fde97f1a0db6638"
+    "6e16a535bbc0b3dfa5d2e82553dddfb6adfe61762a8ec65bfa8f58b79f463a38"
 )
 FROZEN_FRAME_SEQUENCE = (
-    "10f77e351dbebfdc59be09b99c6faa166b79b9cce9a72a9dfd615fc91b2ef45b"
+    "be4cb25f9d659afd70b8b2a03465b2f45b121d8136f464336eaa651b02c75ee0"
 )
-FROZEN_ACCEPTED_EVENT_COUNT = 4868
-FROZEN_REJECTED_PROPOSAL_COUNT = 1422
+FROZEN_ACCEPTED_EVENT_COUNT = 5088
+FROZEN_REJECTED_PROPOSAL_COUNT = 1320
 
 
 def test_living_settlement_320_matches_the_ratified_frozen_baseline():

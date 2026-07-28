@@ -1,0 +1,301 @@
+{
+  "accepted_event_count": 5088,
+  "accepted_event_sequence_hash": "6e16a535bbc0b3dfa5d2e82553dddfb6adfe61762a8ec65bfa8f58b79f463a38",
+  "actions_by_type": {
+    "apologise": 1,
+    "consume": 17,
+    "cooperate": 152,
+    "drink": 18,
+    "gather": 10,
+    "lie": 1,
+    "move": 271,
+    "promise": 1,
+    "reconcile": 1,
+    "repair": 4,
+    "repay": 94,
+    "request_help": 57,
+    "rest": 402,
+    "retrieve": 3,
+    "share_information": 1,
+    "store": 2,
+    "tend": 203,
+    "threaten": 1,
+    "trade": 1
+  },
+  "final_state_hash": "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2",
+  "frame_sequence_hash": "be4cb25f9d659afd70b8b2a03465b2f45b121d8136f464336eaa651b02c75ee0",
+  "person007_social_events_first20": [
+    {
+      "target": "person-001",
+      "tick": 3,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 54,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-003",
+      "tick": 55,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-003",
+      "tick": 58,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 60,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 61,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 69,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 75,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 78,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 79,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-003",
+      "tick": 80,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 178,
+      "type": "social_request_help"
+    },
+    {
+      "target": "person-000",
+      "tick": 186,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 188,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 190,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 192,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 209,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 220,
+      "type": "social_repay"
+    },
+    {
+      "target": "person-000",
+      "tick": 221,
+      "type": "social_repay"
+    }
+  ],
+  "person007_social_rejections_first20": [
+    {
+      "detail": "living_agent.relationships.person-001_eq_failed",
+      "target": "person-001",
+      "tick": 2,
+      "type": "social_warn"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 5,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 6,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 11,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 13,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 14,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 15,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 16,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 21,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 27,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 30,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 46,
+      "type": "living_tend"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 51,
+      "type": "living_tend"
+    },
+    {
+      "detail": "living_agent.relationships.person-003_eq_failed",
+      "target": "person-003",
+      "tick": 56,
+      "type": "social_request_help"
+    },
+    {
+      "detail": "living_agent.relationships.person-003_eq_failed",
+      "target": "person-003",
+      "tick": 57,
+      "type": "social_repay"
+    },
+    {
+      "detail": "living_agent.relationships.person-003_eq_failed",
+      "target": "person-003",
+      "tick": 59,
+      "type": "social_repay"
+    },
+    {
+      "detail": "condition_eq_failed",
+      "target": null,
+      "tick": 71,
+      "type": "living_tend"
+    },
+    {
+      "detail": "living_agent.relationships.person-003_eq_failed",
+      "target": "person-003",
+      "tick": 72,
+      "type": "social_repay"
+    },
+    {
+      "detail": "living_agent.relationships.person-003_eq_failed",
+      "target": "person-003",
+      "tick": 73,
+      "type": "social_repay"
+    },
+    {
+      "detail": "living_agent.relationships.person-003_eq_failed",
+      "target": "person-003",
+      "tick": 74,
+      "type": "social_repay"
+    }
+  ],
+  "reciprocal_pairs": [],
+  "rejected_proposal_count": 1320,
+  "rejection_census": {
+    "precondition.failed|condition_eq_failed": 156,
+    "precondition.failed|living_agent.relationships.person-000_eq_failed": 1049,
+    "precondition.failed|living_agent.relationships.person-001_eq_failed": 52,
+    "precondition.failed|living_agent.relationships.person-002_eq_failed": 17,
+    "precondition.failed|living_agent.relationships.person-003_eq_failed": 9,
+    "precondition.failed|living_agent.relationships.person-004_eq_failed": 6,
+    "precondition.failed|living_agent.relationships.person-005_eq_failed": 1,
+    "precondition.failed|living_agent.relationships.person-006_eq_failed": 12,
+    "precondition.failed|living_agent.relationships.person-007_eq_failed": 9,
+    "social_action.not_adjacent|social_action.not_adjacent": 9
+  },
+  "replay_matches_final_entities": true,
+  "replay_state_hash": "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2",
+  "singleton_actions": {
+    "apologise": 1,
+    "lie": 1,
+    "promise": 1,
+    "reconcile": 1,
+    "share_information": 1,
+    "threaten": 1,
+    "trade": 1
+  },
+  "social_completed": {
+    "social_apologise": 1,
+    "social_cooperate": 152,
+    "social_lie": 1,
+    "social_promise": 1,
+    "social_reconcile": 1,
+    "social_repay": 94,
+    "social_request_help": 57,
+    "social_share_information": 1,
+    "social_threaten": 1,
+    "social_trade": 1
+  },
+  "top3_dominance": {
+    "pairs": [
+      [
+        "rest",
+        402
+      ],
+      [
+        "move",
+        271
+      ],
+      [
+        "tend",
+        203
+      ]
+    ],
+    "share": 0.706452
+  },
+  "total_living_actions": 1240
+}

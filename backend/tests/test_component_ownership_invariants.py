@@ -28,6 +28,7 @@ from __future__ import annotations
 import copy
 
 from core.commit_pipeline import run_commit_frame
+from core.mutations import MERGE_WRAPPER_KEY
 from domains.association_contracts import (
     build_association_proposal,
     make_association_evidence,
@@ -112,7 +113,11 @@ REQUIRED_GUARDS: set[tuple[str, str]] = {
     ("living_actions", "contents"),            # store/retrieve CAS the storage
     ("living_actions", "carried_resources"),   # every resource producer CASes
     ("living_actions", "condition"),           # repair/tend strict equality CAS
-    ("living_social", "living_agent"),         # actor AND target CAS'd
+    # ("living_social", "living_agent") was deliberately REMOVED by Active Leg
+    # A (2026-07-28): the whole-blob CAS was a false positive by construction
+    # (disjoint relationship-record writes collided; 1263/1422 baseline
+    # rejections at living_agent_eq_failed). The narrowed-merge replacement is
+    # pinned by test_social_action_narrows_living_agent_write_and_drops_blob_cas.
     ("group_collective", "carried_resources"),
 }
 
@@ -356,12 +361,20 @@ def test_existing_cas_guards_are_not_silently_removed():
     assert not missing, f"CAS guard(s) disappeared: {sorted(missing)}"
 
 
-def test_physical_action_lacks_the_living_agent_cas_that_social_carries():
-    """F4, pinned. build_social_action_proposal CASes living_agent on actor and
-    target; build_physical_action_proposal CASes neither, while the settlement
-    domain attaches living_agent to every proposal including physical ones. The
-    guard is therefore one-directional. Deferred with F1-F3; pinned so the
-    asymmetry cannot widen or vanish unnoticed."""
+def test_social_action_narrows_living_agent_write_and_drops_blob_cas():
+    """F4 resolved by Active Leg A (2026-07-28).
+
+    The asymmetric whole-blob living_agent CAS this test used to pin was a
+    false positive by construction: the only participant write is the
+    counterpart's relationship record (plus at most one commitment), so two
+    agents acting on the same person collided on provably disjoint sub-keys
+    and one was always discarded -- 1263/1422 baseline rejections at
+    living_agent_eq_failed over 320 ticks. The social builder now pins
+    `alive` on both participants only, and writes the target's living_agent
+    as an opt-in merge spec of the records it actually changed. Physical
+    actions still carry no living_agent CAS. Pinned so the whole-blob CAS
+    cannot silently return; the registry row (REGISTRY-COMPONENT-OWNERSHIP
+    F4) needs its status updated to match."""
     entities = _base_entities()
     physical = build_physical_action_proposal(
         entities, actor_id="person-a", action_type="rest", tick=1,
@@ -370,14 +383,23 @@ def test_physical_action_lacks_the_living_agent_cas_that_social_carries():
         entities, actor_id="person-a", action_type="cooperate", tick=1,
         target_id="person-c",
     )
-    assert "living_agent" not in _guarded_fields(physical), (
-        "physical actions now CAS living_agent -- F4 is fixed; update the "
-        "registry and delete this test."
+    assert "living_agent" not in _guarded_fields(physical)
+    guarded = _guarded_fields(social)
+    assert "living_agent" not in guarded, (
+        "the whole-blob living_agent CAS is back -- the Leg A defect with it: "
+        "two agents acting on the same person will collide on unrelated "
+        "fields again"
     )
-    social_guarded = [
-        p for p in social["preconditions"] if p["field"] == "living_agent"
-    ]
-    assert {p["entity_id"] for p in social_guarded} == {"person-a", "person-c"}
+    assert guarded == {
+        "alive",
+        "living_agent.relationships.person-a",
+        "living_agent.relationships.person-c",
+    }, f"unexpected guard set: {sorted(guarded)} -- pin the two modified records, nothing broader"
+    target_write = (
+        social["mutation"]["entity_updates"].get("person-c") or {}
+    ).get("living_agent")
+    assert isinstance(target_write, dict) and set(target_write) == {MERGE_WRAPPER_KEY}
+    assert set(target_write[MERGE_WRAPPER_KEY]) <= {"relationships", "commitments"}
 
 
 def test_social_actions_write_energy_cross_entity():
