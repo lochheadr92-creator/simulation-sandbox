@@ -1,149 +1,85 @@
-# simulation-sandbox — standing rules (always in force)
+# simulation-sandbox — standing rules
 
-Deterministic simulation kernel. Core owns truth; domains are proposal-only.
-Current arc: Behaviour Enrichment — Layer C (Individual Agency), gate-and-stop.
-**Authority: `THE-SPINE.md` (map) + `FRONTIER.md` (current task) + `ARCHITECTURE-SPINE.md` (rules).** The `memory/` roadmaps (CAPABILITY_ROADMAP / ROADMAP / MACRO-ROADMAP / DOMAIN_MAPPING) are demoted historical archive — never take the frontier from them.
-Detailed instructions live in `memory/` and are read per-session — this file
-is the index, not the brain dump. Keep it under 150 lines.
+Deterministic simulation kernel. Core owns truth; domains propose.
+**The work is simulation dynamics — making the world do things worth watching.**
+Architecture work is maintenance-only: it happens when it blocks behaviour,
+safety or performance.
 
-## Session start (every session, before acting)
+**Authority, in order:**
 
-1. `git log --oneline -10` and `git status`.
-2. Read `THE-SPINE.md` + `FRONTIER.md` (current authority), then `AGENT_WORKFLOW.md` and the active leg's contract.
-3. Restate your position in one paragraph. Then act.
+1. `ENGINE-CONSTITUTION.md` — the eight properties that must hold. Rarely changes.
+2. `PRODUCT-STATE.md` — what the world measurably does today.
+3. `DYNAMICS-BACKLOG.md` — what we are chasing now. The only living doc.
 
-## STOP discipline
+Everything under `memory/archive/` is history. Never take the current task from
+it. `memory/evidence/` is data, still citable.
 
-- A STOP means: post the close-out report, ask the explicit question, END THE
-  TURN. Auto-accept mode, permissive settings, and user silence are never
-  permission to continue. Continuing "because the next step is obvious" is the
-  named defect.
-- Contract phases run in plan mode. Implementation starts only after the
-  user's confirmation in a later turn.
-- One leg per session (minimum one phase per session). If context runs low,
-  write a Session handoff note into the leg doc and tell the user to restart.
-- STOPs are for judgment calls: contracts, scope, risk, authority. Mechanical
-  process rules (e.g. diagnostic escalation order) are standing rules
-  enforced by review, not per-instance STOPs.
+## Session start
 
-## Hard rails (never, without explicit user confirmation at a STOP)
+`git log --oneline -10`, `git status`, read the three docs above, restate your
+position in one paragraph, then act.
 
-- Cross the Stage 9 boundary: production, surplus, storage economy, ownership,
-  trade, currency; unblocking 7C; institutions/governance (10); demography
-  (11); player surfaces (14/15); LLM-generated canonical state.
-- Change the frozen `living_settlement` 320-tick hash
-  (`9c1b9b8b…46e55d4`, authorised 2026-07-27 at age-realism stage 2: realistic
-  founder ages + engine `0.6.0` fence). Prior: `48dfec22…1b1e3b` (stage 1,
-  genesis RNG isolation), `897f3f7f…3c5ab` (Layer C Variety Leg 1), then
-  `84d3ad52…c32d2`. Gates/attribution: `memory/evidence/genesis-rng/SHARED-
-  SPAWN-STREAM-2026-07-26.md`. Re-baseline requires explicit authorisation.
-- Touch Stage 7A–7D / 8A schemas, caps, priorities, constants — extend via new
-  registries, schema-version bumps, new hooks only.
+## How a change is judged — the five checks
+
+1. **Visible** — a player sees the difference in the world, inspector, or event history.
+2. **Consequential** — it changes later decisions or state.
+3. **Recurrent** — across time, multiple actors. One firing is not a behaviour.
+4. **Diverse** — it doesn't just replace `rest` with a new dominant loop.
+5. **Deterministic** — same version, seed, inputs reproduce exactly.
+
+No event-count bands. No pre-registration for tuning. Change the dial, watch
+the world, keep or revert.
+
+## Hashes
+
+`backend/tests/test_frozen_baseline_hashes.py` proves the engine is
+deterministic for an unchanged version, seed and scenario. It is not a
+behavioural gate. When an intended change moves it, update the pinned constants
+**in the same commit** and say what moved them in the commit message.
+
+## Hard rails (explicit confirmation required)
+
 - Destructive git: reset/checkout/clean/stash-drop on the working tree,
   force-push, history rewrite, branch deletion.
-- Fix the three documented hardening surfaces inside a culture leg.
+- Committing secrets — never, with or without confirmation.
+- Anything that breaks one of the eight constitutional properties.
 
-## Invariants (verbatim from the master protocol)
+## Reporting
 
-> **Namespacing (F3 fix, 2026-07-25, per CORE-INTEGRITY-001 review):** items below
-> are the CULTURE invariant list, citable as **C-1 … C-12**. A separate, unrelated
-> numbered list exists at SOURCE-OF-TRUTH-v2.md §19, citable as **SOT-19.N**.
-> Numbers are NOT interchangeable across the two lists; never cite a bare
-> "invariant N" without a namespace.
-
-1. Core alone writes truth; culture domains propose over pinned frames.
-2. Determinism: repeat + replay + resume; keyed RNG; no wall-clock, no
-   iteration-order dependence, no probabilities-as-culture.
-3. Every transition provenance-stamped and event-caused; chains inspectable.
-4. Bounded state: hard caps, ≥20% measured peak headroom; never raise a prior
-   stage's cap.
-5. Pin upstreams ⇒ commit before them; document every one-tick lag.
-6. Influence is read-only, member/carrier-grounded, boosts/suppresses only
-   existing candidates, never outranks urgent survival.
-7. Forbidden fields in every culture record: inventory, authority, obedience,
-   orders, law, command, punishment.
-8. No hidden group mind.
-9. Culture is canonical decision-affecting state, never generated text.
-10. Validators re-derive + exact equality; forged-field rejection tested.
-11. Every leg carries the integrated full-kernel same-frame churn test.
-12. Organic reachability (v2, 2026-07-22): extensions of existing organic
-    behaviour — probed BEFORE the contract; probe evidence or deferral
-    classification up front. Genuinely new decision logic — post-build
-    acceptance gate: bounded probe-build, pre-registered gates, one
-    evidence-based calibration max, rollback on failure, no dependent work
-    before the gate passes. Only the ratified doc text governs.
-
-## Reporting rules
-
-- Labels on every claim: VERIFIED / LIKELY / UNKNOWN. Never promote.
-- Suite status is never unqualified "green" while exclusions exist. Phrasing:
-  "N executed passed; M known <reason> collection failures excluded from
-  execution; no executed test failed."
+- Label every claim VERIFIED / LIKELY / UNKNOWN. Never promote one to another.
+- Suite status is never unqualified "green" while exclusions exist.
 - Hash strings pasted from run output, never from memory.
-- STOP report: STATUS / CHANGES / RISKS / NEXT STEP.
-- Deferral taxonomy: the taxonomy section in `CAPABILITY_ROADMAP.md` is the
-  sole authority — do not mirror its category list here or elsewhere. A
-  deferral without its required record is an open gate. New categories only
-  with explicit user authorisation recorded in the close-out; never invented
-  unilaterally.
+- Close-out: STATUS / CHANGES / RISKS / NEXT STEP. Keep it short.
 
-## Proportionality (verification is bounded)
+## Proportionality
 
+- Cheapest decisive observation first. Name the single observation that would
+  settle the question, run it, escalate only if it comes back ambiguous.
 - Verification effort is bounded by the cost of the failure it prevents.
-  Scale rigor to irreversibility × blast radius: reversible, backed-up,
-  local-only work earns one cheap decisive check; the full apparatus is
-  reserved for hard-rail territory (frozen hash, history rewrite, pushes,
-  schema/cap changes, data migration).
-- Cheapest decisive observation first. Before designing any verification
-  plan, name the single observation that would settle the decision (a grep
-  of committed reports beats a 40-run experiment); run it; escalate to
-  statistics only if it returns ambiguous.
-- Review verdicts are bounded: when reviewing, report the single
-  highest-severity flaw or state "no blocking flaw" — do not enumerate.
-  "Good enough, ship" is a valid and expected verdict.
-- Alarm threshold: if your proposed verification plan is longer than the
-  diff it verifies, cut the plan before presenting it, and say so.
-- Discrepancy investigations: narrowest falsifying diagnostic first (targeted
-  trace or dump of the divergent window); a full harness re-run is the
-  escalation after an inconclusive narrow check, never the opening move.
-- Prefer deterministic fixture/injection (Tier A) proof wherever a claim can
-  be shown directly; reserve organic-run evidence for claims that require
-  unscripted emergence.
-- Before building new probe or scenario infrastructure, check whether an
-  existing probe or fixture extends to answer the question.
+  Reversible local work earns one cheap check.
+- If the verification plan is longer than the diff, cut the plan.
+- Narrowest falsifying diagnostic before any full harness re-run.
+- Report the single highest-severity flaw or "no blocking flaw". Don't
+  enumerate. "Good enough, ship" is a valid verdict.
 
 ## Runs and tests
 
-- Full suite: `python -m pytest` from `backend/`. Harness:
-  `backend/tools/living_agent_harness.py`, seed `living-agents-stage6`,
-  recorded invocations only — if you can't locate one, STOP and ask.
-- Long runs: redirect output to a file; read back only the summary block
-  (a PreToolUse hook enforces this as a safety net — do not fight it; if you
-  need full detail for debugging, redirect to a file and Read the file).
-- Delegate probes to the `probe-runner` subagent; delegate summary extraction
-  from existing output files to `log-summarizer`. Adversarial review remains
-  an independent agent (Codex flow) — never self-review, and record the
-  independence level honestly in every report. Stage-end reviews follow
-  `memory/ADVERSARIAL-REVIEW-PROTOCOL.md`: claims attacked blind-first,
-  findings ledger (FIX / ACCEPT / DISPUTE) ships in the close-out.
-
-## Model / cost discipline
-
-- Session default is Sonnet. Escalate model (`/model`) only for contract
-  phases and the eligibility-fork analysis; drop effort (`/effort`) for
-  mechanical run-and-paste turns.
-- `/clear` between independent tasks (e.g. between Leg 0 items). Scratch
-  output under ignored paths or OS temp, never committed.
+- Suite: `python -m pytest` from `backend/`.
+- Harness: `py -3.12 -m tools.living_agent_harness --scenario living_settlement
+  --ticks 320 --seed living-agents-stage6` from `backend/`.
+- Long runs: redirect to a file, read back the summary (a PreToolUse hook
+  enforces this — don't fight it).
+- UI: backend `uvicorn server:app --port 8000` from `backend/`, frontend
+  `npm start` in `frontend/` (port 3010).
+- Worktrees only when parallel work genuinely needs isolation. Default to
+  working in the main checkout.
 
 ## Environment
 
-- Windows; quote paths; prefer `python -m pytest` from `backend/`; avoid
-  POSIX-only assumptions unless the shell is git-bash.
+Windows; quote paths; git-bash available at
+`C:\Program Files\Git\bin\bash.exe`.
 
-## On ambiguity or missing data
+## On ambiguity
 
-STOP. Report the gap. No invented data, constants, fields, or flags; no new
-store, cap raise, or authority grant to route around a gap; no threshold
-lowered without measured evidence and a recorded decision. Conflicts between
-docs/code/tests: name it, show evidence, present options, recommend one, wait.
-Silence is never approval.
+Name the gap. No invented data, constants or fields. If docs, code and tests
+disagree, say so, show evidence, recommend one option. Silence is not approval.
