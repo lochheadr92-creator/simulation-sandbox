@@ -12,6 +12,7 @@ import InterventionsPanel from "./components/InterventionsPanel";
 import TimelineTab from "./components/TimelineTab";
 import TileInspector from "./components/TileInspector";
 import AttentionStrip from "./components/AttentionStrip";
+import WorldStatusStrip from "./components/WorldStatusStrip";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
 import { api } from "./api";
 import { DEFAULT_SPEED, SPEED_PRESETS, clampSpeed } from "./lib/simulationControl";
@@ -423,6 +424,15 @@ export default function App() {
               Dismiss
             </button>
           </div>
+        )}
+
+        {worldState && (
+          <WorldStatusStrip
+            worldState={worldState}
+            isPlaying={isPlaying}
+            speed={speed}
+            observedTps={observedTps}
+          />
         )}
 
         {worldState && (
