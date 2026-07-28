@@ -1,0 +1,219 @@
+{
+  "accepted_only_reciprocal_pairs": 0,
+  "hash_reproduction": {
+    "accepted_event_count": 5088,
+    "expected_accepted": 5088,
+    "expected_final_state_hash": "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2",
+    "expected_rejected": 1320,
+    "final_state_hash": "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2",
+    "rejected_proposal_count": 1320,
+    "replay_matches_final_entities": true
+  },
+  "loser_sorted_after_record_count": 136,
+  "path_named_rejection_total": 1155,
+  "reciprocally_covered": 233,
+  "rejections_by_record": {
+    "person-000": 1049,
+    "person-001": 52,
+    "person-002": 17,
+    "person-003": 9,
+    "person-004": 6,
+    "person-005": 1,
+    "person-006": 12,
+    "person-007": 9
+  },
+  "top_social_activity": {
+    "person-000": 281,
+    "person-001": 143,
+    "person-002": 36,
+    "person-003": 40,
+    "person-004": 26,
+    "person-005": 6,
+    "person-006": 45,
+    "person-007": 43
+  },
+  "uncovered": [
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-003",
+      "target": "person-002",
+      "tick": 3,
+      "type": "trade"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-003",
+      "target": "person-007",
+      "tick": 63,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 90,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 91,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 92,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 93,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 94,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 94,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 95,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 95,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 96,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 96,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 97,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 97,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 98,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 98,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 99,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 99,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 100,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "covered_by": [],
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 101,
+      "type": "cooperate"
+    }
+  ],
+  "uncovered_count": 922,
+  "warn_proposals_all": [
+    {
+      "actor": "person-007",
+      "outcome": "rejected",
+      "reason_detail": "living_agent.relationships.person-001_eq_failed",
+      "target": "person-001",
+      "tick": 2
+    }
+  ],
+  "winner_loser_top10": {
+    "person-000>person-001": 71,
+    "person-000>person-002": 11,
+    "person-000>person-003": 8,
+    "person-000>person-004": 12,
+    "person-000>person-006": 17,
+    "person-000>person-007": 10,
+    "person-001>person-000": 51,
+    "person-002>person-000": 17,
+    "person-003>person-007": 6,
+    "person-006>person-000": 12
+  }
+}

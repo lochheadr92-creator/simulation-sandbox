@@ -7,6 +7,11 @@ was built on a wrong diagnosis. Corrected below with the evidence.
 
 ## STATUS: PASS WITH LIMITATIONS — implemented at `d8f00eb6`, independently verified
 
+Finalised 2026-07-28: open item 2 resolved (the residue is a pin-capture
+mismatch, not reciprocal pairs), item 1 deferred to the retarget leg with the
+fix point located, item 3 closed as a documented known limitation. See
+"Finalise 2026-07-28" below.
+
 Verified on a clean `git archive` of `d8f00eb6` (not the implementer's worktree,
 not the dirty main checkout): **33 passed in 111.6s** across
 `test_frozen_baseline_hashes`, `test_stage6d_social_relationships`,
@@ -37,6 +42,9 @@ rather than churning. Needs a causal check, not a correlation.
 
 ### Open item 1 — the actor-side write was not narrowed
 
+(DEFERRED 2026-07-28 to the retarget leg — the live fix point is the domain's
+cognition-carrier write, not the builder; see the Finalise block below.)
+
 The target write became a merge spec, but the **actor** still writes
 `updates[actor_id]["living_agent"] = actor_state` — the whole blob, from a
 frame-start base — in the base update and in all three commitment branches.
@@ -51,6 +59,9 @@ Fix: apply `_living_agent_write_diff` to the actor write too, and pin whatever
 the actor genuinely depends on beyond the counterpart record.
 
 ### Open item 2 — one hot record carries 91% of the remaining rejections
+
+(RESOLVED 2026-07-28 — mostly not reciprocal pairs and not item 1; the pinned
+record is perception-volatile. See the Finalise block below.)
 
 `rejection_census` after the fix:
 
@@ -70,6 +81,9 @@ Open item 1 is the obvious suspect and should be ruled in or out first.
 
 ### Open item 3 — `warn` went 1 → 0
 
+(CLOSED 2026-07-28 as a documented known limitation — see the Finalise block
+below.)
+
 The behaviour that started this investigation is now extinct in the organic
 320-tick baseline. The fixture tests pass; the world produces none. Seven
 singletons still fire once, `warn` fires zero times. The fix multiplied the two
@@ -78,6 +92,77 @@ already-common social actions and did nothing for the eight rare ones.
 This does **not** invalidate the leg — the commit-survival defect was real and
 is fixed — but the leg's own success test is not met, and the singleton family
 remains the actual product problem.
+
+---
+
+### Finalise 2026-07-28 — items 1–3 closed out
+
+Re-verified on a clean `git archive` of `a04939b7` (not the dirty checkout):
+the three analysis runs below each reproduced the pinned trajectory exactly —
+final hash `e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2`,
+5,088 accepted, 1,320 rejected, replay equality True. Evidence:
+`memory/evidence/frozen-hash/leg-a-2026-07-28-hot-record-{r1,v2,v3}.json`.
+No code changed in this close-out, so the frozen constants do not move.
+
+**Item 1 — DEFERRED to the retarget leg; the live fix point is located and it
+is not in the social builder.** Every per-entity proposal — social or not —
+passes through the settlement domain's cognition carrier, which rewrites
+`actor_update["living_agent"]` wholesale from a frame-start base
+(`living_settlement_domain.py:777` @ `a04939b7`; `:810` in the working tree
+with the uncommitted retarget). Narrowing only the builder's actor write feeds
+a `{__merge__}` spec into
+`resulting_state = copy.deepcopy(actor_update.get("living_agent") or state)`
+(`:752`), and `derive_internal_pressures` immediately subscripts
+`state["traits"]` (`living_agent_cognition.py:432`) — the harness would crash
+on the first social tick (VERIFIED by code reading; deliberately not run). The
+real fix is at the composition point: diff the enriched blob against the
+frame-start base and emit a merge spec at `:777`. That file holds Ryan's
+uncommitted Leg-2 R1 retarget, so this handoff is his to pick up.
+
+**Item 2 — RESOLVED: the residue is mostly not reciprocal pairs, and item 1
+was never the cause.** Three census rounds over the pinned trajectory:
+
+- 233/1155 (20%) have an accepted same-tick reciprocal action that wrote the
+  pinned record — the genuine class the pin exists for (VERIFIED, r1).
+- 922/1155 have **no same-tick writer of the record on the actor's blob at
+  all** (VERIFIED, v2 writer census: only 233 same-tick `social_cooperate` /
+  `social_repay` / `social_request_help` merge-spec writes found).
+- 955/1155 (83%) are actor-side pins whose pinned **value** is stamped with
+  the rejection tick itself: the pin was captured from the domain's
+  perception-ENRICHED working actor blob
+  (`working_actor["living_agent"] = state`, after
+  `apply_observed_social_information`), while commit revalidation compares it
+  against the PRE-perception committed record. When the actor observed a fresh
+  signal from the target, the two can never match — the proposal is
+  self-doomed at build time (VERIFIED, v3: `pin_stamped_this_tick` = 955;
+  stale-stamp genuine class ≈ 195; 3 target-side, the target's own
+  earlier-committing enriched write).
+
+So what "writes `person-000`'s record 1,049 times" is mostly **nothing
+in-frame**: person-000 is the most-observed agent (281 social touchpoints vs
+143 next — VERIFIED, r1 activity census), so every observer's record about it
+is refreshed by perception nearly every tick, self-dooming nearly every action
+aimed at it — visible as stuck loops (person-001 `cooperate`→person-000
+rejected at ticks 90–101 consecutively). The census's `reciprocal_pairs: []`
+was an accepted-events-only scan, structurally blind to pairs whose second
+half was rejected. Correction on the record: the `d8f00eb6` commit message's
+attribution of all 1,155 to "genuine reciprocal collisions" was wrong for the
+~83% — that class is the pin-capture mismatch above, and it is corrected here.
+The fix is the pin-capture contract — capture the actor-side record pin from
+the committed frame-start blob, not the enriched working blob — which lives at
+the same builder↔domain boundary as item 1, in the same file, and goes with it
+to the retarget leg. Projected residue after both fixes: ~230 honest
+rejections (LIKELY, projected from the census partitions — not run).
+
+**Item 3 — CLOSED as known limitation.** Exactly ONE `social_warn` proposal is
+generated in the entire post-fix 320-tick world (tick 2, person-007 →
+person-001), and it lost the genuine reciprocal collision to person-001's
+committed cooperate (pinned `None` vs the record the cooperate created —
+VERIFIED, r1 `warn_proposals_all`). So `warn` 1 → 0 is no longer a
+commit-survival problem: candidate GENERATION is the bottleneck — one
+candidate in 320 ticks — and the single generated candidate was legitimately
+contested. Per the finalise brief, no scores, thresholds, or priorities were
+tuned; the singleton family is a separate domain problem.
 
 ---
 

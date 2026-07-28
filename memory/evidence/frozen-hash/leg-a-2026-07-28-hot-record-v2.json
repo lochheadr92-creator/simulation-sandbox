@@ -1,0 +1,467 @@
+{
+  "hash_check": {
+    "accepted_event_count": 5088,
+    "final_state_hash": "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2",
+    "rejected_proposal_count": 1320
+  },
+  "path_named_rejection_total": 1155,
+  "unmatched_count": 922,
+  "unmatched_examples": [
+    {
+      "actor": "person-003",
+      "record": "person-003",
+      "target": "person-002",
+      "tick": 3,
+      "type": "trade"
+    },
+    {
+      "actor": "person-003",
+      "record": "person-003",
+      "target": "person-007",
+      "tick": 63,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 90,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 91,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 92,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 93,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 94,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 94,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 95,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 95,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-003",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 96,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 96,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-001",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 97,
+      "type": "cooperate"
+    },
+    {
+      "actor": "person-003",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 97,
+      "type": "request_help"
+    },
+    {
+      "actor": "person-003",
+      "record": "person-000",
+      "target": "person-000",
+      "tick": 98,
+      "type": "request_help"
+    }
+  ],
+  "writer_census": {
+    "social_cooperate|merge_spec|living_settlement": 123,
+    "social_repay|merge_spec|living_settlement": 71,
+    "social_request_help|merge_spec|living_settlement": 39
+  },
+  "writer_examples": {
+    "NO_WRITER_FOUND||": [
+      {
+        "actor": "person-003",
+        "record": "person-003",
+        "target": "person-002",
+        "tick": 3,
+        "type": "trade",
+        "writers": []
+      },
+      {
+        "actor": "person-003",
+        "record": "person-003",
+        "target": "person-007",
+        "tick": 63,
+        "type": "cooperate",
+        "writers": []
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 90,
+        "type": "cooperate",
+        "writers": []
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 91,
+        "type": "cooperate",
+        "writers": []
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 92,
+        "type": "cooperate",
+        "writers": []
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 93,
+        "type": "cooperate",
+        "writers": []
+      }
+    ],
+    "social_cooperate|merge_spec|living_settlement": [
+      {
+        "actor": "person-007",
+        "record": "person-001",
+        "target": "person-001",
+        "tick": 2,
+        "type": "warn",
+        "writers": [
+          {
+            "event_entity": "person-001",
+            "event_type": "social_cooperate",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-007"
+          }
+        ]
+      },
+      {
+        "actor": "person-007",
+        "record": "person-003",
+        "target": "person-003",
+        "tick": 56,
+        "type": "request_help",
+        "writers": [
+          {
+            "event_entity": "person-003",
+            "event_type": "social_cooperate",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-007"
+          }
+        ]
+      },
+      {
+        "actor": "person-007",
+        "record": "person-003",
+        "target": "person-003",
+        "tick": 57,
+        "type": "repay",
+        "writers": [
+          {
+            "event_entity": "person-003",
+            "event_type": "social_cooperate",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-007"
+          }
+        ]
+      },
+      {
+        "actor": "person-007",
+        "record": "person-003",
+        "target": "person-003",
+        "tick": 59,
+        "type": "repay",
+        "writers": [
+          {
+            "event_entity": "person-003",
+            "event_type": "social_cooperate",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-007"
+          }
+        ]
+      },
+      {
+        "actor": "person-007",
+        "record": "person-003",
+        "target": "person-003",
+        "tick": 72,
+        "type": "repay",
+        "writers": [
+          {
+            "event_entity": "person-003",
+            "event_type": "social_cooperate",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-007"
+          }
+        ]
+      },
+      {
+        "actor": "person-007",
+        "record": "person-003",
+        "target": "person-003",
+        "tick": 73,
+        "type": "repay",
+        "writers": [
+          {
+            "event_entity": "person-003",
+            "event_type": "social_cooperate",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-007"
+          }
+        ]
+      }
+    ],
+    "social_repay|merge_spec|living_settlement": [
+      {
+        "actor": "person-001",
+        "record": "person-007",
+        "target": "person-007",
+        "tick": 3,
+        "type": "promise",
+        "writers": [
+          {
+            "event_entity": "person-007",
+            "event_type": "social_repay",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-001"
+          }
+        ]
+      },
+      {
+        "actor": "person-003",
+        "record": "person-007",
+        "target": "person-007",
+        "tick": 58,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-007",
+            "event_type": "social_repay",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-003"
+          }
+        ]
+      },
+      {
+        "actor": "person-003",
+        "record": "person-007",
+        "target": "person-007",
+        "tick": 60,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-007",
+            "event_type": "social_repay",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-003"
+          }
+        ]
+      },
+      {
+        "actor": "person-003",
+        "record": "person-007",
+        "target": "person-007",
+        "tick": 61,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-007",
+            "event_type": "social_repay",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-003"
+          }
+        ]
+      },
+      {
+        "actor": "person-003",
+        "record": "person-007",
+        "target": "person-007",
+        "tick": 69,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-007",
+            "event_type": "social_repay",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-003"
+          }
+        ]
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 82,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-000",
+            "event_type": "social_repay",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-001"
+          }
+        ]
+      }
+    ],
+    "social_request_help|merge_spec|living_settlement": [
+      {
+        "actor": "person-003",
+        "record": "person-007",
+        "target": "person-007",
+        "tick": 55,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-007",
+            "event_type": "social_request_help",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-003"
+          }
+        ]
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 84,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-000",
+            "event_type": "social_request_help",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-001"
+          }
+        ]
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 85,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-000",
+            "event_type": "social_request_help",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-001"
+          }
+        ]
+      },
+      {
+        "actor": "person-001",
+        "record": "person-000",
+        "target": "person-000",
+        "tick": 86,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-000",
+            "event_type": "social_request_help",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-001"
+          }
+        ]
+      },
+      {
+        "actor": "person-000",
+        "record": "person-006",
+        "target": "person-006",
+        "tick": 95,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-006",
+            "event_type": "social_request_help",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-000"
+          }
+        ]
+      },
+      {
+        "actor": "person-000",
+        "record": "person-002",
+        "target": "person-002",
+        "tick": 122,
+        "type": "cooperate",
+        "writers": [
+          {
+            "event_entity": "person-002",
+            "event_type": "social_request_help",
+            "how": "merge_spec",
+            "proposer": "living_settlement",
+            "writer_target": "person-000"
+          }
+        ]
+      }
+    ]
+  }
+}
