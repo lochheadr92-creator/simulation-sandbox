@@ -14,6 +14,7 @@ from core.constants import (
     STRUCTURE_TEND_CONDITION_CEILING,
     STRUCTURE_TEND_CONDITION_FLOOR,
     TEND_STRUCTURE_BASE_SCORE,
+    time_phase,
 )
 from core.navigation import ARRIVAL_ADJACENT, find_path
 from domains.base import DomainEngine, DomainOutput
@@ -239,6 +240,57 @@ def _apply_group_norm_influence(candidates, entity_id, entities, tick):
             if any(s >= base for s in survival_scores):
                 continue  # urgent survival present; suppress the norm nudge
             _boost_score(cand, NORM_REPAIR_INCREMENT, "cultural_weight")
+    return candidates
+
+
+DAY_PHASE_INCREMENT = 120  # bounded, below the 8A norm nudge (150) and the 7D goal nudge (250)
+
+# What each phase of the day favours (+1) or discourages (-1), by action type.
+# Weighting, never gating: a discouraged action is still generated, still
+# scored, and still wins whenever it matters.
+_PHASE_WEIGHTS = {
+    "dawn": {"tend": 1, "repair": 1},
+    "day": {"gather": 1, "tend": 1, "repair": 1, "retrieve": 1, "store": 1, "rest": -1},
+    "dusk": {"cooperate": 1, "repay": 1, "request_help": 1, "share_information": 1,
+             "promise": 1, "reconcile": 1},
+    "night": {"rest": 1, "tend": -1, "repair": -1, "explore": -1, "store": -1},
+}
+
+
+def _apply_day_phase_weighting(candidates, tick):
+    """Leg B: give the settlement a readable daily rhythm.
+
+    `time_phase(tick)` already exists in core/constants.py and is already used
+    by the kernel and by animal_domain -- animals have lived by the day cycle
+    since Stage 6 while people ignored it entirely. This connects the existing
+    signal to the entities anyone is actually watching. No new state, no new
+    candidates, no new events; derived from `tick`, so determinism is untouched.
+
+    Weighting, not gating, under two rules:
+      * a positive nudge never lifts a candidate to or above an urgent survival
+        candidate -- the same guard the 7D goal and 8A norm hooks use;
+      * a negative nudge is never applied to a survival candidate at all, so a
+        hungry person still gathers at night and an exhausted one still rests
+        at noon. Both fall out of SURVIVAL_GOALS membership rather than from a
+        special case.
+    """
+    weights = _PHASE_WEIGHTS.get(time_phase(int(tick))) or {}
+    if not weights:
+        return candidates
+    survival = [c for c in candidates if c.get("goal") in SURVIVAL_GOALS]
+    for cand in candidates:
+        direction = weights.get(cand.get("direct_action_type"))
+        if not direction:
+            continue
+        if direction < 0:
+            if cand.get("goal") in SURVIVAL_GOALS:
+                continue  # never dampen survival
+            _boost_score(cand, -DAY_PHASE_INCREMENT, "day_phase")
+            continue
+        base = _effective_score(cand)
+        if any(_effective_score(other) >= base for other in survival if other is not cand):
+            continue  # urgent survival present; the phase preference yields
+        _boost_score(cand, DAY_PHASE_INCREMENT, "day_phase")
     return candidates
 
 
@@ -579,6 +631,8 @@ class LivingSettlementDomain(DomainEngine):
             # registries, preserving the frozen Stage 6 hash.
             candidates = _apply_group_goal_influence(candidates, entity_id, frame.entities, tick)
             candidates = _apply_group_norm_influence(candidates, entity_id, frame.entities, tick)
+            # Leg B: the day cycle the kernel and the animals already live by.
+            candidates = _apply_day_phase_weighting(candidates, tick)
             selected = select_goal(candidates)
             desired_action = selected["direct_action_type"]
             target_id = selected.get("target_entity_id")
