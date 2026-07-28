@@ -101,8 +101,29 @@ without changing the write and a concurrent change to any other sub-key is
 silently clobbered: we would trade a visible rejection for actual data loss.
 Strictly worse.
 
-**So the fix is sub-field CAS for dict-valued fields** — one coherent
-subsystem, four touch points:
+**What the social action actually changes (VERIFIED, decisive).**
+`apply_relationship_consequence` (`living_agent_social.py:77`) modifies exactly
+one path. Its own CORE-PERF-01 comment at lines 89–92 states it:
+
+> the only per-key write is `relationships[subject_id] = relation`
+> (a whole-record replacement)
+
+And in `updates[actor_id]`, `action` / `plan` / `current_goal` are already
+separate top-level fields. **So the only reason either side writes
+`living_agent` at all is one relationship record.**
+
+Two agents acting on the same person in one frame therefore write
+`relationships[person-001]` and `relationships[person-004]` — provably disjoint
+keys. The whole-blob CAS is a false positive by construction. That is why 100%
+of rejections are this one failure.
+
+The genuine collision is narrow and worth keeping: a reciprocal pair in the
+same tick (007→001 and 001→007) really does write both relationship records
+twice. Pinning the *path* surfaces that honestly as one rejection instead of
+killing both.
+
+**So the fix is: shrink the write, then the pin follows** — three touch points,
+not four:
 
 1. `core/commit_pipeline.py:120` `evaluate_preconditions` — accept an optional
    `path` on a condition and compare the value at that path inside the field's
@@ -111,18 +132,27 @@ subsystem, four touch points:
 2. `core/mutations.py:15` `apply_mutation` — a merge semantic for dict-valued
    field updates so a proposal can write only the sub-keys it changed. Keep
    whole-field replace as the default; merge is opt-in per update.
-3. `domains/living_agent_social.py:326-336` — pin only the sub-keys the action
-   reads, write only the sub-keys it changes.
-4. `domains/living_settlement_domain.py:548` `_replace_living_preconditions` —
-   currently rewrites the `living_agent` precondition value wholesale; must
-   become path-aware or it will re-widen what step 3 narrowed.
+3. `domains/living_agent_social.py:326-336` — **this is the actual fix.** Both
+   sides write `living_agent.relationships[counterpart]` only, not the blob.
+   The whole-blob `eq` precondition goes; in its place, pin that one
+   relationship record. `alive` stays on both sides.
+
+`domains/living_settlement_domain.py:548` `_replace_living_preconditions`
+becomes vestigial once no whole-blob `living_agent` conditions are emitted —
+check it, don't pre-emptively rewrite it.
+
+Order matters: **do 3 first with the write narrowed and no pin at all**, run
+the 320-tick comparison, and see whether any genuine reciprocal collision
+actually occurs in practice. If it does, add 1 and 2 to catch it honestly. If
+it never does, 1 and 2 may not be needed at all — which would make this a
+single-file change.
 
 Determinism note: merge order must be deterministic (sorted keys) or invariant
 4 breaks. The frozen hash **will** move — more actions commit. Update the pin
 in the same commit and say what moved it, per `ENGINE-CONSTITUTION.md`.
 
-Do this on a clean context. It is a four-file engine change with a hash move
-and a regression suite; it should not be started at the tail of a long session.
+Start on a clean context. The hash move plus regression suite is real work even
+if step 3 turns out to be the whole fix.
 
 ## Acceptance
 
