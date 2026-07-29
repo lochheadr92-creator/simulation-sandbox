@@ -15,7 +15,8 @@ from core.constants import (
     STRUCTURE_TEND_CONDITION_FLOOR,
     TEND_STRUCTURE_BASE_SCORE,
 )
-from core.navigation import ARRIVAL_ADJACENT, find_path
+from core.geometry import is_passable
+from core.navigation import ARRIVAL_ADJACENT, NEIGHBOR_DELTAS, find_path
 from domains.base import DomainEngine, DomainOutput
 from domains.living_agent_actions import build_physical_action_proposal
 from domains.living_agent_cognition import (
@@ -242,8 +243,15 @@ def _apply_group_norm_influence(candidates, entity_id, entities, tick):
     return candidates
 
 
+# Sentinel ordering key for a person observation that carries no `distance`.
+# perceive_living sets `distance` on every observation it emits
+# (living_agent_cognition.py:240), so this is a defensive last-place sort key for
+# a malformed observation, NOT a behavioural threshold or a tunable constant.
+UNKNOWN_OBSERVATION_DISTANCE = 1_000_000_000
+
+
 def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowledge: dict,
-                                delta: dict, tick: int) -> list[dict]:
+                                delta: dict, tick: int, terrain: list | None = None) -> list[dict]:
     """Generate candidates from observer-owned inputs only."""
     candidates = []
     role = entity.get("stage6_role", "resident")
@@ -321,7 +329,33 @@ def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowl
                 target_id=target_id, target_pos=_pos(obs), resource_kind="food",
             ))
         if visible_person_ids:
-            target_id = visible_person_ids[0]
+            # Layer C social density Leg 2 (R1, ratified 2026-07-27): ask
+            # whoever is actually NEAREST, not whoever sorts first. The old
+            # `visible_person_ids[0]` was an unconsidered placeholder tiebreak,
+            # and it made `cooperate` eligibility a function of entity-id order:
+            # measured, one person answered two-thirds to four-fifths of all
+            # calls and five of eight were never asked at all.
+            #
+            # `distance` is already computed per observation by perceive_living
+            # (living_agent_cognition.py:240) -- no new state, no new field.
+            # The existing id ordering survives ONLY as the deterministic
+            # equal-distance tiebreak, so selection stays fully deterministic
+            # and RNG-free. Eligibility is unchanged: the same
+            # `visible_person_ids` set is ranked, never filtered.
+            #
+            # Scoped to REQUEST_HELP alone. `target_id = visible_person_ids[0]`
+            # is a DUPLICATED expression, not a shared helper (:402 warn, :413
+            # lie, :436 share_information, :451 trade, :460 threaten), and
+            # `visible_person_ids` itself is deliberately NOT re-sorted -- doing
+            # so would silently retarget all five other call sites, including
+            # PARKED `warn`.
+            target_id = min(
+                visible_person_ids,
+                key=lambda person_id: (
+                    int((people[person_id] or {}).get("distance", UNKNOWN_OBSERVATION_DISTANCE)),
+                    person_id,
+                ),
+            )
             candidates.append(_candidate(
                 "REQUEST_HELP", "request_help", 1200 + hunger,
                 target_id=target_id, target_pos=_pos(people[target_id]),
@@ -509,6 +543,14 @@ def build_settlement_candidates(entity_id: str, entity: dict, state: dict, knowl
             unknown.append(pos)
     if unknown:
         candidates.append(_candidate("EXPLORE", "move", 180, target_pos=unknown[0]))
+    if not unknown and fatigue < 500:
+        # WANDER fallback: when all adjacent tiles are known but not exhausted,
+        # pick the first passable adjacent tile in N/E/S/W order.
+        for dx, dy in NEIGHBOR_DELTAS:
+            pos = {"x": entity["position"]["x"] + dx, "y": entity["position"]["y"] + dy}
+            if terrain is None or is_passable(pos, terrain):
+                candidates.append(_candidate("WANDER", "move", 90, target_pos=pos))
+                break
     candidates.append(_candidate("REST", "rest", 60))
     return candidates[:LIMITS.candidate_goals_per_decision]
 
@@ -568,7 +610,7 @@ class LivingSettlementDomain(DomainEngine):
                 observations=delta.get("observations") or [], learned=learned,
             )
             state = refresh_wants(state, entity_id, tick)
-            base_candidates = build_settlement_candidates(entity_id, entity, state, knowledge, delta, tick)
+            base_candidates = build_settlement_candidates(entity_id, entity, state, knowledge, delta, tick, frame.terrain)
             candidates = score_goal_candidates(
                 base_candidates, actor_id=entity_id, state=state,
                 knowledge=knowledge, tick=tick,
