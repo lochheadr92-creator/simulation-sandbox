@@ -12,6 +12,8 @@ Per-tick cognitive chain (same activation, proposal-only):
 Omniscient target scans are not used for planning. Hunting uses known/perceived
 animals only. Exploration uses passable unknown 4-neighbours only.
 """
+import copy
+
 from domains.base import DomainEngine, DomainOutput
 from domains.perception import merge_knowledge, empty_knowledge, _compat_knowledge
 from domains.living_agent_contracts import compat_action, compat_living_agent_state, compat_plan
@@ -41,6 +43,7 @@ from domains.living_agent_social import (
     apply_observed_social_information,
 )
 from domains.people_utility import score_candidates
+from domains.people_culture import update_culture_state
 from domains.people_planning import (
     idle_action, empty_plan, check_critical_interrupt, form_plan, start_step,
     execute_action_tick, context_from_action,
@@ -138,6 +141,18 @@ class PeopleDomain(DomainEngine):
             )
             living_state = refresh_wants(living_state, eid, tick)
 
+            # Culture Pass: norms, collective memory, aid eligibility. Reads
+            # only the pinned frame + merged knowledge; surplus-enabled
+            # persons only (storage_location gate), so legacy scenarios keep
+            # byte-identical proposals. Scoring below uses the updated state.
+            culture_state = None
+            culture_changed = False
+            if e.get("storage_location") is not None:
+                culture_state, culture_changed = update_culture_state(
+                    e, eid, knowledge, frame.entities, pos, tick,
+                    ((living_state.get("traits") or {}).get("generosity")),
+                )
+
             action = dict(e.get("action") or idle_action())
             plan = compat_plan(e.get("plan") or empty_plan(), actor_id=eid, tick=tick)
             paused = e.get("paused")
@@ -145,6 +160,8 @@ class PeopleDomain(DomainEngine):
             e_for_score = dict(e)
             e_for_score["id"] = eid
             e_for_score["knowledge"] = knowledge
+            if culture_state is not None:
+                e_for_score["culture_state"] = culture_state
             base_candidates, context = score_candidates(
                 e_for_score, knowledge, pos, tick, night, action, terrain,
                 entities=frame.entities, perception_delta=delta,
@@ -231,6 +248,7 @@ class PeopleDomain(DomainEngine):
             carcass_delta = action.pop("_carcass_delta", None)
             animal_delta = action.pop("_animal_delta", None)
             food_transfer = action.pop("_food_transfer", None)
+            trade = action.pop("_trade", None)
             action["physical_effects"] = established_action_effects(action.get("type"))
             action = compat_action(action, actor_id=eid, tick=tick, plan=plan)
             step_note = result["explanation"]
@@ -274,7 +292,14 @@ class PeopleDomain(DomainEngine):
                 if action["status"] != "failed" and plan["step_index"] < len(plan.get("steps", [])):
                     next_step = plan["steps"][plan["step_index"]]
                     context = context_from_action(action, result["pos"])
-                    action = start_step(next_step, e, eid, context, terrain, tick, result["pos"])
+                    # Wrap like every other action path: a raw start_step action
+                    # has no actor_id, so the living-action validator rejected
+                    # every plan-step transition proposal (invalid_actor) and
+                    # multi-step plans deadlocked one tile from their target.
+                    action = compat_action(
+                        start_step(next_step, e, eid, context, terrain, tick, result["pos"]),
+                        actor_id=eid, tick=tick, plan=plan,
+                    )
                 else:
                     plan["status"] = "completed" if action["status"] != "failed" else "abandoned"
 
@@ -294,6 +319,7 @@ class PeopleDomain(DomainEngine):
             proposal = self._build_proposal(
                 e, eid, action, plan, paused, knowledge, knowledge_changed, living_state, result,
                 tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation,
+                trade=trade, culture_state=culture_state, culture_changed=culture_changed,
             )
             proposals.append(proposal)
             # Phase 5B3: protocol proposals ride as additional domain proposals.
@@ -356,6 +382,18 @@ class PeopleDomain(DomainEngine):
                 "reciprocity_trust": {
                     "views": list_subject_views(knowledge, observer_id=eid, current_tick=tick)[:8],
                 },
+                # Culture Pass: census-readable counters (norm/memory sizes,
+                # offer availability, memory hit, gate exclusions this tick).
+                "culture": {
+                    "enabled": culture_state is not None,
+                    "changed": culture_changed,
+                    "norms": len((culture_state or {}).get("norms") or {}),
+                    "memory": len((culture_state or {}).get("memory") or {}),
+                    "aid_eligible": sorted((culture_state or {}).get("aid_eligible") or {}),
+                    "offer_available": bool(context.get("trade_partner_id")),
+                    "memory_hit": bool(context.get("culture_memory_hit")),
+                    "gate_blocked": int(context.get("culture_gate_blocked") or 0),
+                },
             }
 
         # Global stranded-accepted maintenance once per activation on the pinned
@@ -366,7 +404,8 @@ class PeopleDomain(DomainEngine):
         return DomainOutput(proposals=proposals, diagnostics=diagnostics)
 
     def _build_proposal(self, e, eid, action, plan, paused, knowledge, knowledge_changed, living_state,
-                        result, tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation):
+                        result, tree_delta, carcass_delta, animal_delta, food_transfer, tick, explanation,
+                        trade=None, culture_state=None, culture_changed=False):
         entity_updates = {
             eid: {
                 "position": result["pos"],
@@ -393,6 +432,13 @@ class PeopleDomain(DomainEngine):
         # (accepted event still carries the action; knowledge rides along when new).
         if knowledge_changed:
             entity_updates[eid]["knowledge"] = knowledge
+        # Surplus Pass: home-store map only exists on surplus-enabled persons.
+        if result.get("stored_resources") is not None:
+            entity_updates[eid]["stored_resources"] = result["stored_resources"]
+        # Culture Pass: cultural state rides only on change (bounded growth,
+        # same discipline as knowledge). The owner is the single writer.
+        if culture_changed and culture_state is not None:
+            entity_updates[eid]["culture_state"] = culture_state
 
         touched_scope = list(result["touched_scope"])
         for target_id in action.get("target_entity_ids") or []:
@@ -403,6 +449,13 @@ class PeopleDomain(DomainEngine):
         # Every people action writes this field.  Revalidation prevents a
         # later single-person proposal from overwriting an accepted transfer.
         preconditions.append({"entity_id": eid, "field": "food_inventory", "op": "eq", "value": e.get("food_inventory", 0)})
+        # Culture Pass: whole-map CAS on culture_state when this proposal
+        # rewrites it (same pattern as stored_resources above).
+        if culture_changed and culture_state is not None:
+            preconditions.append({
+                "entity_id": eid, "field": "culture_state", "op": "eq",
+                "value": copy.deepcopy(e.get("culture_state")),
+            })
         new_entities = dict(result["new_entities"])
         signal = evidence_signal_for_action(action, position=result["pos"], tick=tick)
         if signal:
@@ -427,11 +480,39 @@ class PeopleDomain(DomainEngine):
             if receiver_id not in touched_scope:
                 touched_scope.append(receiver_id)
 
+        if trade:
+            # Barter is an equal-quantity swap: the giver side already moved
+            # through result["inventory"]/result["food_inventory"]; build the
+            # receiver's mirror update from the pinned values in the contract.
+            receiver_id = trade["receiver_id"]
+            give_field = trade["give_field"]
+            receive_field = trade["receive_field"]
+            give_qty = trade["give_quantity"]
+            receive_qty = trade["receive_quantity"]
+            new_inv = trade["receiver_inventory"]
+            new_food = trade["receiver_food_inventory"]
+            if receive_field == "inventory":
+                new_inv -= receive_qty
+            else:
+                new_food -= receive_qty
+            if give_field == "inventory":
+                new_inv += give_qty
+            else:
+                new_food += give_qty
+            entity_updates[receiver_id] = {
+                "inventory": new_inv,
+                "food_inventory": new_food,
+                "carried_resources": {"wood": new_inv, "food": new_food},
+            }
+            if receiver_id not in touched_scope:
+                touched_scope.append(receiver_id)
+
         for delta in (tree_delta, carcass_delta):
             if delta:
-                entity_updates[delta["id"]] = {
-                    "resource": delta["resource"], "claimed_tick": delta["claimed_tick"],
-                }
+                update = {"resource": delta["resource"], "claimed_tick": delta["claimed_tick"]}
+                if "resource_ownership" in delta:
+                    update["resource_ownership"] = delta["resource_ownership"]
+                entity_updates[delta["id"]] = update
                 if delta["id"] not in touched_scope:
                     touched_scope.append(delta["id"])
 
@@ -461,6 +542,14 @@ class PeopleDomain(DomainEngine):
             proposal["transfer"] = {
                 key: food_transfer[key]
                 for key in ("contract_version", "giver_id", "receiver_id", "field", "quantity")
+            }
+        if trade:
+            proposal["trade"] = {
+                key: trade[key]
+                for key in (
+                    "contract_version", "giver_id", "receiver_id",
+                    "give_field", "give_quantity", "receive_field", "receive_quantity",
+                )
             }
         proposal["living_action"] = living_action_metadata(action, plan)
         return proposal

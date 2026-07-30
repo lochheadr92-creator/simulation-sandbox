@@ -8,3 +8,4 @@ from scenarios import desert_oasis  # noqa: F401
 from scenarios import living_settlement  # noqa: F401
 from scenarios import emergent_groups  # noqa: F401
 from scenarios import collective_groups  # noqa: F401
+from scenarios import surplus_forage  # noqa: F401

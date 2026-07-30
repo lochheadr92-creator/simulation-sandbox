@@ -147,6 +147,12 @@ def generate_world(seed: str, scenario):
         # Keep legacy scalar and versioned resource inventory aligned.
         spec["inventory"] = int(spec["carried_resources"].get("wood", spec["inventory"]))
         spec["food_inventory"] = int(spec["carried_resources"].get("food", spec["food_inventory"]))
+        # Surplus Pass: generic opt-in home storage (SURPLUS_PASS.md). Scenarios
+        # setting `assign_storage_location` get persons whose spawn tile is their
+        # storage site; all other scenarios generate byte-identical persons.
+        if cfg.get("assign_storage_location"):
+            spec.setdefault("storage_location", dict(spec["position"]))
+            spec.setdefault("stored_resources", {"wood": 0, "food": 0})
         genesis_specs.append(spec)
 
     a_hunger = cfg.get("animal_hunger_range", (100, 300))

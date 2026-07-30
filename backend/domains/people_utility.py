@@ -15,7 +15,15 @@ from core.navigation import ARRIVAL_ADJACENT, ARRIVAL_EXACT, path_length
 from core.constants import (
     SEEK_THRESHOLD, VISION_RADIUS, GATHER_TICKS, HUNT_TICKS,
     CRITICAL_THRESHOLD, FOOD_TRANSFER_SURPLUS,
+    CARCASS_KNOWLEDGE_STALE_TICKS,
+    GATHER_EXCESS_MAX_HUNGER, GATHER_EXCESS_MIN_RESOURCE,
+    MEAT_STOCK_HUNT_SEVERITY,
+    RETRIEVE_MIN_HUNGER, STORE_MIN_MOVABLE, STORE_TRIGGER_LOAD,
+    SURPLUS_KEEP_FOOD, SURPLUS_KEEP_WOOD,
+    TRADE_MAX_SCARCE,
+    AID_QUANTITY, AID_SEVERITY,
 )
+from domains.people_culture import select_aid_receiver, select_trade_partner
 
 W_SEVERITY = 1.0
 W_PREDICTED = 0.5
@@ -148,12 +156,18 @@ def nearest_known_food(pos, knowledge, min_resource=1, terrain=None):
     return None, None, None, "tree", 0
 
 
-def nearest_huntable_animal(pos, knowledge, terrain=None, perception_delta=None, entities=None):
+def nearest_huntable_animal(pos, knowledge, terrain=None, perception_delta=None, entities=None,
+                            allow_injured_fleeing=False):
     """Hunt targets from personal knowledge and/or this-tick perception only.
 
     Never scans the full entity table for animals the observer has not
     perceived or retained. Prefer currently perceived live animals; fall back
     to last-known positions from knowledge (may be stale — strike can fail).
+
+    Fleeing animals are skipped (healthy prey outruns a person), except when
+    `allow_injured_fleeing` is set (Surplus Pass): a wounded animal flees
+    forever and can never be finished otherwise, so the kill chain deadlocks
+    at one strike per animal. Legacy callers keep the legacy skip.
     """
     entities = entities or {}
     known = dict((knowledge or {}).get("known_animals", {}))
@@ -166,7 +180,8 @@ def nearest_huntable_animal(pos, knowledge, terrain=None, perception_delta=None,
             if live.get("type") != "animal" or not live.get("alive", True):
                 continue
             if (live.get("action") or {}).get("type") == "flee":
-                continue
+                if not (allow_injured_fleeing and live.get("injured", False)):
+                    continue
             apos = live["position"]
             # Live target must still be in vision for a current strike plan
             if manhattan(pos, apos) > VISION_RADIUS and eid not in known:
@@ -362,20 +377,159 @@ def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
     ))
 
     # Surplus gather when already on or adjacent to a reachable tree (historical adjacency).
-    gather_avail = 1.0 if (tree_id and tree_d is not None and tree_d <= 1) else 0.0
+    # Suppressed for surplus-enabled persons, who use GATHER_EXCESS instead.
+    surplus_enabled = e.get("storage_location") is not None
+    gather_avail = 1.0 if (not surplus_enabled and tree_id and tree_d is not None and tree_d <= 1) else 0.0
     candidates.append(_score(
         "GATHER_SURPLUS", 95 if (gather_avail and e["inventory"] < 20) else 0,
         0, 0, gather_avail, 0, interrupt_cost,
         extra={"path_length": tree_d, "reachable": bool(tree_id and tree_d is not None and tree_d <= 1)},
     ))
 
+    # --- Surplus Pass candidates (SURPLUS_PASS.md) ---
+    # Only surplus-enabled persons (genesis knob `assign_storage_location`)
+    # ever see these; legacy scenarios score the exact legacy set above.
+    trade_partner_id, trade_give_field, trade_receive_field = None, None, None
+    trade_give_qty, trade_receive_qty = 0, 0
+    trade_aid, memory_hit, gate_blocked_count = False, False, 0
+    if surplus_enabled:
+        storage_pos = e.get("storage_location")
+        storage_d = path_length(pos, storage_pos, terrain, ARRIVAL_EXACT)
+        carried_food = e.get("food_inventory", 0)
+        carry_total = e["inventory"] + carried_food
+        carry_room = max(0, int(e.get("inventory_capacity", 30)) - carry_total)
+        stored_food = int((e.get("stored_resources") or {}).get("food", 0))
+
+        # gather_excess: below eat-when-hungry, non-zero when satiated with an
+        # abundant known source nearby and room to carry more.
+        xs_id, xs_pos, xs_d, xs_kind, xs_res = None, None, None, "tree", 0
+        if hunger < GATHER_EXCESS_MAX_HUNGER and carry_room > 0:
+            xs_id, xs_pos, xs_d, xs_kind, xs_res = nearest_known_food(
+                pos, knowledge, GATHER_EXCESS_MIN_RESOURCE, terrain)
+        xs_avail = _resource_availability(xs_res) if xs_id else 0.0
+        xs_travel = xs_d if (xs_id and xs_d is not None) else 0
+        satiation = max(0, GATHER_EXCESS_MAX_HUNGER - hunger)
+        xs_sev = (60 + satiation // 5 + min(xs_res, 60) // 2) if xs_avail > 0 else 0
+        candidates.append(_score(
+            "GATHER_EXCESS", xs_sev, xs_sev, xs_travel, xs_avail, 0,
+            interrupt_for(("gather_excess", "travel")),
+            extra={
+                "path_length": xs_d, "reachable": bool(xs_id), "target_pos": xs_pos,
+                "target_resource": xs_res if xs_id else None,
+                "action_time": GATHER_TICKS if xs_id else 0,
+            },
+        ))
+
+        # store: rises with carry load, discounted by distance to home storage.
+        movable = max(0, e["inventory"] - SURPLUS_KEEP_WOOD) + max(0, carried_food - SURPLUS_KEEP_FOOD)
+        store_avail = 1.0 if (
+            carry_total >= STORE_TRIGGER_LOAD and movable >= STORE_MIN_MOVABLE
+            and storage_d is not None
+        ) else 0.0
+        store_sev = min(240, 40 + 4 * carry_total) if store_avail > 0 else 0
+        candidates.append(_score(
+            "STORE", store_sev, store_sev, storage_d or 0, store_avail, 0,
+            interrupt_for(("store", "travel")),
+            extra={
+                "path_length": storage_d, "reachable": storage_d is not None,
+                "target_pos": storage_pos, "carry_total": carry_total,
+                "movable_surplus": movable,
+            },
+        ))
+
+        # retrieve: rises with hunger, discounted by distance to home storage.
+        retr_avail = 1.0 if (
+            hunger >= RETRIEVE_MIN_HUNGER and stored_food > 0 and carry_room > 0
+            and carried_food <= 0 and storage_d is not None
+        ) else 0.0
+        retr_travel = storage_d or 0
+        retr_sev = hunger if retr_avail > 0 else 0
+        candidates.append(_score(
+            "RETRIEVE", retr_sev, hunger + HUNGER_RATE * retr_travel if retr_avail > 0 else 0,
+            retr_travel, retr_avail, 0, interrupt_for(("retrieve", "travel")),
+            extra={
+                "path_length": storage_d, "reachable": storage_d is not None,
+                "target_pos": storage_pos, "stored_food": stored_food,
+            },
+        ))
+
+        # offer_trade: complementary-surplus partner within interaction range.
+        # Severity must beat the satiated-idle alternatives (~300-420 for
+        # gather_excess/store) inside its rare availability window: a mirror
+        # profile in range is exactly when barter is most valuable.
+        # Culture Pass: partner choice is biased by collective memory and the
+        # offered terms come from the agent's norm tuple; when no barter
+        # profile exists, a satiated stocked agent may instead AID a hungry
+        # gate-passing ally (same candidate, aid contract). Influence only
+        # ever biases or suppresses this existing candidate — it never
+        # invents a new one and never outranks urgent survival.
+        generosity = ((e.get("living_agent") or {}).get("traits") or {}).get("generosity")
+        culture_state = e.get("culture_state")
+        (trade_partner_id, trade_give_field, trade_receive_field,
+         trade_give_qty, trade_receive_qty, memory_hit) = select_trade_partner(
+            e, culture_state, pos, entities or {}, perception_delta, tick, generosity)
+        trade_aid = False
+        aid_receiver_id = None
+        aid_support = 0
+        if trade_partner_id is None:
+            aid_receiver_id, aid_support, gate_blocked_count = select_aid_receiver(
+                e, culture_state, knowledge, e.get("id"), pos, entities or {},
+                perception_delta, tick)
+            if aid_receiver_id is not None:
+                trade_aid = True
+                trade_partner_id = aid_receiver_id
+                trade_give_field, trade_receive_field = "food_inventory", None
+                trade_give_qty, trade_receive_qty = AID_QUANTITY, 0
+        trade_avail = 1.0 if trade_partner_id else 0.0
+        if trade_aid:
+            trade_sev = AID_SEVERITY + (generosity or 0) // 2
+        else:
+            trade_sev = (
+                320 + (40 if (trade_receive_field == "food_inventory" and hunger >= 400) else 0)
+            ) if trade_avail > 0 else 0
+        candidates.append(_score(
+            "OFFER_TRADE", trade_sev, trade_sev, 0, trade_avail, 0,
+            interrupt_for(("offer_trade",)),
+            extra={
+                "path_length": 0, "reachable": bool(trade_partner_id),
+                "recipient_id": trade_partner_id,
+                "trade_give_field": trade_give_field,
+                "trade_receive_field": trade_receive_field,
+                "trade_give_quantity": trade_give_qty,
+                "trade_receive_quantity": trade_receive_qty,
+                "aid": trade_aid,
+                "memory_hit": memory_hit,
+                "aid_support": aid_support,
+                "gate_blocked": gate_blocked_count,
+                "selection_rule": (
+                    "aid_ally_gate" if trade_aid
+                    else "culture_memory_complementary"
+                ),
+            },
+        ))
+
     animal_id, animal_pos, animal_d = nearest_huntable_animal(
         pos, knowledge, terrain, perception_delta=perception_delta, entities=entities or {},
+        allow_injured_fleeing=surplus_enabled,
     )
     hunt_avail = 1.0 if animal_id else 0.0
     hunt_travel = animal_d if animal_d is not None else 0
     hunt_predicted = hunger + HUNGER_RATE * (hunt_travel + HUNT_TICKS)
     hunt_sev = (hunger if hunger >= SEEK_THRESHOLD else hunger * 0.25) * 0.7  # discounted: slower/riskier than foraging
+    # Surplus Pass: satiated surplus persons with no meat stock still hunt to
+    # stock protein -- meat is the retrievable/tradable food, and a wood-only
+    # economy never produces the complementary profiles barter needs.
+    # Suppressed while a freshly-sighted carcass still holds meat: harvest
+    # what is already dead before killing more (keeps the kill rate
+    # sustainable and routes hunters to their own carcasses).
+    if surplus_enabled and hunt_avail and hunger < GATHER_EXCESS_MAX_HUNGER:
+        fresh_carcass_meat = any(
+            info.get("last_known_resource", 0) >= GATHER_EXCESS_MIN_RESOURCE
+            and tick - info.get("last_seen_tick", tick) <= CARCASS_KNOWLEDGE_STALE_TICKS
+            for info in (knowledge or {}).get("known_carcasses", {}).values()
+        )
+        if not fresh_carcass_meat and e.get("food_inventory", 0) + stored_food <= TRADE_MAX_SCARCE:
+            hunt_sev = max(hunt_sev, MEAT_STOCK_HUNT_SEVERITY)
     hunt_risk = 15 if night else 5
     candidates.append(_score(
         "HUNT", hunt_sev, hunt_predicted, hunt_travel, hunt_avail, hunt_risk, interrupt_for(("hunt_strike", "travel")),
@@ -410,5 +564,20 @@ def score_candidates(e, knowledge, pos, tick, night, current_action, terrain,
         "food_target_id": food_id, "food_target_pos": food_pos, "food_target_kind": food_kind,
         "animal_target_id": animal_id, "animal_target_pos": animal_pos,
         "food_recipient_id": recipient_id,
+        "excess_target_id": xs_id if surplus_enabled else None,
+        "excess_target_pos": xs_pos if surplus_enabled else None,
+        "excess_target_kind": xs_kind if surplus_enabled else "tree",
+        "storage_target": e.get("storage_location") if surplus_enabled else None,
+        "trade_partner_id": trade_partner_id,
+        "trade_give_field": trade_give_field,
+        "trade_receive_field": trade_receive_field,
+        # Culture Pass: norm terms + aid flag ride the context so start_step
+        # copies every field onto the action (same discipline the surplus pass
+        # applied to give_field/receive_field).
+        "trade_give_quantity": trade_give_qty,
+        "trade_receive_quantity": trade_receive_qty,
+        "trade_aid": trade_aid,
+        "culture_memory_hit": memory_hit,
+        "culture_gate_blocked": gate_blocked_count,
     }
     return candidates, context

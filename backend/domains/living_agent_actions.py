@@ -37,6 +37,11 @@ RUNTIME_ACTION_MAP = {
     "hunt_strike": "damage",
     "give_food": "give",
     "idle": "rest",
+    # Surplus Pass (SURPLUS_PASS.md): people-stack home-storage + barter types.
+    "gather_excess": "gather",
+    "store": "store",
+    "retrieve": "retrieve",
+    "offer_trade": "trade",
 }
 
 ESTABLISHED_ACTION_EFFECTS = {
@@ -50,6 +55,11 @@ ESTABLISHED_ACTION_EFFECTS = {
     "hunt_strike": ("health_change", "damage", "noise"),
     "give_food": ("resource_change", "inventory_change", "social_signal"),
     "idle": ("internal_state_change",),
+    # Surplus Pass (SURPLUS_PASS.md).
+    "gather_excess": ("resource_depletion", "inventory_change", "noise", "debris"),
+    "store": ("resource_change", "inventory_change"),
+    "retrieve": ("resource_change", "inventory_change"),
+    "offer_trade": ("resource_change", "inventory_change", "social_signal"),
 }
 
 LIVING_ACTION_PROPOSAL_VERSION = "living-action-proposal-v1"
@@ -194,6 +204,23 @@ def evidence_signal_for_action(action: dict, *, position: dict, tick: int):
         signal_kind, strength = "social", 500
     else:
         return None
+    message = None
+    if signal_kind == "social":
+        message = {
+            "action_type": canonical_action_type(action.get("type")),
+            "target_ids": list(action.get("target_entity_ids") or []),
+        }
+        # Culture Pass: trade signals carry the offered terms so witnesses can
+        # record the exchange in collective memory and norms can converge on
+        # observed terms. Scoped to offer_trade; every other action's signal
+        # payload is byte-identical to before.
+        if action.get("type") == "offer_trade":
+            message.update({
+                "give_field": action.get("give_field"),
+                "give_quantity": int(action.get("give_quantity") or 0),
+                "receive_field": action.get("receive_field"),
+                "receive_quantity": int(action.get("receive_quantity") or 0),
+            })
     return _signal_spec(
         actor_id=action.get("actor_id"),
         action_id=action.get("action_id"),
@@ -202,10 +229,7 @@ def evidence_signal_for_action(action: dict, *, position: dict, tick: int):
         position=position,
         signal_kind=signal_kind,
         strength=strength,
-        message={
-            "action_type": canonical_action_type(action.get("type")),
-            "target_ids": list(action.get("target_entity_ids") or []),
-        } if signal_kind == "social" else None,
+        message=message,
     )
 
 
@@ -654,9 +678,12 @@ def validate_living_action_proposal(proposal: dict, entities: dict) -> str | Non
 
     if action_type in ("store", "retrieve", "open", "access"):
         target_id = next(iter(target_ids), None)
-        target = entities.get(target_id)
-        if not target or not _can_access(actor_id, target):
-            return "living_action.access_denied"
+        # People-stack home storage is virtual (actor-owned, no entity), so
+        # there is no target to access-check; entity-backed stores unchanged.
+        if target_id is not None:
+            target = entities.get(target_id)
+            if not target or not _can_access(actor_id, target):
+                return "living_action.access_denied"
     if meta.get("progress", 0) < 0 or meta.get("progress", 0) > 1000:
         return "living_action.invalid_progress"
     if not meta.get("physical_effects") and action_type not in ("rest",):

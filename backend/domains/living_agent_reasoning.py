@@ -21,6 +21,11 @@ GOAL_PRESSURES = {
     "SLEEP": ("fatigue", "comfort", "exposure"),
     "BUILD_SHELTER": ("exposure", "comfort", "safety"),
     "GATHER_SURPLUS": ("safety",),
+    # Surplus Pass (SURPLUS_PASS.md): pressure wiring for the home-storage loop.
+    "GATHER_EXCESS": ("safety",),
+    "STORE": ("safety",),
+    "RETRIEVE": ("hunger",),
+    "OFFER_TRADE": ("hunger", "safety"),
     "HUNT": ("hunger", "curiosity"),
     "GIVE_FOOD": ("belonging", "attachment", "perceived_obligation"),
     "EXPLORE": ("curiosity",),

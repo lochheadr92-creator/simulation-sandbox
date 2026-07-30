@@ -1,0 +1,32 @@
+{
+  "scenario": "living_settlement",
+  "seed": "living-agents-stage6",
+  "ticks": 320,
+  "ratified_baseline": "e80743460e46be4cf73086854988baa9aa92de27cbff9b5e777430497a0317b2",
+  "all_domains": {
+    "final_state_hash": "5ffaf4ba7bb669ea09bfe13c1537cae1bc1d37c4be6eaceb38358c8603858c76",
+    "accepted_event_count": 5774,
+    "emotion_events": 0,
+    "matches_ratified": false
+  },
+  "no_emotion_domain": {
+    "final_state_hash": "5ffaf4ba7bb669ea09bfe13c1537cae1bc1d37c4be6eaceb38358c8603858c76",
+    "accepted_event_count": 5774,
+    "emotion_events": 0,
+    "matches_ratified": false
+  },
+  "domains_all": [
+    "weather",
+    "ecology",
+    "lifecycle",
+    "living_settlement",
+    "animal"
+  ],
+  "domains_no_emotion": [
+    "weather",
+    "ecology",
+    "lifecycle",
+    "living_settlement",
+    "animal"
+  ]
+}

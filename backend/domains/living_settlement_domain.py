@@ -243,6 +243,41 @@ def _apply_group_norm_influence(candidates, entity_id, entities, tick):
     return candidates
 
 
+# Emotion gradient: moderate emotions nudge existing candidate scores.
+# Applied AFTER score_goal_candidates so the scorer's pressure/survival
+# components are already injected. Does not create new candidates.
+EMOTION_GRADIENT_INCREMENTS = {
+    "fear": {"REST": 30, "WANDER": -10, "EXPLORE": -20, "REQUEST_HELP": 25},
+    "anger": {"CONFRONT": 40, "COOPERATE": -20, "REST": -15},
+    "joy": {"COOPERATE": 20, "SHARE_INFORMATION": 15, "TRADE_RESOURCES": 10},
+    "sadness": {"REST": 20, "WANDER": -10, "COOPERATE": -15},
+}
+
+
+def _apply_emotion_gradient(candidates, state):
+    """Read emotions from state and apply bounded per-emotion score nudges.
+
+    Inert when no emotions field exists (e.g. emotion domain not enabled),
+    preserving the frozen Stage 6 determinism hash."""
+    emotions = (state or {}).get("emotions")
+    if not isinstance(emotions, dict):
+        return candidates
+    for emotion_kind, goal_map in EMOTION_GRADIENT_INCREMENTS.items():
+        intensity = int(emotions.get(emotion_kind, 0))
+        if intensity < 100:
+            continue  # below perceptual threshold
+        # Scale increment by intensity: full at 1000, quarter at 100
+        scale = intensity / 1000
+        for cand in candidates:
+            goal = cand.get("goal")
+            if goal not in goal_map:
+                continue
+            increment = int(goal_map[goal] * scale)
+            if increment:
+                _boost_score(cand, increment, f"emotion_{emotion_kind}")
+    return candidates
+
+
 # Sentinel ordering key for a person observation that carries no `distance`.
 # perceive_living sets `distance` on every observation it emits
 # (living_agent_cognition.py:240), so this is a defensive last-place sort key for
@@ -621,6 +656,7 @@ class LivingSettlementDomain(DomainEngine):
             # registries, preserving the frozen Stage 6 hash.
             candidates = _apply_group_goal_influence(candidates, entity_id, frame.entities, tick)
             candidates = _apply_group_norm_influence(candidates, entity_id, frame.entities, tick)
+            candidates = _apply_emotion_gradient(candidates, state)
             selected = select_goal(candidates)
             desired_action = selected["direct_action_type"]
             target_id = selected.get("target_entity_id")

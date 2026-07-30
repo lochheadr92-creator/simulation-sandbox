@@ -22,7 +22,12 @@ from core.mutations import (
     snapshot_for_hash,
     spliced_snapshot_json,
 )
-from core.constants import CRITICAL_THRESHOLD, FOOD_TRANSFER_QUANTITY, FOOD_TRANSFER_SURPLUS
+from core.constants import (
+    CRITICAL_THRESHOLD, FOOD_TRANSFER_QUANTITY, FOOD_TRANSFER_SURPLUS,
+    TRADE_CONTRACT_VERSION, TRADE_MIN_RETAIN, TRADE_MIN_SURPLUS, TRADE_RANGE,
+    AID_CONTRACT_VERSION, AID_GIVER_MIN_FOOD, AID_QUANTITY,
+    AID_RECEIVER_MIN_HUNGER,
+)
 from core.food_interaction import (
     PROPOSAL_CREATE,
     PROPOSAL_FULFIL,
@@ -91,6 +96,8 @@ def normalize_proposal(p: dict, seq: int) -> dict:
     }
     if p.get("association_update") is not None:
         core_fields["association_update"] = p["association_update"]
+    if p.get("trade") is not None:
+        core_fields["trade"] = p["trade"]
     if p.get("group_state_update") is not None:
         core_fields["group_state_update"] = p["group_state_update"]
     if p.get("collective_action") is not None:
@@ -207,6 +214,224 @@ def validate_food_transfer(proposal: dict, entities: dict):
     }
     if not required.issubset(seen):
         return "food_transfer.invalid_preconditions"
+    return None
+
+
+def validate_people_trade(proposal: dict, entities: dict):
+    """Core-owned validation for the Surplus Pass barter contract.
+
+    Mirrors validate_food_transfer: re-derives the expected two-party swap
+    from live state rather than trusting the domain's mutation. Pre-culture
+    trades were equal-quantity (carry totals invariant); the Culture Pass
+    prices terms from agent norms, so give may differ from receive and
+    capacity + post-trade retain are re-derived explicitly for both parties.
+    """
+    if proposal.get("proposal_type") != "offer_trade":
+        return None
+
+    trade = proposal.get("trade") or {}
+    if trade.get("contract_version") == AID_CONTRACT_VERSION:
+        # One-sided aid gifts carry their own contract; validated by
+        # validate_people_aid. Barter rules (equal two-way exchange) do not
+        # apply to them.
+        return None
+    giver_id = trade.get("giver_id")
+    receiver_id = trade.get("receiver_id")
+    give_field = trade.get("give_field")
+    receive_field = trade.get("receive_field")
+    give_qty = trade.get("give_quantity")
+    receive_qty = trade.get("receive_quantity")
+    if trade.get("contract_version") != TRADE_CONTRACT_VERSION:
+        return "trade.invalid_contract"
+    if (
+        give_field not in ("inventory", "food_inventory")
+        or receive_field not in ("inventory", "food_inventory")
+        or give_field == receive_field
+        or not isinstance(give_qty, int) or give_qty <= 0
+        or not isinstance(receive_qty, int) or receive_qty <= 0
+    ):
+        return "trade.invalid_terms"
+    if giver_id != proposal.get("entity_id") or not giver_id or giver_id == receiver_id:
+        return "trade.invalid_ownership"
+    if giver_id not in proposal.get("touched_scope", []) or receiver_id not in proposal.get("touched_scope", []):
+        return "trade.invalid_scope"
+
+    giver = entities.get(giver_id)
+    receiver = entities.get(receiver_id)
+    if not giver or not receiver:
+        return "trade.participant_missing"
+    if giver.get("type") != "person" or receiver.get("type") != "person":
+        return "trade.invalid_participant"
+    if not giver.get("alive", True) or not receiver.get("alive", True):
+        return "trade.participant_not_living"
+    giver_pos, receiver_pos = giver.get("position"), receiver.get("position")
+    if (
+        not giver_pos or not receiver_pos
+        or abs(giver_pos["x"] - receiver_pos["x"]) + abs(giver_pos["y"] - receiver_pos["y"]) > TRADE_RANGE
+    ):
+        return "trade.out_of_range"
+    # Each party must hold the surplus it offers. Post-trade retain is NOT
+    # implied by TRADE_MIN_SURPLUS for norm-priced quantities (receive_qty 3
+    # against a 4-holder leaves 1 < TRADE_MIN_RETAIN), so it is enforced
+    # explicitly in the required precondition set below.
+    if giver.get(give_field, 0) < TRADE_MIN_SURPLUS or receiver.get(receive_field, 0) < TRADE_MIN_SURPLUS:
+        return "trade.insufficient_surplus"
+
+    updates = proposal.get("mutation", {}).get("entity_updates", {})
+    giver_update = updates.get(giver_id, {})
+    receiver_update = updates.get(receiver_id, {})
+    if (
+        giver_update.get(give_field) != giver.get(give_field, 0) - give_qty
+        or giver_update.get(receive_field) != giver.get(receive_field, 0) + receive_qty
+        or receiver_update.get(receive_field) != receiver.get(receive_field, 0) - receive_qty
+        or receiver_update.get(give_field) != receiver.get(give_field, 0) + give_qty
+    ):
+        return "trade.invalid_mutation"
+    # Norm-priced terms make give != receive, so carry totals are no longer
+    # invariant (Culture Pass): capacity is re-derived explicitly for both
+    # parties. Equal-swap trades are unaffected (net 0 on both sides).
+    giver_capacity = int(giver.get("inventory_capacity", 30))
+    receiver_capacity = int(receiver.get("inventory_capacity", 30))
+    if (
+        giver.get("inventory", 0) + giver.get("food_inventory", 0) - give_qty + receive_qty
+        > giver_capacity
+        or receiver.get("inventory", 0) + receiver.get("food_inventory", 0) - receive_qty + give_qty
+        > receiver_capacity
+    ):
+        return "trade.capacity_exceeded"
+    # The versioned carry mirror must stay aligned with the legacy scalars.
+    if (
+        giver_update.get("carried_resources")
+        != {"wood": giver_update.get("inventory"), "food": giver_update.get("food_inventory")}
+        or receiver_update.get("carried_resources")
+        != {"wood": receiver_update.get("inventory"), "food": receiver_update.get("food_inventory")}
+    ):
+        return "trade.invalid_mutation"
+
+    required = {
+        (giver_id, "alive", "eq", True),
+        (giver_id, give_field, "gte", give_qty + TRADE_MIN_RETAIN),
+        (receiver_id, "alive", "eq", True),
+        (receiver_id, receive_field, "gte", receive_qty + TRADE_MIN_RETAIN),
+        (receiver_id, "food_inventory", "eq", receiver.get("food_inventory", 0)),
+        (receiver_id, "inventory", "eq", receiver.get("inventory", 0)),
+    }
+    seen = {
+        (p.get("entity_id"), p.get("field"), p.get("op"), p.get("value"))
+        for p in proposal.get("preconditions", [])
+        if not isinstance(p.get("value"), dict)
+    }
+    if not required.issubset(seen):
+        return "trade.invalid_preconditions"
+    # Position values are dicts (unhashable), so the range pin is checked apart.
+    if not any(
+        p.get("entity_id") == receiver_id and p.get("field") == "position"
+        and p.get("op") == "eq" and p.get("value") == receiver_pos
+        for p in proposal.get("preconditions", [])
+    ):
+        return "trade.invalid_preconditions"
+    return None
+
+
+def validate_people_aid(proposal: dict, entities: dict):
+    """Core-owned validation for the Culture Pass aid contract (people-aid-v1).
+
+    Aid is a one-sided meat gift riding the existing offer_trade proposal
+    type: no reciprocity leg, so the barter checks are bypassed and Core
+    re-derives the material flow from live state — giver decrement, receiver
+    increment, receiver capacity, versioned carry mirrors. Ally and gate
+    semantics are domain-side cultural judgement and are deliberately NOT
+    re-derived here: Core validates the transfer, not the relationship.
+    """
+    if proposal.get("proposal_type") != "offer_trade":
+        return None
+    trade = proposal.get("trade") or {}
+    if trade.get("contract_version") != AID_CONTRACT_VERSION:
+        return None
+
+    giver_id = trade.get("giver_id")
+    receiver_id = trade.get("receiver_id")
+    give_field = trade.get("give_field")
+    give_qty = trade.get("give_quantity")
+    if (
+        give_field != "food_inventory"
+        or give_qty != AID_QUANTITY
+        or trade.get("receive_field") is not None
+        or trade.get("receive_quantity") != 0
+    ):
+        return "aid.invalid_terms"
+    if giver_id != proposal.get("entity_id") or not giver_id or giver_id == receiver_id:
+        return "aid.invalid_ownership"
+    if giver_id not in proposal.get("touched_scope", []) or receiver_id not in proposal.get("touched_scope", []):
+        return "aid.invalid_scope"
+
+    giver = entities.get(giver_id)
+    receiver = entities.get(receiver_id)
+    if not giver or not receiver:
+        return "aid.participant_missing"
+    if giver.get("type") != "person" or receiver.get("type") != "person":
+        return "aid.invalid_participant"
+    if not giver.get("alive", True) or not receiver.get("alive", True):
+        return "aid.participant_not_living"
+    giver_pos, receiver_pos = giver.get("position"), receiver.get("position")
+    if (
+        not giver_pos or not receiver_pos
+        or abs(giver_pos["x"] - receiver_pos["x"]) + abs(giver_pos["y"] - receiver_pos["y"]) > TRADE_RANGE
+    ):
+        return "aid.out_of_range"
+    # Surplus retention is the aid contract's defining bound: the giver keeps
+    # at least SURPLUS_KEEP_FOOD after the gift (AID_GIVER_MIN_FOOD ==
+    # SURPLUS_KEEP_FOOD + AID_QUANTITY).
+    if giver.get("food_inventory", 0) < AID_GIVER_MIN_FOOD:
+        return "aid.insufficient_surplus"
+    if receiver.get("hunger", 0) < AID_RECEIVER_MIN_HUNGER:
+        return "aid.receiver_not_in_need"
+    capacity = int(receiver.get("inventory_capacity", 30))
+    if receiver.get("inventory", 0) + receiver.get("food_inventory", 0) + AID_QUANTITY > capacity:
+        return "aid.receiver_capacity_exceeded"
+
+    updates = proposal.get("mutation", {}).get("entity_updates", {})
+    giver_update = updates.get(giver_id, {})
+    receiver_update = updates.get(receiver_id, {})
+    # All four legs re-derived against live state: meat moves, wood does not.
+    if (
+        giver_update.get("food_inventory") != giver.get("food_inventory", 0) - AID_QUANTITY
+        or receiver_update.get("food_inventory") != receiver.get("food_inventory", 0) + AID_QUANTITY
+        or giver_update.get("inventory") != giver.get("inventory", 0)
+        or receiver_update.get("inventory") != receiver.get("inventory", 0)
+    ):
+        return "aid.invalid_mutation"
+    # The versioned carry mirror must stay aligned with the legacy scalars.
+    if (
+        giver_update.get("carried_resources")
+        != {"wood": giver_update.get("inventory"), "food": giver_update.get("food_inventory")}
+        or receiver_update.get("carried_resources")
+        != {"wood": receiver_update.get("inventory"), "food": receiver_update.get("food_inventory")}
+    ):
+        return "aid.invalid_mutation"
+
+    required = {
+        (giver_id, "alive", "eq", True),
+        (giver_id, "food_inventory", "gte", AID_GIVER_MIN_FOOD),
+        (receiver_id, "alive", "eq", True),
+        (receiver_id, "hunger", "gte", AID_RECEIVER_MIN_HUNGER),
+        (receiver_id, "food_inventory", "eq", receiver.get("food_inventory", 0)),
+        (receiver_id, "inventory", "eq", receiver.get("inventory", 0)),
+    }
+    seen = {
+        (p.get("entity_id"), p.get("field"), p.get("op"), p.get("value"))
+        for p in proposal.get("preconditions", [])
+        if not isinstance(p.get("value"), dict)
+    }
+    if not required.issubset(seen):
+        return "aid.invalid_preconditions"
+    # Position values are dicts (unhashable), so the range pin is checked apart.
+    if not any(
+        p.get("entity_id") == receiver_id and p.get("field") == "position"
+        and p.get("op") == "eq" and p.get("value") == receiver_pos
+        for p in proposal.get("preconditions", [])
+    ):
+        return "aid.invalid_preconditions"
     return None
 
 
@@ -411,6 +636,16 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
             rejected.append(_reject(proposal, "initial_validation", transfer_err, transfer_err, tick, rejected))
             continue
 
+        trade_err = validate_people_trade(proposal, entities)
+        if trade_err:
+            rejected.append(_reject(proposal, "initial_validation", trade_err, trade_err, tick, rejected))
+            continue
+
+        aid_err = validate_people_aid(proposal, entities)
+        if aid_err:
+            rejected.append(_reject(proposal, "initial_validation", aid_err, aid_err, tick, rejected))
+            continue
+
         living_action_err = validate_living_action_proposal(proposal, entities)
         if living_action_err:
             rejected.append(_reject(
@@ -552,6 +787,8 @@ def run_commit_frame(entities: dict, domain_outputs: list, tick: int, lineage_ke
         })
         if proposal.get("transfer"):
             accepted_events[-1]["transfer"] = proposal["transfer"]
+        if proposal.get("trade"):
+            accepted_events[-1]["trade"] = proposal["trade"]
         if proposal.get("interaction"):
             accepted_events[-1]["interaction"] = proposal["interaction"]
         if proposal.get("living_action"):

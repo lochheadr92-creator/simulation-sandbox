@@ -40,7 +40,11 @@ from core.constants import (GATHER_TICKS, BUILD_TICKS, SHELTER_COST, GATHER_YIEL
                              SLEEP_ENERGY_TARGET, CRITICAL_THRESHOLD, HUNT_TICKS, HUNT_DAMAGE,
                              ANIMAL_MAX_HEALTH, CARCASS_MEAT_YIELD, CARCASS_HARVEST_YIELD,
                              MEAT_HUNGER_REDUCTION, FOOD_TRANSFER_QUANTITY,
-                             FOOD_TRANSFER_SURPLUS)
+                             FOOD_TRANSFER_SURPLUS, RETRIEVE_MAX_QUANTITY,
+                             SURPLUS_KEEP_FOOD, SURPLUS_KEEP_WOOD, TRADE_CONTRACT_VERSION,
+                             TRADE_MIN_RETAIN, TRADE_QUANTITY, TRADE_RANGE,
+                             AID_CONTRACT_VERSION, AID_GIVER_MIN_FOOD,
+                             AID_RECEIVER_MIN_HUNGER)
 from domains.living_agent_contracts import compat_plan
 from domains.living_agent_contracts import default_affordances
 
@@ -57,6 +61,11 @@ PLAN_STEPS = {
     "GIVE_FOOD": ["GIVE_FOOD"],
     "EXPLORE": ["TRAVEL_FRONTIER"],
     "WANDER": ["WANDER_STEP"],
+    # Surplus Pass (SURPLUS_PASS.md): home-storage loop + barter trade.
+    "GATHER_EXCESS": ["TRAVEL_EXCESS", "GATHER_EXCESS"],
+    "STORE": ["TRAVEL_STORAGE", "STORE"],
+    "RETRIEVE": ["TRAVEL_STORAGE", "RETRIEVE"],
+    "OFFER_TRADE": ["OFFER_TRADE"],
 }
 
 # Travel step -> (arrival_mode, arrival_action or None)
@@ -69,6 +78,8 @@ TRAVEL_ARRIVAL = {
     "TRAVEL_SHELTER": (ARRIVAL_EXACT, "SLEEP"),
     "TRAVEL_FRONTIER": (ARRIVAL_EXACT, None),
     "TRAVEL_ANIMAL": (ARRIVAL_EXACT, "HUNT_STRIKE"),
+    "TRAVEL_EXCESS": (ARRIVAL_EXACT, "GATHER_EXCESS"),
+    "TRAVEL_STORAGE": (ARRIVAL_EXACT, None),
 }
 
 
@@ -106,6 +117,19 @@ def context_from_action(action, pos):
         "animal_target_id": action.get("target_entity_id"),
         "animal_target_pos": action.get("target_pos"),
         "food_recipient_id": action.get("target_entity_id"),
+        "excess_target_id": action.get("target_entity_id"),
+        "excess_target_pos": action.get("target_pos"),
+        "excess_target_kind": action.get("target_kind", "tree"),
+        "storage_target": action.get("target_pos"),
+        "trade_partner_id": action.get("target_entity_id"),
+        # Culture Pass: every OFFER_TRADE field must survive the
+        # action -> context -> start_step round trip (surplus-pass defect
+        # class: fields dropped here silently reset to defaults mid-plan).
+        "trade_give_field": action.get("give_field"),
+        "trade_receive_field": action.get("receive_field"),
+        "trade_give_quantity": action.get("give_quantity"),
+        "trade_receive_quantity": action.get("receive_quantity"),
+        "trade_aid": bool(action.get("aid")),
     }
 
 
@@ -178,6 +202,12 @@ def start_step(step, e, eid, context, terrain, tick, pos):
         elif step == "TRAVEL_ANIMAL":
             target_entity_id = context.get("animal_target_id")
             target = context.get("animal_target_pos")
+        elif step == "TRAVEL_EXCESS":
+            target_entity_id = context.get("excess_target_id")
+            target = context.get("excess_target_pos")
+            target_kind = context.get("excess_target_kind", "tree")
+        elif step == "TRAVEL_STORAGE":
+            target = context.get("storage_target")
         action = {
             **base,
             "type": "travel",
@@ -216,6 +246,31 @@ def start_step(step, e, eid, context, terrain, tick, pos):
     if step == "GIVE_FOOD":
         return {**base, "type": "give_food", "status": "performing",
                 "target_entity_id": context.get("food_recipient_id"),
+                "target_pos": dict(pos), "ticks_required": 1}
+    if step == "GATHER_EXCESS":
+        return {**base, "type": "gather_excess", "status": "performing",
+                "target_entity_id": context.get("excess_target_id"),
+                "target_pos": copy_pos(context.get("excess_target_pos")) if context.get("excess_target_pos") else None,
+                "ticks_required": GATHER_TICKS,
+                "target_kind": context.get("excess_target_kind", "tree")}
+    if step == "STORE":
+        return {**base, "type": "store", "status": "performing",
+                "target_pos": dict(pos), "ticks_required": 1}
+    if step == "RETRIEVE":
+        return {**base, "type": "retrieve", "status": "performing",
+                "target_pos": dict(pos), "ticks_required": 1}
+    if step == "OFFER_TRADE":
+        # Culture Pass: quantities come from the agent's norm tuple (defaults
+        # keep pre-culture actions valid); aid offers are one-sided gifts
+        # (receive_field None, receive_quantity 0) under the aid contract.
+        aid = bool(context.get("trade_aid"))
+        return {**base, "type": "offer_trade", "status": "performing",
+                "target_entity_id": context.get("trade_partner_id"),
+                "give_field": context.get("trade_give_field"),
+                "receive_field": None if aid else context.get("trade_receive_field"),
+                "give_quantity": int(context.get("trade_give_quantity") or TRADE_QUANTITY),
+                "receive_quantity": 0 if aid else int(context.get("trade_receive_quantity") or TRADE_QUANTITY),
+                "aid": aid,
                 "target_pos": dict(pos), "ticks_required": 1}
     return {**base, "type": "wander", "status": "performing"}
 
@@ -363,6 +418,12 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
     inventory = e["inventory"]
     food_inventory = e.get("food_inventory", 0)
     has_shelter = e.get("has_shelter", False)
+    # Surplus Pass: home-store map, tracked only for surplus-enabled persons
+    # (None keeps legacy proposals byte-identical; see SURPLUS_PASS.md).
+    stored = (
+        dict(e.get("stored_resources") or {"wood": 0, "food": 0})
+        if e.get("storage_location") is not None else None
+    )
 
     touched_scope = [eid]
     preconditions = []
@@ -379,14 +440,14 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
         advance_plan = travel["advance_plan"]
         explanation = travel["explanation"]
 
-    elif atype == "gather":
+    elif atype in ("gather", "gather_excess"):
         target_id = action.get("target_entity_id")
         kind = action.get("target_kind", "tree")
         live_target = entities.get(target_id) if target_id else None
         if not live_target or live_target.get("resource", 0) <= 0:
             new_action["status"] = "failed"
             advance_plan = True
-            explanation = f"target {target_id} depleted or gone; abandoning gather"
+            explanation = f"target {target_id} depleted or gone; abandoning {atype}"
         else:
             ticks_spent = action.get("ticks_spent", 0) + 1
             new_action["ticks_spent"] = ticks_spent
@@ -396,14 +457,29 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
             if ticks_spent >= action.get("ticks_required", GATHER_TICKS):
                 yield_amount = CARCASS_HARVEST_YIELD if kind == "carcass" else GATHER_YIELD
                 amount = min(yield_amount, live_target["resource"])
-                if kind == "carcass":
-                    food_inventory += amount
+                # Carry capacity binds every surplus-enabled gather, and is the
+                # defining bound of gather_excess (legacy gathers stay unbounded).
+                capacity_bounded = atype == "gather_excess" or e.get("storage_location") is not None
+                if capacity_bounded:
+                    capacity = int(e.get("inventory_capacity", 30))
+                    room = capacity - (inventory + food_inventory)
+                    amount = min(amount, max(0, room))
+                if amount <= 0 and capacity_bounded:
+                    new_action["status"] = "failed"
+                    advance_plan = True
+                    explanation = f"carry capacity full; abandoning {atype} on {target_id}"
                 else:
-                    inventory += amount
-                new_action["status"] = "completed"
-                advance_plan = True
-                explanation = f"finished gathering {amount} {'meat' if kind == 'carcass' else 'wood'} from {target_id}"
-                new_action[f"_{kind}_delta"] = {"id": target_id, "resource": live_target["resource"] - amount, "claimed_tick": tick}
+                    if kind == "carcass":
+                        food_inventory += amount
+                    else:
+                        inventory += amount
+                    new_action["status"] = "completed"
+                    advance_plan = True
+                    explanation = f"finished gathering {amount} {'meat' if kind == 'carcass' else 'wood'} from {target_id}"
+                    delta = {"id": target_id, "resource": live_target["resource"] - amount, "claimed_tick": tick}
+                    if atype == "gather_excess":
+                        delta["resource_ownership"] = eid
+                    new_action[f"_{kind}_delta"] = delta
             else:
                 new_action["status"] = "performing"
                 explanation = f"gathering from {target_id} ({ticks_spent}/{action.get('ticks_required', GATHER_TICKS)})"
@@ -487,6 +563,139 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
         new_action["status"] = "completed"
         advance_plan = True
 
+    elif atype == "store":
+        storage_pos = e.get("storage_location")
+        if stored is None or not storage_pos or manhattan(pos, storage_pos) != 0:
+            new_action["status"] = "failed"
+            advance_plan = True
+            explanation = "not at storage location; store failed"
+        else:
+            wood_deposit = max(0, inventory - SURPLUS_KEEP_WOOD)
+            food_deposit = max(0, food_inventory - SURPLUS_KEEP_FOOD)
+            if wood_deposit or food_deposit:
+                inventory -= wood_deposit
+                food_inventory -= food_deposit
+                stored["wood"] = stored.get("wood", 0) + wood_deposit
+                stored["food"] = stored.get("food", 0) + food_deposit
+                preconditions.append({
+                    "entity_id": eid, "field": "stored_resources", "op": "eq",
+                    "value": dict(e.get("stored_resources") or {"wood": 0, "food": 0}),
+                })
+                explanation = f"stored surplus at home ({wood_deposit} wood, {food_deposit} meat)"
+            else:
+                explanation = "no surplus above keep thresholds; nothing stored"
+            new_action["status"] = "completed"
+            advance_plan = True
+
+    elif atype == "retrieve":
+        storage_pos = e.get("storage_location")
+        if stored is None or not storage_pos or manhattan(pos, storage_pos) != 0:
+            new_action["status"] = "failed"
+            advance_plan = True
+            explanation = "not at storage location; retrieve failed"
+        else:
+            capacity = int(e.get("inventory_capacity", 30))
+            room = max(0, capacity - (inventory + food_inventory))
+            qty = min(RETRIEVE_MAX_QUANTITY, int(stored.get("food", 0)), room)
+            if qty > 0:
+                stored["food"] = stored.get("food", 0) - qty
+                food_inventory += qty
+                preconditions.append({
+                    "entity_id": eid, "field": "stored_resources", "op": "eq",
+                    "value": dict(e.get("stored_resources") or {"wood": 0, "food": 0}),
+                })
+                explanation = f"retrieved {qty} meat from home storage"
+            else:
+                explanation = "nothing retrievable (store empty or carry full)"
+            new_action["status"] = "completed"
+            advance_plan = True
+
+    elif atype == "offer_trade":
+        partner_id = action.get("target_entity_id")
+        partner = entities.get(partner_id) if partner_id else None
+        give_field = action.get("give_field")
+        receive_field = action.get("receive_field")
+        give_qty = int(action.get("give_quantity", TRADE_QUANTITY))
+        aid = bool(action.get("aid"))
+        receive_qty = 0 if aid else int(action.get("receive_quantity", TRADE_QUANTITY))
+        # Culture Pass: aid terms are one-sided (food gift, nothing back).
+        terms_ok = give_field in ("inventory", "food_inventory") and (
+            (aid and give_field == "food_inventory" and receive_field is None)
+            or (not aid and receive_field in ("inventory", "food_inventory")
+                and give_field != receive_field)
+        )
+        if (
+            not partner or partner.get("type") != "person" or not partner.get("alive", True)
+            or manhattan(pos, partner.get("position", {})) > TRADE_RANGE
+            or not terms_ok
+        ):
+            new_action["status"] = "failed"
+            advance_plan = True
+            explanation = f"trade partner {partner_id} unavailable or out of range; abandoning offer"
+        elif aid:
+            # Aid (people-aid-v1): a one-sided meat gift to a hungry ally.
+            # Bypasses barter reciprocity but decrements the giver's surplus.
+            food_inventory -= give_qty
+            touched_scope.append(partner_id)
+            preconditions.extend([
+                {"entity_id": eid, "field": "food_inventory", "op": "gte", "value": AID_GIVER_MIN_FOOD},
+                {"entity_id": partner_id, "field": "alive", "op": "eq", "value": True},
+                {"entity_id": partner_id, "field": "hunger", "op": "gte", "value": AID_RECEIVER_MIN_HUNGER},
+                {"entity_id": partner_id, "field": "food_inventory", "op": "eq", "value": partner.get("food_inventory", 0)},
+                {"entity_id": partner_id, "field": "inventory", "op": "eq", "value": partner.get("inventory", 0)},
+                {"entity_id": partner_id, "field": "position", "op": "eq", "value": dict(partner.get("position") or {})},
+            ])
+            new_action["_trade"] = {
+                "contract_version": AID_CONTRACT_VERSION,
+                "giver_id": eid,
+                "receiver_id": partner_id,
+                "give_field": give_field,
+                "give_quantity": give_qty,
+                "receive_field": None,
+                "receive_quantity": 0,
+                "receiver_food_inventory": partner.get("food_inventory", 0),
+                "receiver_inventory": partner.get("inventory", 0),
+            }
+            explanation = f"gave {give_qty} meat to {partner_id} (aid, no reciprocity expected)"
+            new_action["status"] = "completed"
+            advance_plan = True
+        else:
+            if give_field == "inventory":
+                inventory -= give_qty
+            else:
+                food_inventory -= give_qty
+            if receive_field == "inventory":
+                inventory += receive_qty
+            else:
+                food_inventory += receive_qty
+            touched_scope.append(partner_id)
+            preconditions.extend([
+                {"entity_id": eid, "field": give_field, "op": "gte", "value": give_qty + TRADE_MIN_RETAIN},
+                {"entity_id": partner_id, "field": "alive", "op": "eq", "value": True},
+                # Culture Pass (S5): the receiver's post-trade retain is
+                # pinned too — norm-priced receive quantities can exceed
+                # TRADE_QUANTITY, where TRADE_MIN_SURPLUS alone no longer
+                # implies retain.
+                {"entity_id": partner_id, "field": receive_field, "op": "gte", "value": receive_qty + TRADE_MIN_RETAIN},
+                {"entity_id": partner_id, "field": "food_inventory", "op": "eq", "value": partner.get("food_inventory", 0)},
+                {"entity_id": partner_id, "field": "inventory", "op": "eq", "value": partner.get("inventory", 0)},
+                {"entity_id": partner_id, "field": "position", "op": "eq", "value": dict(partner.get("position") or {})},
+            ])
+            new_action["_trade"] = {
+                "contract_version": TRADE_CONTRACT_VERSION,
+                "giver_id": eid,
+                "receiver_id": partner_id,
+                "give_field": give_field,
+                "give_quantity": give_qty,
+                "receive_field": receive_field,
+                "receive_quantity": receive_qty,
+                "receiver_food_inventory": partner.get("food_inventory", 0),
+                "receiver_inventory": partner.get("inventory", 0),
+            }
+            explanation = f"traded {give_qty} {give_field} for {receive_qty} {receive_field} with {partner_id}"
+            new_action["status"] = "completed"
+            advance_plan = True
+
     elif atype == "drink":
         if is_water_adjacent(pos, terrain):
             thirst = 0
@@ -539,6 +748,7 @@ def execute_action_tick(e, eid, action, entities, terrain, tick, night, rng):
     return {
         "pos": pos, "hunger": hunger, "thirst": thirst, "energy": energy, "inventory": inventory,
         "food_inventory": food_inventory, "has_shelter": has_shelter, "action": new_action,
+        "stored_resources": stored,
         "advance_plan": advance_plan, "touched_scope": touched_scope, "preconditions": preconditions,
         "new_entities": new_entities, "event_type": atype, "explanation": explanation,
     }

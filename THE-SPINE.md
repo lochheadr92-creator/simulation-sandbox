@@ -95,6 +95,20 @@ Two things were built out of order and both stalled:
    do not fail to pair, they do not happen.)* 8C Leg A's surplus diagnosis is
    separate either way — it has its own 17/17 evidence and needs its own check.
 
+3. **Social density (C) outran kernel concurrency control (A) — and the agency
+   substrate.** Layer C's social-density discovery (2026-07-27, VERIFIED, two
+   seeds) found the eight rare social actions are not rare for want of
+   motivation. Three measured blockers stack, none of them behavioural:
+   genesis-fixed `stage6_role` eligibility (zero write sites — seven of eight
+   people are permanently ineligible for each action); once-per-lifetime
+   monotone `living_action_counts` with no reset path; and whole-blob
+   `living_agent` CAS attrition at `commit_pipeline.py:476` removing
+   **~56–70% of WINNING social decisions** across both seeds. The first two sit
+   inside Stage 6's sealed boundary; the third is a Layer A concurrency-control
+   property, not a Layer C one. *No resolution is stated here, and which leg
+   follows is not settled — it depends on the decided-vs-committed actor-spread
+   evidence and on Ryan's authorisation.*
+
 The correction is just to respect the stack: **fill C now** (ordinary life), before
 more E; keep aid parked until **F-A** (material surplus) exists. Same order Maslow
 and Dwarf Fortress both use — daily needs and behaviour precede social esteem and
@@ -105,15 +119,21 @@ culture. We learned it the hard way; it is written down now.
 Owned by `FRONTIER.md` (the only file that declares the current task). Summary:
 
 > **Layer C — Individual Agency: behaviour enrichment.** Order: variety → social
-> density → individuality → memory. **Active leg: NONE** — both most-recent legs
-> closed 2026-07-25. Variety Leg 1 (Upkeep drive) VERIFIED–CLOSED: agents rest
+> density → individuality → memory. **Active leg: Social Density Leg 1 —
+> Shared-Storage Intent; CONTRACT PROPOSED, awaiting confirmation.** Its
+> pre-registered 5,000-tick probe verifies the earliest dead seam: shared
+> storage is visible, but carried food never reaches `STORE_SURPLUS`'s `>=3`
+> gate, so zero candidates and zero stores occur. A threshold-2 read-only
+> shadow would win 31/56 opportunities across two actors without a score
+> change. No production behaviour has been implemented. Contract:
+> `memory/CAPABILITY-LAYER-C-SOCIAL-DENSITY-LEG1.md`.
+>
+> Variety Leg 1 (Upkeep drive) VERIFIED–CLOSED: agents rest
 > less and tend worn structures on their own initiative (rest 73.3%→32.1%
 > `living_settlement`; 89.5%→40.9% / 88.9%→47.2% `collective_groups`; entropy
 > 0.75→2.31 / 1.52→2.46 bits; frozen hash re-baselined `84d3ad52…c32d2` →
 > `897f3f7f…3c5ab` with authorisation). CORE-PERF-01 (Layer A infra)
-> VERIFIED–CLOSED, hash-neutral, ~1.2–2.1×. **Next, not started:** Layer C social
-> density — needs its own probe + contract phase (C-12 v2) before any
-> implementation.
+> VERIFIED–CLOSED, hash-neutral, ~1.2–2.1×.
 
 ## 6. The five rails (every layer obeys these)
 
@@ -149,11 +169,13 @@ Indexes, not essays. Each stamped "as of `<commit>`".
 | Item | Delivery | Blocker | Re-entry condition | Preserved |
 |---|---|---|---|---|
 | Aid Exchange *(arch. 8C Leg A)* | DEFERRED | needs **Layer F-A material surplus** (not full economy) | a committed run shows reliable transferable surplus | `lega_v2_full.patch`: priority-5 window, keep-one guard, RESPOND_AID 3334 |
-| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **agents never perform storage actions at all** (VERIFIED 2026-07-26) | Registries form, all 12 groups are recognised, the domain activates — it stops at gate 3, zero `shared_storage` facts ever. Cause measured, not inferred: the 1,000-tick run contains **one** storage action in total (a `retrieve` of 1 food, `person-006`, tick 7) and **zero `store` actions**. `storage-camp`'s `{food: 0, wood: 12}` is genesis seeding (`{food: 1, wood: 12}`) minus that one retrieve — nothing was ever deposited. The 4-tick pairing rule (`association_contracts.py:303-316`) is resource-agnostic and never becomes the binding constraint. **Re-entry condition: ≥2 distinct agents perform storage actions on a shared storage organically.** *(Supersedes the "surplus falsified" framing in §4 and the earlier `food >= 3` attribution — why agents never store is a separate, unverified question.)* | mechanism on branch; probes `_probe_f8_collective_preconditions.py`, `_probe_f8_storage_pairing.py` |
+| Layer-E collective deposit / group storage *(arch. 7C)* | DEFERRED | **agents never store; storage interaction is organically inert** (VERIFIED; cause sharpened 2026-07-27) | Registries form and recognised groups exist, but the chain stops before scoring: a 5,000-tick `collective_groups` control has shared storage visible on 33,683 / 37,521 decisions while carried food never exceeds 2. The inline `food >= 3` gate therefore produces zero `STORE_SURPLUS` candidates, one retrieve, zero stores, and zero `shared_storage` facts. The 4-tick pairing rule remains non-binding. A threshold-2 shadow would win 31/56 opportunities across two actors, but the behaviour change is only PROPOSED in the active Layer C contract. **Re-entry condition: ≥2 distinct agents perform storage actions on a shared storage organically.** | mechanism on branch; probes `_probe_f8_collective_preconditions.py`, `_probe_f8_storage_pairing.py`, `_probe_layer_c_social_density.py`; evidence `memory/evidence/layer-c-social-density-leg1/` |
 | CORE-INTEGRITY-001 remediation | DEFERRED | authorized re-baseline (moves frozen hashes) | dedicated core-integrity stage at a STOP | finding + probes on branch |
 | CORE-INTEGRITY-002 *(7a association-revision signature)* | **DEFERRED** — *not answered.* **7b is VERIFIED-resolved** and closed separately: its setup asserted on `group-shared-state-000` at tick 12, a registry that does not exist that early, so it failed in setup and never reached concurrency; a wait-for-precondition fixes it. **7a remains UNKNOWN**: whether the association-revision signature is an engine lost update or a test-side race was never determined | no probe is required to hold this open | **the conservation assertion fires** — `revision delta == accepted association-proposal count`. Now instrumented in `test_concurrency.py` and proven able to fail on all four violation shapes, so the question surfaces itself on any real occurrence rather than waiting on a watcher | 30-seed formation distribution `memory/evidence/core-integrity-002/`; serial no-op evidence + full close-out in `memory/CORE-INTEGRITY-002-CONCURRENCY-CAS.md` |
 | CORE-INTEGRITY-004 *(commit order is content-derived)* | **DEFERRED — remediation is its own high-risk stage** | `order_key` ties on `(requested_time, phase, engine_priority)`, so `content_hash` decides commit order; `causal_parent_event_ids` sits inside `core_fields` and event ids embed content `hash8`. **Any perturbation to any committed event id propagates into ordering for the rest of the run** — deterministic but chaotic | a dedicated stage at a STOP. Candidates: permanent content-independent tie-break; event ids without a content component; provenance refs out of `core_fields` | **CONFIRMED** by pre-registered scalpel: content-independent tie-break makes an age-band change produce byte-identical behaviour (4620/4620, action mix identical) where the real tie-break moved `living_rest` −28%. **Noise floor: single-run A/B action-count deltas untrustworthy at tens-of-percent scale; statistical gates are now the DEFAULT for re-baselines.** Byte-identical gates and repeat/replay/resume UNAFFECTED. `memory/CORE-INTEGRITY-004-COMMIT-ORDER-CONTENT-SENSITIVITY.md` |
 | CORE-INTEGRITY-003 remediation *(frame-knowledge aliasing)* | DEFERRED | authorized re-baseline (moves frozen `living_settlement` + `collective_groups` hashes) | dedicated core-integrity stage at a STOP | finding + withheld fix described in `memory/CORE-INTEGRITY-003-frame-knowledge-aliasing.md` |
+| Eight-singleton social-density target *(Layer C)* | **DEFERRED / BLOCKED at Stage 6's sealed boundary** — *not* failed for want of agent motivation | **genesis-fixed `stage6_role` eligibility + increment-only `living_action_counts` semantics** (VERIFIED, both seeds). Six of eight singletons gate on `stage6_role`, which has **zero write sites**, so seven of eight people are permanently ineligible for each; the counter is once-per-lifetime with no decrement, reset, decay or TTL. **Consequence: the target cannot satisfy its own acceptance gates** — ">=N distinct actors" is blocked by a genesis caste, and "fires in every 1,000-tick window" is blocked by an intentional once-per-lifetime counter. Both mechanisms are inside the sealed Stage 6 boundary. Separately, ~56–70% of winning social decisions are refused at the whole-blob `living_agent` CAS (see the `living_agent.relationships` row in `REGISTRY-COMPONENT-OWNERSHIP.md`) | **an explicitly authorised change to role assignment or to counter semantics** | `leg2_session1_funnel_report.md` §5 amendment + §7; `leg2_seed2_diagnostic_report.md`; `leg2_precond_seed{1,2}_1200.json` |
+| `warn` recurrence *(Layer C social density)* | **PARKED** — not a Layer C contract candidate | **animal proximity, not any Layer C gate** (VERIFIED, 2 seeds). `warn` needs an animal AND a person observed at once; the animal sits at median distance 11–12 vs `VISION_RADIUS` 4 after a single adjacent tick-1 encounter. `animal_observed` fails 2,999/3,000 (seed 1) and 1,199/1,200 (seed 2); `counter_open` is true 100% of both runs, so the self-cap is NOT the blocker; the scout reaching full radius 4 in 22–32% of decisions rules out perceptual degradation. Fixing it means changing **Layer B world dynamics** (animal movement) — outside Layer C, baseline-protection sensitive, and hash-moving | **a committed run shows animals recurrently entering `VISION_RADIUS`** | `_probe_layer_c_warn_opportunity.py`; evidence `leg2_session2_warn_report.md`, `leg2_seed2_diagnostic_report.md` |
 | Remaining Layer-E culture (plurality, enforcement, diffusion) *(arch. 8C–8D)* | not started | behaviour + social density (Layers C, D) | C and D organically thicken | — |
 
 ## 9. Coherence test (the project is coherent when a newcomer can answer these from the docs, not from chat history)

@@ -177,6 +177,12 @@ def empty_living_agent_state(entity_id: str, tick: int, rng=None) -> dict:
         "schema_version": LIVING_AGENT_SCHEMA_VERSION,
         "traits": traits,
         "pressures": pressures,
+        "emotions": {
+            "schema_version": "emotion-v1",
+            "joy": 0, "fear": 0, "anger": 0, "sadness": 0,
+            "disgust": 0, "surprise": 0, "calm": 0,
+            "dominant_emotion": None, "arousal": 0, "valence": 0,
+        },
         "wants": {},
         "memories": {},
         "relationships": {},
@@ -187,8 +193,6 @@ def empty_living_agent_state(entity_id: str, tick: int, rng=None) -> dict:
         "created_tick": int(tick),
         "last_updated_tick": int(tick),
     }
-
-
 def _bounded_dict(value, limit: int, *, tick_field: str) -> dict:
     if not isinstance(value, dict):
         return {}
@@ -289,6 +293,10 @@ def compat_living_agent_state(existing: dict | None, entity_id: str, tick: int, 
         )
         for kind in PRESSURE_KINDS
     }
+    # Emotion compatibility: preserve committed emotions or default to empty
+    existing_emotions = existing.get("emotions")
+    if isinstance(existing_emotions, dict) and existing_emotions.get("schema_version") in (None, "emotion-v1"):
+        state["emotions"] = copy.deepcopy(existing_emotions)
     state["wants"] = _bounded_dict(
         existing.get("wants"), LIMITS.candidate_goals_per_decision,
         tick_field="last_updated_tick",

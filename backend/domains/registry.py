@@ -15,6 +15,7 @@ from domains.living_settlement_domain import LivingSettlementDomain
 from domains.association_domain import AssociationDomain
 from domains.group_state_domain import GroupStateDomain
 from domains.group_collective_domain import GroupCollectiveDomain
+from domains.emotion_domain import EmotionDomain
 from domains.group_goal_domain import GroupGoalDomain
 from domains.group_norm_domain import GroupNormDomain
 from domains.group_carriage_domain import GroupCarriageDomain
@@ -26,6 +27,7 @@ DOMAIN_REGISTRY = {
     "animal": AnimalDomain(),
     "weather": WeatherDomain(),
     "living_settlement": LivingSettlementDomain(),
+    "emotion": EmotionDomain(),
     "association": AssociationDomain(),
     "group_state": GroupStateDomain(),
     "group_collective": GroupCollectiveDomain(),

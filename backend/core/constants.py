@@ -122,6 +122,68 @@ STORE_SURPLUS_MIN_FOOD = 2
 FOOD_TRANSFER_QUANTITY = 1        # this phase permits exactly one meat unit per transfer
 FOOD_TRANSFER_SURPLUS = 2         # giver retains one unit after a transfer
 
+# --- Surplus Pass (Phase 1 of revised domain roadmap; SURPLUS_PASS.md) ---
+# Carry capacity is the pre-existing `inventory_capacity` person field
+# (world/generator.py default 30), enforced ONLY for surplus-enabled persons
+# (those carrying a `storage_location` field, minted by the generic genesis
+# knob `assign_storage_location`). Legacy scenarios have no such person, so
+# their gather/eat behaviour and hashes are byte-identical by construction.
+SURPLUS_KEEP_FOOD = 4             # carried meat units a store action never deposits
+                                  # (== TRADE_MIN_SURPLUS, so a post-store agent with
+                                  # a meat haul still shows the barter offer profile)
+SURPLUS_KEEP_WOOD = 2             # carried wood units a store action never deposits
+GATHER_EXCESS_MAX_HUNGER = 500    # gather_excess only while satiated (below: eat wins)
+GATHER_EXCESS_MIN_RESOURCE = 20   # "abundant" = last-known stock at least this
+STORE_TRIGGER_LOAD = 12           # carried total (wood+meat) that starts a store trip
+STORE_MIN_MOVABLE = 4             # minimum depositable surplus that justifies the trip
+RETRIEVE_MIN_HUNGER = 550         # retrieve from storage only once hunger bites
+RETRIEVE_MAX_QUANTITY = 3         # meat units pulled per retrieve (bounded by room)
+TRADE_RANGE = 2                   # manhattan distance for an offer_trade swap
+TRADE_QUANTITY = 2                # units exchanged per resource leg (equal both ways,
+                                  # so a swap never changes either party's carry total)
+TRADE_MIN_SURPLUS = 4             # carried units of the offered resource required
+TRADE_MAX_SCARCE = 2              # carried units of the wanted resource at or below
+                                  # (aligned with SURPLUS_KEEP_*: an agent straight
+                                  # off a store trip reads as scarce, which is when
+                                  # restocking via barter is actually useful)
+TRADE_MIN_RETAIN = 2              # each party keeps at least this much of what it gives
+TRADE_CONTRACT_VERSION = "people-trade-v1"
+CARCASS_KNOWLEDGE_STALE_TICKS = 25  # a carcass decays away in ~20 ticks; a sighting
+                                    # older than this no longer counts as harvestable meat
+MEAT_STOCK_HUNT_SEVERITY = 520    # satiated surplus persons still stock protein:
+                                  # floors HUNT severity (which is otherwise
+                                  # hunger-scaled and loses to gather_excess)
+                                  # while carried+stored meat is scarce. Must
+                                  # clear _score's W_RISK*5 (~350) + W_TRAVEL
+                                  # penalties and still beat GATHER_EXCESS (~300).
+
+# --- Culture Pass (Phase 2 of the revised domain roadmap; CULTURE_PASS.md) ---
+# Norms, aid, collective memory and gate-keeping for the people stack, hooked
+# into the surplus pipeline (gather -> store -> offer_trade -> consume), not
+# replacing it. Every mechanism rides the EXISTING proposal set: aid is an
+# offer_trade proposal carrying the people-aid-v1 contract (one-sided gift,
+# receive_quantity 0); norms, memory and gate-keeping only bias or suppress the
+# existing OFFER_TRADE candidate (constitution: influence never invents a
+# candidate and never outranks urgent survival). All cultural state lives in a
+# per-person `culture_state` field, minted only for surplus-enabled persons
+# (the storage_location gate), so every legacy scenario stays byte-identical.
+CULTURE_STATE_VERSION = "people-culture-v1"
+AID_CONTRACT_VERSION = "people-aid-v1"
+AID_QUANTITY = 2                  # meat units gifted per aid event
+AID_GIVER_MIN_FOOD = SURPLUS_KEEP_FOOD + AID_QUANTITY
+                                  # giver retains >= SURPLUS_KEEP_FOOD after aid
+AID_MAX_HUNGER = 400              # only a satiated giver aids (self-interest first)
+AID_RECEIVER_MIN_HUNGER = 550     # mirrors RETRIEVE_MIN_HUNGER: hunger has bitten
+AID_ALLY_MIN_SUPPORT = 20         # reciprocity-trust support_score ally threshold
+AID_SEVERITY = 280                # + generosity//2. Evaluated only when NO
+                                  # barter partner exists (same OFFER_TRADE
+                                  # candidate, barter tried first), so aid
+                                  # never outbids exchange for the slot.
+CULTURE_MEMORY_HALF_LIFE_TICKS = 100   # one day; entry weight halves per period
+CULTURE_MEMORY_MAX_ENTRIES = 16
+CULTURE_NORM_EMA_SHIFT = 2        # integer EMA on x100 fixed point:
+                                  # new = old - (old >> shift) + ((obs*100) >> shift)
+
 # --- Phase 5B3: food request/offer protocol (food-interaction-v1) ---
 FOOD_INTERACTION_PROTOCOL_VERSION = "food-interaction-v1"
 # Named expiry interval for food-interaction-v1: response allowed while

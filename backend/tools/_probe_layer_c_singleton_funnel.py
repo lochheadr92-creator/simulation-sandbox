@@ -276,6 +276,13 @@ class WindowStats:
         self.group_state_peak_composition: dict = {}
         self.ticks_over_payload_target = 0
         self.rejections = Counter()
+        # --- Leg 2 R1 acceptance surfaces ---
+        # S0: identities actually chosen as REQUEST_HELP targets this window.
+        self.request_target_ids = Counter()
+        # S1: actors whose decision WON with cooperate this window.
+        self.winning_cooperate_actors = Counter()
+        # S0 denominator: identities alive at the END of this window.
+        self.survivors_at_end: list[str] = []
 
     def metrics(self) -> dict:
         rows = {}
@@ -325,6 +332,37 @@ class WindowStats:
             "group_state_peak_composition": self.group_state_peak_composition,
             "rejections_by_reason": _sorted_counter(self.rejections),
             "actions": rows,
+            "acceptance": self._acceptance_rows(),
+        }
+
+    def _acceptance_rows(self) -> dict:
+        survivors = sorted(set(self.survivors_at_end))
+        targeted = set(self.request_target_ids)
+        missed = sorted(s for s in survivors if s not in targeted)
+        t_total = sum(self.request_target_ids.values())
+        t_top = max(self.request_target_ids.values()) if self.request_target_ids else 0
+        c_total = sum(self.winning_cooperate_actors.values())
+        c_top = max(self.winning_cooperate_actors.values()) if self.winning_cooperate_actors else 0
+        top_share = round(t_top / t_total, 4) if t_total else None
+        return {
+            "surface0_required_survivor_ids": survivors,
+            "surface0_required_survivor_count": len(survivors),
+            "surface0_selected_target_ids": sorted(targeted),
+            "surface0_selected_target_counts": _sorted_counter(self.request_target_ids),
+            "surface0_distinct_targets": len(targeted),
+            "surface0_absolute_selections": t_total,
+            "surface0_top_target_share": top_share,
+            "surface0_survivors_never_targeted": missed,
+            "surface0_every_survivor_targeted": not missed,
+            "surface0_concentration_ok": (
+                top_share is not None and top_share <= 0.528
+            ),
+            "surface1_winning_cooperate_actor_counts": _sorted_counter(
+                self.winning_cooperate_actors),
+            "surface1_distinct_winning_cooperate_actors": len(self.winning_cooperate_actors),
+            "surface1_absolute_winning_decisions": c_total,
+            "surface1_top_actor_share": round(c_top / c_total, 4) if c_total else None,
+            "surface1_threshold_ge_4_met": len(self.winning_cooperate_actors) >= 4,
         }
 
 
@@ -594,6 +632,9 @@ class SingletonFunnelCensus:
                 continue
 
             funnel.won += 1
+            if action == "cooperate":
+                # Surface 1: an actor producing a WINNING cooperate decision.
+                self._window(tick).winning_cooperate_actors[actor_id] += 1
             self._resolve_won(
                 funnel=funnel, action=action, tick=tick, actor_id=actor_id,
                 selected_goal_id=str(selected_goal_id or ""), receipt=receipt,
