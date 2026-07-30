@@ -716,6 +716,24 @@ class LivingSettlementDomain(DomainEngine):
                 "energy": actor_after["energy"], "knowledge": knowledge,
                 "paused_living_plan": paused_plan,
             })
+            # ARM B -- SEMANTICALLY INACTIVE TWIN of the OQ-1 containment guard.
+            # UNACCEPTED EXPERIMENT SCAFFOLD, not a fix and not for merge.
+            #
+            # Identical entity, field, construction site and list position to
+            # arm C (77f73c96); ONLY the operator and value differ, chosen so
+            # the guard is EVALUATED on every one of these proposals yet can
+            # never fail -- every energy writer clamps to [0, 1000]. `gte` is
+            # used by no production precondition, so an `energy_gte_failed`
+            # rejection would uniquely identify this guard firing.
+            #
+            # Purpose: separate the guard's ORDERING/CONTENT footprint (which
+            # arm B shares with arm C) from its SEMANTICS (which only arm C
+            # has). If A and B are byte-identical, any A-vs-C difference is
+            # caused by the guard actually failing, not by adding content.
+            proposal.setdefault("preconditions", []).append({
+                "entity_id": entity_id, "field": "energy", "op": "gte",
+                "value": -1_000_000_000,
+            })
             if decision_kind == "critical_interrupt":
                 action["interrupted_plan_id"] = prior_plan.get("plan_id")
                 action["interruption_reason"] = "critical_survival_pressure"

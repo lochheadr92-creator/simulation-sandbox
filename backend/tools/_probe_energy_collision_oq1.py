@@ -83,10 +83,27 @@ class EnergyCollisionCensus:
         self.outcome = Counter()
         self.delta_from_last_writer = Counter()
         self.examples: list[dict] = []
+        # Containment cost accounting: what does failing closed actually drop?
+        self.rejected_by_detail = Counter()
+        self.energy_rejections_by_action = Counter()
+        self.accepted_actions = Counter()
+        self.alive_end = 0
 
     def observe_frame(self, *, tick: int, accepted: list[dict],
-                      before: dict, entities: dict) -> None:
+                      before: dict, entities: dict,
+                      rejected: list[dict] | None = None) -> None:
         self.frames += 1
+        for event in accepted:
+            action = (event.get("living_action") or {}).get("action_type")
+            if action:
+                self.accepted_actions[str(action)] += 1
+        for rejection in (rejected or []):
+            detail = str(rejection.get("reason_detail") or "none")
+            self.rejected_by_detail[detail] += 1
+            if detail == "energy_eq_failed":
+                proposal = rejection.get("proposal_snapshot") or {}
+                act = (proposal.get("living_action") or {}).get("action_type")
+                self.energy_rejections_by_action[str(act or "none")] += 1
         by_entity: dict[str, list[dict]] = defaultdict(list)
         for event in accepted:
             writes = _energy_writes(event)
@@ -157,6 +174,10 @@ class EnergyCollisionCensus:
             "outcome": _sorted_counter(self.outcome),
             "final_minus_pre_frame_energy": _sorted_counter(self.delta_from_last_writer),
             "examples": self.examples,
+            "rejected_by_detail": _sorted_counter(self.rejected_by_detail),
+            "energy_rejections_by_action": _sorted_counter(self.energy_rejections_by_action),
+            "accepted_actions": _sorted_counter(self.accepted_actions),
+            "alive_at_end": self.alive_end,
         }
 
 
@@ -196,8 +217,11 @@ def probe(*, ticks: int = DEFAULT_TICKS, seed: str = SEED,
             valid_parent_ids.add(event["id"])
             apply_mutation(replayed, copy.deepcopy(event["mutation"]))
         census.observe_frame(tick=tick, accepted=accepted, before=before,
-                             entities=entities)
+                             entities=entities, rejected=_rejected)
 
+    census.alive_end = sum(
+        1 for e in entities.values()
+        if e.get("type") == "person" and e.get("alive", True))
     payload = {
         "status": "complete",
         "probe": "oq1-energy-collision-attribution",
